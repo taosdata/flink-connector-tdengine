@@ -1,4 +1,4 @@
-package com.taosdata.flink.sink;
+package com.taosdata.flink.sink.entity;
 
 /**
  * 系统增加新的无符号数据类型，分别是：
@@ -10,21 +10,21 @@ package com.taosdata.flink.sink;
  * create table tb(ts timestamp, a tinyint unsigned, b smallint unsigned, c int unsigned, d bigint unsigned)),
  */
 public enum DataType {
-    TSDB_DATA_TYPE_BOOL("BOOL", 1),
-    TSDB_DATA_TYPE_TINYINT("TINYINT", 2),
-    TSDB_DATA_TYPE_SMALLINT("SMALLINT", 3),
-    TSDB_DATA_TYPE_INT("INT", 4),
-    TSDB_DATA_TYPE_BIGINT("BIGINT", 5),
-    TSDB_DATA_TYPE_FLOAT("FLOAT", 6),
-    TSDB_DATA_TYPE_DOUBLE("DOUBLE", 7),
-    TSDB_DATA_TYPE_VARCHAR("VARCHAR", 8),
-    TSDB_DATA_TYPE_BINARY("BINARY", 8),
-    TSDB_DATA_TYPE_TIMESTAMP("TIMESTAMP", 9),
-    TSDB_DATA_TYPE_NCHAR("NCHAR", 10),
+    DATA_TYPE_BOOL("BOOL", 1),
+    DATA_TYPE_TINYINT("TINYINT", 2),
+    DATA_TYPE_SMALLINT("SMALLINT", 3),
+    DATA_TYPE_INT("INT", 4),
+    DATA_TYPE_BIGINT("BIGINT", 5),
+    DATA_TYPE_FLOAT("FLOAT", 6),
+    DATA_TYPE_DOUBLE("DOUBLE", 7),
+    DATA_TYPE_VARCHAR("VARCHAR", 8),
+    DATA_TYPE_BINARY("BINARY", 8),
+    DATA_TYPE_TIMESTAMP("TIMESTAMP", 9),
+    DATA_TYPE_NCHAR("NCHAR", 10),
 
-    TSDB_DATA_TYPE_JSON("JSON", 15),
-    TSDB_DATA_TYPE_VARBINARY("VARBINARY", 16),
-    TSDB_DATA_TYPE_GEOMETRY("GEOMETRY", 20),
+    DATA_TYPE_JSON("JSON", 15),
+    DATA_TYPE_VARBINARY("VARBINARY", 16),
+    DATA_TYPE_GEOMETRY("GEOMETRY", 20),
     ;
     private final String typeName;
     private final int typeNo;

@@ -1,12 +1,20 @@
 package com.taosdata.flink.source;
 
-import com.taosdata.flink.sink.TaosOptions;
+
+import com.taosdata.jdbc.tmq.TaosConsumer;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 
+import java.sql.SQLException;
+import java.util.Properties;
+
 public class DynamicSourceFunction<T> extends RichParallelSourceFunction<T> {
-    private TaosOptions taosOptions;
-    public DynamicSourceFunction(TaosOptions taosOptions) {
-//        this.taosOptions = taosOptions;
+    private Properties properties;
+    private TaosConsumer consumer;
+    private volatile boolean running = true;
+    public DynamicSourceFunction(Properties properties) {
+        this.properties = properties;
+
 //        final String url = "jdbc:TAOS://" + host + ":6030/?user=" + user + "&password=" + password;
 //        Connection connection;
 //
@@ -20,8 +28,16 @@ public class DynamicSourceFunction<T> extends RichParallelSourceFunction<T> {
     }
 
     @Override
+    public void open(Configuration parameters) throws Exception {
+        this.consumer = new TaosConsumer<>(this.properties);
+    }
+
+    @Override
     public void run(SourceContext<T> sourceContext) throws Exception {
 
+    }
+
+    public void close() throws Exception {
     }
 
     @Override

@@ -1,10 +1,10 @@
-package com.taosdata.flink.sink;
+package com.taosdata.flink.sink.entity;
 
-public class Param<T> {
+public class TagParam<T> {
     private DataType type;
     private T value;
 
-    public Param(DataType type, T value) {
+    public TagParam(DataType type, T value) {
         this.type = type;
         this.value = value;
     }

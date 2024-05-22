@@ -1,4 +1,4 @@
-package com.taosdata.flink.sink;
+package com.taosdata.flink.sink.entity;
 
 public class TaosType {
     public static final int TSDB_DATA_TYPE_BOOL = 1;

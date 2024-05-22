@@ -2,6 +2,8 @@ package com.taosdata.flink.sink;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
+import com.taosdata.flink.sink.entity.*;
+import com.taosdata.jdbc.TSDBDriver;
 import com.taosdata.jdbc.TSDBError;
 import com.taosdata.jdbc.TSDBErrorNumbers;
 import com.taosdata.jdbc.ws.TSWSPreparedStatement;
@@ -15,29 +17,34 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.List;
+import java.util.Properties;
 
-public class TaosSinkFunction<T> extends RichSinkFunction<T> implements CheckpointListener, CheckpointedFunction {
-    private static final Logger logger = LoggerFactory.getLogger(TaosSinkFunction.class);
-    private TaosOptions taosOptions;
+public class TaosSinkConnector<T> extends RichSinkFunction<T> implements CheckpointListener, CheckpointedFunction {
+    private static final Logger logger = LoggerFactory.getLogger(TaosSinkConnector.class);
+    private Properties properties;
+    private String url;
     private Connection conn;
-    public TaosSinkFunction(TaosOptions taosOptions) {
-        this.taosOptions = taosOptions;
+    public TaosSinkConnector(String url, Properties properties) {
+        properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
+        this.properties = properties;
+        this.url = url;
     }
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        String jdbcUrl = "jdbc:TAOS-RS://" + this.taosOptions.getHost() + ":"+ this.taosOptions.getPort() +"/?batchfetch=true";
-        this.conn = DriverManager.getConnection(jdbcUrl, this.taosOptions.getUserName(), this.taosOptions.getPwd());
-        logger.info("connect websocket url:", jdbcUrl);
+        try {
+            this.conn = DriverManager.getConnection(this.url, this.properties);
+        } catch (SQLException e) {
+            logger.error("open exception url:", this.url, e.getSQLState());
+        }
+
+        logger.info("connect websocket url:", this.url);
     }
-    private void setStmtTag(TSWSPreparedStatement pstmt, List<Param> params) throws Exception {
-        for (int i = 1; i <= params.size(); i++) {
-            Param tagParam = params.get(i - 1);
+    private void setStmtTag(TSWSPreparedStatement pstmt, List<TagParam> tagParams) throws Exception {
+        for (int i = 1; i <= tagParams.size(); i++) {
+            TagParam tagParam = tagParams.get(i - 1);
             switch (tagParam.getType().getTypeNo()) {
                 case TaosType.TSDB_DATA_TYPE_BOOL:
                     pstmt.setTagBoolean(i, (boolean) tagParam.getValue());
@@ -86,49 +93,49 @@ public class TaosSinkFunction<T> extends RichSinkFunction<T> implements Checkpoi
 
     }
 
-    private void setStmtLineParams(TSWSPreparedStatement pstmt, List<List<Param>> params) throws Exception {
-        for (List<Param> lineParams : params) {
-            for (int i = 1; i <= lineParams.size(); i++) {
-                Param param = lineParams.get(i - 1);
-                switch (param.getType().getTypeNo()) {
+    private void setStmtLineParams(TSWSPreparedStatement pstmt, List<List<TagParam>> params) throws Exception {
+        for (List<TagParam> lineTagParams : params) {
+            for (int i = 1; i <= lineTagParams.size(); i++) {
+                TagParam tagParam = lineTagParams.get(i - 1);
+                switch (tagParam.getType().getTypeNo()) {
                     case TaosType.TSDB_DATA_TYPE_BOOL:
-                        pstmt.setBoolean(i, (boolean) param.getValue());
+                        pstmt.setBoolean(i, (boolean) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_INT:
-                        pstmt.setInt(i, (int) param.getValue());
+                        pstmt.setInt(i, (int) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_TINYINT:
-                        pstmt.setByte(i, (byte) param.getValue());
+                        pstmt.setByte(i, (byte) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
-                        pstmt.setTimestamp(i, new Timestamp((long) param.getValue()));
+                        pstmt.setTimestamp(i, new Timestamp((long) tagParam.getValue()));
                         break;
                     case TaosType.TSDB_DATA_TYPE_BIGINT:
-                        pstmt.setLong(i, (long) param.getValue());
+                        pstmt.setLong(i, (long) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_FLOAT:
-                        pstmt.setFloat(i, (float) param.getValue());
+                        pstmt.setFloat(i, (float) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_DOUBLE:
-                        pstmt.setDouble(i, (double) param.getValue());
+                        pstmt.setDouble(i, (double) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_SMALLINT:
-                        pstmt.setShort(i, (short) param.getValue());
+                        pstmt.setShort(i, (short) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_BINARY:
-                        pstmt.setString(i, (String) param.getValue());
+                        pstmt.setString(i, (String) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_NCHAR:
-                        pstmt.setNString(i, (String) param.getValue());
+                        pstmt.setNString(i, (String) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_GEOMETRY:
-                        pstmt.setGeometry(i, (byte[]) param.getValue());
+                        pstmt.setGeometry(i, (byte[]) tagParam.getValue());
                         break;
                     case TaosType.TSDB_DATA_TYPE_VARBINARY:
-                        pstmt.setVarbinary(i, (byte[]) param.getValue());
+                        pstmt.setVarbinary(i, (byte[]) tagParam.getValue());
                         break;
                     default:
-                        logger.error("setStmtLineParams param type is error, type:", param.getType().getTypeName());
+                        logger.error("setStmtLineParams param type is error, type:", tagParam.getType().getTypeName());
                         throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
                 }
             }
@@ -136,9 +143,9 @@ public class TaosSinkFunction<T> extends RichSinkFunction<T> implements Checkpoi
         }
     }
 
-    private void setStmtParams(TSWSPreparedStatement pstmt, List<StatementParam> params) throws Exception {
+    private void setStmtParams(TSWSPreparedStatement pstmt, List<ColumParam> params) throws Exception {
         for (int i = 1; i <= params.size(); i++) {
-            StatementParam param = params.get(i - 1);
+            ColumParam param = params.get(i - 1);
             switch (param.getType().getTypeNo()) {
                 case TaosType.TSDB_DATA_TYPE_BOOL:
                     pstmt.setBoolean(i, param.getValues());
@@ -183,58 +190,119 @@ public class TaosSinkFunction<T> extends RichSinkFunction<T> implements Checkpoi
         }
     }
 
-    private String getStmtSql(StatementData data) {
+    private String getSupperTableSql(SupperTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSupperTableName())
-                || Strings.isNullOrEmpty(data.getTableName()) || data.getTagFieldNames() == null
-                || data.getTagFieldNames().isEmpty() || data.getFieldNames() == null || data.getFieldNames().isEmpty()) {
+                || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumNames() == null
+                || data.getColumNames().isEmpty()) {
             logger.error("StatementData param error:", JSON.toJSONString(data));
             return "";
         }
-        String sql = "INSERT INTO ? USING " + data.getDbName() + "." + data.getSupperTableName() + " (";
-        sql += String.join(",", data.getTagFieldNames()) + ") TAGS (?";
+        String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSupperTableName() + "` (";
+        sql += String.join(",", data.getTagNames()) + ") TAGS (?";
 
-        for (int i = 1; i < data.getTagFieldNames().size(); i++) {
+        for (int i = 1; i < data.getTagNames().size(); i++) {
             sql += ",?";
         }
 
-        sql += ") (" + String.join(",", data.getFieldNames()) + ") VALUES (?";
-        for (int i = 1; i < data.getFieldNames().size(); i++) {
+        sql += ") (" + String.join(",", data.getColumNames()) + ") VALUES (?";
+        for (int i = 1; i < data.getColumNames().size(); i++) {
             sql += ",?";
         }
         sql += ")";
         return sql;
     }
-
+    private String getNormalTableSql(NormalTableData data) {
+        if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
+                ||data.getColumNames() == null || data.getColumNames().isEmpty()) {
+            logger.error("NormalTableData param error:", JSON.toJSONString(data));
+            return "";
+        }
+        String sql = "INSERT INTO ? (" + String.join(",", data.getColumNames()) + ") VALUES (?";
+        for (int i = 1; i < data.getColumNames().size(); i++) {
+            sql += ",?";
+        }
+        sql += ")";
+        return sql;
+    }
     @Override
     public void invoke(T value, Context context) throws Exception {
+        if (value == null) {
+            logger.error("invoke value is null");
+            return;
+        }
         if (null == this.conn) {
-            String jdbcUrl = "jdbc:TAOS-RS://" + this.taosOptions.getHost() + ":" + this.taosOptions.getPort() +"/?batchfetch=true";
-            this.conn = DriverManager.getConnection(jdbcUrl, this.taosOptions.getUserName(), this.taosOptions.getPwd());
+            this.conn = DriverManager.getConnection(this.url, this.properties);
+            logger.info("connect websocket url:", this.url);
         }
 
-        if (value instanceof StatementData) {
-            StatementData data = (StatementData)value;
-            String sql = getStmtSql(data);
+        if (value instanceof SupperTableData) {
+            SupperTableData supperTableData = (SupperTableData)value;
+            String sql = getSupperTableSql(supperTableData);
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
             }
 
-            try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
-                pstmt.setTableName(data.getDbName() + "." +data.getTableName());
-                setStmtTag(pstmt, data.getTagParams());
-                if (data.getMode() == 1) {
-                    setStmtParams(pstmt, data.getColumParams());
+            List<SubTableData> subTableDataList = supperTableData.getSubTableDataList();
+            if (subTableDataList == null || subTableDataList.isEmpty()) {
+                logger.error("invoke tableDataList is null");
+                return;
+            }
+            for (SubTableData subTableData : subTableDataList) {
+                try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
+                    pstmt.setTableName(supperTableData.getDbName() + "." + subTableData.getTableName());
+                    setStmtTag(pstmt, subTableData.getTagParams());
+                    setStmtParams(pstmt, subTableData.getColumParams());
                     pstmt.columnDataAddBatch();
                     pstmt.columnDataExecuteBatch();
-                }else {
-                    setStmtLineParams(pstmt, data.getLineParams());
-                    pstmt.executeBatch();
-                }
 
+                } catch (SQLException e) {
+                    logger.error("invoke exception sql:", sql, e.getSQLState());
+                    throw e;
+                }
+            }
+
+        } else if (value instanceof NormalTableData) {
+            NormalTableData normalTableData = (NormalTableData) value;
+            String sql = getNormalTableSql(normalTableData);
+            if (Strings.isNullOrEmpty(sql)) {
+                throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
+            }
+            List<ColumParam> columParams = normalTableData.getColumParams();
+            if (columParams == null || columParams.isEmpty()) {
+                logger.error("invoke normalTableData columParams is null");
+                return;
+            }
+            try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
+                pstmt.setTableName(normalTableData.getDbName() + "." + normalTableData.getTableName());
+                setStmtParams(pstmt, normalTableData.getColumParams());
+                pstmt.columnDataAddBatch();
+                pstmt.columnDataExecuteBatch();
             } catch (SQLException e) {
                 logger.error("invoke exception sql:", sql, e.getSQLState());
                 throw e;
             }
+
+        } else if (value instanceof SqlData) {
+            SqlData sqlData = (SqlData) value;
+            if (sqlData.getSqlList() == null || sqlData.getSqlList().isEmpty()) {
+                logger.error("invoke sqlList is null");
+                return;
+            }
+            try (Statement statement = this.conn.createStatement()) {
+                if (!Strings.isNullOrEmpty(sqlData.getDbName())) {
+                    statement.executeUpdate("USE " + sqlData.getDbName());
+                }
+
+                for (String sql : sqlData.getSqlList()) {
+                    statement.executeUpdate(sql);
+                }
+            } catch (SQLException e) {
+                logger.error("invoke sql exception ", e.getSQLState());
+                throw e;
+            }
+        } else {
+            logger.error("invoke input params data type wrong:", JSON.toJSONString(value));
+            throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
     }
 
