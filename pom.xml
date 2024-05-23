@@ -111,6 +111,7 @@
                 </excludes>
             </resource>
         </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -133,6 +134,18 @@
                     <descriptors>
                         <descriptor>src/main/assembly/assembly-jar.xml</descriptor>
                     </descriptors>
+
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+
+                    <archive>
+                        <manifest>
+                            <!-- 此处指定main方法入口的class，这里需要根据实际情况进行配置 -->
+                            <!-- 其余的默认即可-->
+                            <mainClass>com.taosdata.flink.Main</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
                 <executions>
                     <execution>
@@ -144,6 +157,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

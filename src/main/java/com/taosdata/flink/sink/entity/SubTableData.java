@@ -5,10 +5,8 @@ import java.util.List;
 public class SubTableData {
     private String tableName;
 
-    private List<TagParam> tagTagParams;
+    private List<TagParam> tagParams;
     private List<ColumParam> columParams;
-
-    private List<List<TagParam>> lineParams;
 
     public SubTableData() {
 
@@ -24,11 +22,11 @@ public class SubTableData {
 
 
     public List<TagParam> getTagParams() {
-        return tagTagParams;
+        return tagParams;
     }
 
     public void setTagParams(List<TagParam> tagTagParams) {
-        this.tagTagParams = tagTagParams;
+        this.tagParams = tagTagParams;
     }
 
     public String getTableName() {
@@ -37,14 +35,5 @@ public class SubTableData {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-
-    public List<List<TagParam>> getLineParams() {
-        return lineParams;
-    }
-
-    public void setLineParams(List<List<TagParam>> lineParams) {
-        this.lineParams = lineParams;
     }
 }

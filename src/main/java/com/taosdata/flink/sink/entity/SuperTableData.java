@@ -2,22 +2,22 @@ package com.taosdata.flink.sink.entity;
 
 import java.util.List;
 
-public class SupperTableData extends TaosSinkData {
-    private String supperTableName;
+public class SuperTableData extends TaosSinkData {
+    private String superTableName;
     private List<String> columNames;
     private List<String> tagNames;
     private List<SubTableData> subTableDataList;
 
-    public SupperTableData(String dbName) {
+    public SuperTableData(String dbName) {
         super(dbName);
     }
 
-    public String getSupperTableName() {
-        return supperTableName;
+    public String getSuperTableName() {
+        return superTableName;
     }
 
-    public void setSupperTableName(String supperTableName) {
-        this.supperTableName = supperTableName;
+    public void setSuperTableName(String superTableName) {
+        this.superTableName = superTableName;
     }
 
     public List<String> getColumNames() {

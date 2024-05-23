@@ -41,10 +41,10 @@ public class FlinkSinkTest {
 
     @Test
     public void testFlinkSink() throws Exception {
-        SupperTableData supperTableData = new SupperTableData("power");
-        supperTableData.setSupperTableName("meters");
-        supperTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
-        supperTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        SuperTableData superTableData = new SuperTableData("power");
+        superTableData.setSuperTableName("meters");
+        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
+        superTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 1; i <= 2; i++ ) {
             SubTableData subTableData = new SubTableData();
@@ -59,25 +59,25 @@ public class FlinkSinkTest {
             )));
             subTableDataList.add(subTableData);
         }
-        supperTableData.setSubTableDataList(subTableDataList);
+        superTableData.setSubTableDataList(subTableDataList);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<SupperTableData> dataStream = env.fromElements(supperTableData);
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata&batchfetch=true";
+        DataStream<SuperTableData> dataStream = env.fromElements(superTableData);
+        String url  = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
-        dataStream.addSink(new TaosSinkConnector<SupperTableData>(url, connProps));
+        dataStream.addSink(new TaosSinkConnector<SuperTableData>(url, connProps));
         env.execute("Dynamic Sink Function");
 
     }
     @Test
     public void testSqlFlinkSink() throws Exception {
-        SupperTableData supperTableData = new SupperTableData("power");
-        supperTableData.setSupperTableName("meters");
-        supperTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
-        supperTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        SuperTableData superTableData = new SuperTableData("power");
+        superTableData.setSuperTableName("meters");
+        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
+        superTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 1; i <= 2; i++ ) {
             SubTableData subTableData = new SubTableData();
@@ -90,14 +90,14 @@ public class FlinkSinkTest {
             )));
             subTableDataList.add(subTableData);
         }
-        supperTableData.setSubTableDataList(subTableDataList);
+        superTableData.setSubTableDataList(subTableDataList);
         SqlData sqlData = new SqlData("", getStringList());
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, supperTableData, sqlData);
+        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, superTableData, sqlData);
 
 
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata&batchfetch=true";
+        String url  = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
@@ -109,10 +109,10 @@ public class FlinkSinkTest {
     }
     @Test
     public void testNormalTableFlinkSink() throws Exception {
-        SupperTableData supperTableData = new SupperTableData("power");
-        supperTableData.setSupperTableName("meters");
-        supperTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
-        supperTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        SuperTableData superTableData = new SuperTableData("power");
+        superTableData.setSuperTableName("meters");
+        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
+        superTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 1; i <= 2; i++ ) {
             SubTableData subTableData = new SubTableData();
@@ -125,11 +125,11 @@ public class FlinkSinkTest {
             )));
             subTableDataList.add(subTableData);
         }
-        supperTableData.setSubTableDataList(subTableDataList);
+        superTableData.setSubTableDataList(subTableDataList);
         SqlData sqlData = new SqlData("", getStringList());
 
         NormalTableData normalTableData = new NormalTableData("power", "test");
-        normalTableData.setColumNames(supperTableData.getColumNames());
+        normalTableData.setColumNames(superTableData.getColumNames());
         normalTableData.setColumParams(new ArrayList<>(Arrays.asList( new ColumParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<Long>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
                 new ColumParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
                 new ColumParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
@@ -137,8 +137,8 @@ public class FlinkSinkTest {
         )));
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, supperTableData, sqlData, normalTableData);
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata&batchfetch=true";
+        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, superTableData, sqlData, normalTableData);
+        String url  = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");

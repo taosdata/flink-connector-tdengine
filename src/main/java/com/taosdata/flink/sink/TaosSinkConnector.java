@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class TaosSinkConnector<T> extends RichSinkFunction<T> implements CheckpointListener, CheckpointedFunction {
-    private static final Logger logger = LoggerFactory.getLogger(TaosSinkConnector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TaosSinkConnector.class);
     private Properties properties;
     private String url;
     private Connection conn;
@@ -30,6 +30,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
         this.url = url;
+        LOG.info("init connect websocket url:" + this.url);
     }
 
     @Override
@@ -37,10 +38,10 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         try {
             this.conn = DriverManager.getConnection(this.url, this.properties);
         } catch (SQLException e) {
-            logger.error("open exception url:", this.url, e.getSQLState());
+            LOG.error("open exception url:" + this.url, e.getSQLState());
         }
 
-        logger.info("connect websocket url:", this.url);
+        LOG.info("connect websocket url:" + this.url);
     }
     private void setStmtTag(TSWSPreparedStatement pstmt, List<TagParam> tagParams) throws Exception {
         for (int i = 1; i <= tagParams.size(); i++) {
@@ -86,7 +87,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     pstmt.setTagVarbinary(i, (byte[]) tagParam.getValue());
                     break;
                 default:
-                    logger.error("setStmtTag tag type is error, type:", tagParam.getType().getTypeName());
+                    LOG.error("setStmtTag tag type is error, type:", tagParam.getType().getTypeName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_TAOS_TYPE);
             }
         }
@@ -135,7 +136,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                         pstmt.setVarbinary(i, (byte[]) tagParam.getValue());
                         break;
                     default:
-                        logger.error("setStmtLineParams param type is error, type:", tagParam.getType().getTypeName());
+                        LOG.error("setStmtLineParams param type is error, type:", tagParam.getType().getTypeName());
                         throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
                 }
             }
@@ -184,20 +185,20 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     pstmt.setVarbinary(i, param.getValues(), param.getValues().size());
                     break;
                 default:
-                    logger.error("setStmtParams param type is error, type:", param.getType().getTypeName());
+                    LOG.error("setStmtParams param type is error, type:", param.getType().getTypeName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
             }
         }
     }
 
-    private String getSupperTableSql(SupperTableData data) {
-        if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSupperTableName())
+    private String getSuperTableSql(SuperTableData data) {
+        if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSuperTableName())
                 || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumNames() == null
                 || data.getColumNames().isEmpty()) {
-            logger.error("StatementData param error:", JSON.toJSONString(data));
+            LOG.error("StatementData param error:", JSON.toJSONString(data));
             return "";
         }
-        String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSupperTableName() + "` (";
+        String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSuperTableName() + "` (";
         sql += String.join(",", data.getTagNames()) + ") TAGS (?";
 
         for (int i = 1; i < data.getTagNames().size(); i++) {
@@ -214,7 +215,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     private String getNormalTableSql(NormalTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
                 ||data.getColumNames() == null || data.getColumNames().isEmpty()) {
-            logger.error("NormalTableData param error:", JSON.toJSONString(data));
+            LOG.error("NormalTableData param error:", JSON.toJSONString(data));
             return "";
         }
         String sql = "INSERT INTO ? (" + String.join(",", data.getColumNames()) + ") VALUES (?";
@@ -227,36 +228,36 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     @Override
     public void invoke(T value, Context context) throws Exception {
         if (value == null) {
-            logger.error("invoke value is null");
+            LOG.error("invoke value is null");
             return;
         }
         if (null == this.conn) {
             this.conn = DriverManager.getConnection(this.url, this.properties);
-            logger.info("connect websocket url:", this.url);
+            LOG.info("invoke connect websocket url:" + this.url);
         }
 
-        if (value instanceof SupperTableData) {
-            SupperTableData supperTableData = (SupperTableData)value;
-            String sql = getSupperTableSql(supperTableData);
+        if (value instanceof SuperTableData) {
+            SuperTableData superTableData = (SuperTableData)value;
+            String sql = getSuperTableSql(superTableData);
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
             }
 
-            List<SubTableData> subTableDataList = supperTableData.getSubTableDataList();
+            List<SubTableData> subTableDataList = superTableData.getSubTableDataList();
             if (subTableDataList == null || subTableDataList.isEmpty()) {
-                logger.error("invoke tableDataList is null");
+                LOG.error("invoke tableDataList is null");
                 return;
             }
             for (SubTableData subTableData : subTableDataList) {
                 try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
-                    pstmt.setTableName(supperTableData.getDbName() + "." + subTableData.getTableName());
+                    pstmt.setTableName(superTableData.getDbName() + "." + subTableData.getTableName());
                     setStmtTag(pstmt, subTableData.getTagParams());
                     setStmtParams(pstmt, subTableData.getColumParams());
                     pstmt.columnDataAddBatch();
                     pstmt.columnDataExecuteBatch();
 
                 } catch (SQLException e) {
-                    logger.error("invoke exception sql:", sql, e.getSQLState());
+                    LOG.error("invoke exception sql:", sql, e.getSQLState());
                     throw e;
                 }
             }
@@ -269,7 +270,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             }
             List<ColumParam> columParams = normalTableData.getColumParams();
             if (columParams == null || columParams.isEmpty()) {
-                logger.error("invoke normalTableData columParams is null");
+                LOG.error("invoke normalTableData columParams is null");
                 return;
             }
             try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
@@ -278,14 +279,14 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 pstmt.columnDataAddBatch();
                 pstmt.columnDataExecuteBatch();
             } catch (SQLException e) {
-                logger.error("invoke exception sql:", sql, e.getSQLState());
+                LOG.error("invoke exception sql:", sql, e.getSQLState());
                 throw e;
             }
 
         } else if (value instanceof SqlData) {
             SqlData sqlData = (SqlData) value;
             if (sqlData.getSqlList() == null || sqlData.getSqlList().isEmpty()) {
-                logger.error("invoke sqlList is null");
+                LOG.error("invoke sqlList is null");
                 return;
             }
             try (Statement statement = this.conn.createStatement()) {
@@ -297,11 +298,11 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     statement.executeUpdate(sql);
                 }
             } catch (SQLException e) {
-                logger.error("invoke sql exception ", e.getSQLState());
+                LOG.error("invoke sql exception ", e.getSQLState());
                 throw e;
             }
         } else {
-            logger.error("invoke input params data type wrong:", JSON.toJSONString(value));
+            LOG.error("invoke input params data type wrong:", JSON.toJSONString(value));
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
     }
@@ -322,12 +323,6 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
     @Override
     public void notifyCheckpointComplete(long l) throws Exception {
-        if (conn != null) {
-            conn.close();
-            conn = null;
-        }
-
-
     }
     @Override
     public void notifyCheckpointAborted(long checkpointId) throws Exception {
