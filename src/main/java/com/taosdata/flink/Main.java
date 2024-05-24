@@ -59,7 +59,6 @@ public class Main {
         // normal table  stmt insert
         NormalTableData normalTableData = getNormalTableData(superTableData);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
         DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData, superTableData, normalTableData);
         String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
