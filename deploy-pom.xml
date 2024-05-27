@@ -11,7 +11,7 @@
 
     <name>flink-connector-tdengine</name>
     <url>https://github.com/taosdata/flink-connect-tdengine</url>
-    <description>TDengine JDBC Driver</description>
+    <description>TDengine Flink Connector</description>
 
     <licenses>
         <license>
