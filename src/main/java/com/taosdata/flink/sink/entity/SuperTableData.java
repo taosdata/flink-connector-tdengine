@@ -4,7 +4,7 @@ import java.util.List;
 
 public class SuperTableData extends TaosSinkData {
     private String superTableName;
-    private List<String> columNames;
+    private List<String> columnNames;
     private List<String> tagNames;
     private List<SubTableData> subTableDataList;
 
@@ -20,12 +20,12 @@ public class SuperTableData extends TaosSinkData {
         this.superTableName = superTableName;
     }
 
-    public List<String> getColumNames() {
-        return columNames;
+    public List<String> getColumnNames() {
+        return columnNames;
     }
 
-    public void setColumNames(List<String> columNames) {
-        this.columNames = columNames;
+    public void setColumnNames(List<String> columnNames) {
+        this.columnNames = columnNames;
     }
 
     public List<String> getTagNames() {

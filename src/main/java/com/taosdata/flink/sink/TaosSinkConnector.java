@@ -144,9 +144,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         }
     }
 
-    private void setStmtParams(TSWSPreparedStatement pstmt, List<ColumParam> params) throws Exception {
+    private void setStmtParams(TSWSPreparedStatement pstmt, List<ColumnParam> params) throws Exception {
         for (int i = 1; i <= params.size(); i++) {
-            ColumParam param = params.get(i - 1);
+            ColumnParam param = params.get(i - 1);
             switch (param.getType().getTypeNo()) {
                 case TaosType.TSDB_DATA_TYPE_BOOL:
                     pstmt.setBoolean(i, param.getValues());
@@ -193,8 +193,8 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
     private String getSuperTableSql(SuperTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSuperTableName())
-                || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumNames() == null
-                || data.getColumNames().isEmpty()) {
+                || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumnNames() == null
+                || data.getColumnNames().isEmpty()) {
             LOG.error("StatementData param error:", JSON.toJSONString(data));
             return "";
         }
@@ -205,8 +205,8 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             sql += ",?";
         }
 
-        sql += ") (" + String.join(",", data.getColumNames()) + ") VALUES (?";
-        for (int i = 1; i < data.getColumNames().size(); i++) {
+        sql += ") (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
+        for (int i = 1; i < data.getColumnNames().size(); i++) {
             sql += ",?";
         }
         sql += ")";
@@ -214,12 +214,12 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     }
     private String getNormalTableSql(NormalTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
-                ||data.getColumNames() == null || data.getColumNames().isEmpty()) {
+                ||data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
             LOG.error("NormalTableData param error:", JSON.toJSONString(data));
             return "";
         }
-        String sql = "INSERT INTO ? (" + String.join(",", data.getColumNames()) + ") VALUES (?";
-        for (int i = 1; i < data.getColumNames().size(); i++) {
+        String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
+        for (int i = 1; i < data.getColumnNames().size(); i++) {
             sql += ",?";
         }
         sql += ")";
@@ -268,8 +268,8 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
             }
-            List<ColumParam> columParams = normalTableData.getColumParams();
-            if (columParams == null || columParams.isEmpty()) {
+            List<ColumnParam> columnParams = normalTableData.getColumParams();
+            if (columnParams == null || columnParams.isEmpty()) {
                 LOG.error("invoke normalTableData columParams is null");
                 return;
             }

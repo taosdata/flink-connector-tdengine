@@ -1,11 +1,11 @@
 package com.taosdata.flink.sink.entity;
 
 import java.util.List;
-public class ColumParam<T> {
+public class ColumnParam<T> {
     private DataType type;
     private List<T> values;
 
-    public ColumParam(DataType type, List<T> values) {
+    public ColumnParam(DataType type, List<T> values) {
         this.type = type;
         this.values = values;
     }

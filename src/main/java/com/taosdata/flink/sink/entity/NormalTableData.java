@@ -4,8 +4,8 @@ import java.util.List;
 
 public class NormalTableData extends TaosSinkData {
     private String tableName;
-    private List<String> columNames;
-    private List<ColumParam> columParams;
+    private List<String> columnNames;
+    private List<ColumnParam> columnParams;
 
     public NormalTableData(String dbName, String tableName) {
         super(dbName);
@@ -20,19 +20,19 @@ public class NormalTableData extends TaosSinkData {
         this.tableName = tableName;
     }
 
-    public List<String> getColumNames() {
-        return columNames;
+    public List<String> getColumnNames() {
+        return columnNames;
     }
 
-    public void setColumNames(List<String> columNames) {
-        this.columNames = columNames;
+    public void setColumnNames(List<String> columnNames) {
+        this.columnNames = columnNames;
     }
 
-    public List<ColumParam> getColumParams() {
-        return columParams;
+    public List<ColumnParam> getColumParams() {
+        return columnParams;
     }
 
-    public void setColumParams(List<ColumParam> columParams) {
-        this.columParams = columParams;
+    public void setColumnParams(List<ColumnParam> columnParams) {
+        this.columnParams = columnParams;
     }
 }

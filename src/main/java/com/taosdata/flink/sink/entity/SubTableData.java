@@ -6,18 +6,18 @@ public class SubTableData {
     private String tableName;
 
     private List<TagParam> tagParams;
-    private List<ColumParam> columParams;
+    private List<ColumnParam> columnParams;
 
     public SubTableData() {
 
     }
 
-    public List<ColumParam> getColumParams() {
-        return columParams;
+    public List<ColumnParam> getColumParams() {
+        return columnParams;
     }
 
-    public void setColumParams(List<ColumParam> columParams) {
-        this.columParams = columParams;
+    public void setColumnParams(List<ColumnParam> columnParams) {
+        this.columnParams = columnParams;
     }
 
 
