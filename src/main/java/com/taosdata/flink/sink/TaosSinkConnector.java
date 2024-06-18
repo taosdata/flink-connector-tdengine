@@ -87,7 +87,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     pstmt.setTagVarbinary(i, (byte[]) tagParam.getValue());
                     break;
                 default:
-                    LOG.error("setStmtTag tag type is error, type:", tagParam.getType().getTypeName());
+                    LOG.error("setStmtTag tag type is error, type:{}", tagParam.getType().getTypeName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_TAOS_TYPE);
             }
         }
@@ -136,7 +136,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                         pstmt.setVarbinary(i, (byte[]) tagParam.getValue());
                         break;
                     default:
-                        LOG.error("setStmtLineParams param type is error, type:", tagParam.getType().getTypeName());
+                        LOG.error("setStmtLineParams param type is error, type:{}", tagParam.getType().getTypeName());
                         throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
                 }
             }
@@ -185,7 +185,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     pstmt.setVarbinary(i, param.getValues(), param.getValues().size());
                     break;
                 default:
-                    LOG.error("setStmtParams param type is error, type:", param.getType().getTypeName());
+                    LOG.error("setStmtParams param type is error, type:{}", param.getType().getTypeName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
             }
         }
@@ -195,7 +195,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSuperTableName())
                 || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumnNames() == null
                 || data.getColumnNames().isEmpty()) {
-            LOG.error("StatementData param error:", JSON.toJSONString(data));
+            LOG.error("StatementData param error:{}", JSON.toJSONString(data));
             return "";
         }
         String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSuperTableName() + "` (";
@@ -215,7 +215,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     private String getNormalTableSql(NormalTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
                 ||data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
-            LOG.error("NormalTableData param error:", JSON.toJSONString(data));
+            LOG.error("NormalTableData param error:{}", JSON.toJSONString(data));
             return "";
         }
         String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
@@ -257,7 +257,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     pstmt.columnDataExecuteBatch();
 
                 } catch (SQLException e) {
-                    LOG.error("invoke exception sql:", sql, e.getSQLState());
+                    LOG.error("invoke exception sql:{}", sql, e.getSQLState());
                     throw e;
                 }
             }
@@ -279,7 +279,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 pstmt.columnDataAddBatch();
                 pstmt.columnDataExecuteBatch();
             } catch (SQLException e) {
-                LOG.error("invoke exception sql:", sql, e.getSQLState());
+                LOG.error("invoke exception sql:{}", sql, e.getSQLState());
                 throw e;
             }
 
@@ -298,11 +298,11 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                     statement.executeUpdate(sql);
                 }
             } catch (SQLException e) {
-                LOG.error("invoke sql exception ", e.getSQLState());
+                LOG.error("invoke sql exception {}", e.getSQLState());
                 throw e;
             }
         } else {
-            LOG.error("invoke input params data type wrong:", JSON.toJSONString(value));
+            LOG.error("invoke input params data type wrong:{}", JSON.toJSONString(value));
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
     }
