@@ -248,6 +248,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
         if (value instanceof SuperTableData) {
             SuperTableData superTableData = (SuperTableData)value;
+            if (Strings.isNullOrEmpty(superTableData.getDbName())) {
+                throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
+            }
             String sql = getSuperTableSql(superTableData);
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
@@ -274,6 +277,14 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
         } else if (value instanceof NormalTableData) {
             NormalTableData normalTableData = (NormalTableData) value;
+            if (Strings.isNullOrEmpty(normalTableData.getDbName())) {
+                throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
+            }
+
+            if (Strings.isNullOrEmpty(normalTableData.getTableName())) {
+                throw SinkError.createSQLException(SinkErrorNumbers.ERROR_TABLE_NAME_NULL);
+            }
+
             String sql = getNormalTableSql(normalTableData);
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
