@@ -192,12 +192,20 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     }
 
     private String getSuperTableSql(SuperTableData data) {
-        if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getSuperTableName())
-                || data.getTagNames() == null || data.getTagNames().isEmpty() || data.getColumnNames() == null
-                || data.getColumnNames().isEmpty()) {
+        if (Strings.isNullOrEmpty(data.getDbName()) || data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
             LOG.error("StatementData param error:{}", JSON.toJSONString(data));
             return "";
         }
+
+        if (Strings.isNullOrEmpty(data.getSuperTableName()) || data.getTagNames() == null || data.getTagNames().isEmpty() ) {
+            String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
+            for (int i = 1; i < data.getColumnNames().size(); i++) {
+                sql += ",?";
+            }
+            sql += ")";
+            return sql;
+        }
+
         String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSuperTableName() + "` (";
         sql += String.join(",", data.getTagNames()) + ") TAGS (?";
 
@@ -212,6 +220,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         sql += ")";
         return sql;
     }
+
     private String getNormalTableSql(NormalTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
                 ||data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
