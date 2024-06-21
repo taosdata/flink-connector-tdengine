@@ -14,8 +14,8 @@ public class SinkError {
     private static final Map<Integer, String> SinkErrorMap = new HashMap<>();
 
     static {
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_DB_NAME_NULL, "db name is null");
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_TABLE_NAME_NULL, "table name is null");
+        SinkErrorMap.put(SinkErrorNumbers.ERROR_DB_NAME_NULL, "db name must be set");
+        SinkErrorMap.put(SinkErrorNumbers.ERROR_TABLE_NAME_NULL, "table name must be set");
     }
 
     public static SQLException createSQLException(int errorCode) {

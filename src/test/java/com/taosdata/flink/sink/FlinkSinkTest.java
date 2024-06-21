@@ -164,7 +164,27 @@ public class FlinkSinkTest {
         dataStream.addSink(new TaosSinkConnector<>(url, connProps));
         env.execute("Dynamic Sink Function");
     }
+    @Test
+    public void testSqlErrorStop() throws Exception {
+        List<String> sqlList = new ArrayList<>();
+        sqlList.add("drop database if exists case3db");
+        sqlList.add("CREATE DATABASE IF NOT EXISTS case3db");
+        sqlList.add("use case3db");
+        sqlList.add("CREATE STABLE IF NOT EXISTS meters (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT) TAGS (groupId INT, location BINARY(24))");
+        sqlList.add("CREATE TABLE IF NOT EXISTS test (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT)");
+        SqlData sqlData = new SqlData("", sqlList);
 
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData);
+        String url = "jdbc:TAOS-RS://" + host + ":6041/?user=test&password=test";
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
+        dataStream.addSink(new TaosSinkConnector<>(url, connProps));
+        env.execute("Dynamic Sink Function");
+    }
     @Test
     public void testNormalTableFlinkSink() throws Exception {
         SuperTableData superTableData = new SuperTableData("power");

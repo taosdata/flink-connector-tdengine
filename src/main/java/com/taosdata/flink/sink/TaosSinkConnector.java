@@ -251,6 +251,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             if (Strings.isNullOrEmpty(superTableData.getDbName())) {
                 throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
             }
+
             String sql = getSuperTableSql(superTableData);
             if (Strings.isNullOrEmpty(sql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
@@ -264,7 +265,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             for (SubTableData subTableData : subTableDataList) {
                 try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
                     pstmt.setTableName(superTableData.getDbName() + "." + subTableData.getTableName());
-                    setStmtTag(pstmt, subTableData.getTagParams());
+                    if (superTableData.getTagNames() != null && superTableData.getTagNames().size() > 0) {
+                        setStmtTag(pstmt, subTableData.getTagParams());
+                    }
                     setStmtParams(pstmt, subTableData.getColumParams());
                     pstmt.columnDataAddBatch();
                     pstmt.columnDataExecuteBatch();
