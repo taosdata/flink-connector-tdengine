@@ -36,22 +36,24 @@ public class FlinkSinkTest {
             statement.executeUpdate("CREATE STABLE IF NOT EXISTS meters (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT) TAGS (groupId INT, location BINARY(24))");
 
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS test (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT)");
+            for (int i = 3; i <= 5; i++ ) {
+                statement.executeUpdate("CREATE TABLE IF NOT EXISTS d00"+ i + " USING meters (groupId, location) TAGS (" + i + ", 'California.SanFrancisco')");
+            }
         }
     }
 
     @Test
     public void testFlinkSink() throws Exception {
         SuperTableData superTableData = new SuperTableData("power");
-//        superTableData.setSuperTableName("meters");
-//        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
+        superTableData.setSuperTableName("meters");
+        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
         superTableData.setColumnNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 1; i <= 2; i++ ) {
             SubTableData subTableData = new SubTableData();
             subTableData.setTableName("d00" + i);
 
-//            subTableData.setTagParams(new ArrayList<>(Arrays.asList( new TagParam(DataType.DATA_TYPE_INT, i), new TagParam(DataType.DATA_TYPE_VARCHAR, "California.SanFrancisco"))));
-
+            subTableData.setTagParams(new ArrayList<>(Arrays.asList( new TagParam(DataType.DATA_TYPE_INT, i), new TagParam(DataType.DATA_TYPE_VARCHAR, "California.SanFrancisco"))));
             subTableData.setColumnParams(new ArrayList<>(Arrays.asList( new ColumnParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<Long>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
                     new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
                     new ColumnParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
@@ -72,7 +74,33 @@ public class FlinkSinkTest {
         env.execute("Dynamic Sink Function");
     }
 
-
+    @Test
+    public void testNotTagFlinkSink() throws Exception {
+        SuperTableData superTableData = new SuperTableData("power");
+        superTableData.setColumnNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        List<SubTableData> subTableDataList = new ArrayList<>();
+        for (int i = 3; i <= 5; i++ ) {
+            SubTableData subTableData = new SubTableData();
+            subTableData.setTableName("d00" + i);
+            subTableData.setColumnParams(new ArrayList<>(Arrays.asList( new ColumnParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<Long>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
+                    new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
+                    new ColumnParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
+                    new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(0.32f, 0.33f, 0.34f)))
+            )));
+            subTableDataList.add(subTableData);
+        }
+        superTableData.setSubTableDataList(subTableDataList);
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<SuperTableData> dataStream = env.fromElements(superTableData);
+        String url  = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
+        dataStream.addSink(new TaosSinkConnector<SuperTableData>(url, connProps));
+        env.execute("Dynamic Sink Function");
+    }
 
     @Test
     public void testSqlFlinkSink() throws Exception {

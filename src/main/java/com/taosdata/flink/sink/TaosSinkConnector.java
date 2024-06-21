@@ -44,54 +44,55 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         LOG.info("connect websocket url:" + this.url);
     }
     private void setStmtTag(TSWSPreparedStatement pstmt, List<TagParam> tagParams) throws Exception {
-        for (int i = 1; i <= tagParams.size(); i++) {
-            TagParam tagParam = tagParams.get(i - 1);
-            switch (tagParam.getType().getTypeNo()) {
-                case TaosType.TSDB_DATA_TYPE_BOOL:
-                    pstmt.setTagBoolean(i, (boolean) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_INT:
-                    pstmt.setTagInt(i, (int) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_TINYINT:
-                    pstmt.setTagByte(i, (byte) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
-                    pstmt.setTagTimestamp(i, (long) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_BIGINT:
-                    pstmt.setTagLong(i, (long) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_FLOAT:
-                    pstmt.setTagFloat(i, (float) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_DOUBLE:
-                    pstmt.setTagDouble(i, (double) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_SMALLINT:
-                    pstmt.setTagShort(i, (short) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_BINARY:
-                    pstmt.setTagString(i, (String) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_JSON:
-                    pstmt.setTagJson(i, (String) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_NCHAR:
-                    pstmt.setTagNString(i, (String) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_GEOMETRY:
-                    pstmt.setTagGeometry(i, (byte[]) tagParam.getValue());
-                    break;
-                case TaosType.TSDB_DATA_TYPE_VARBINARY:
-                    pstmt.setTagVarbinary(i, (byte[]) tagParam.getValue());
-                    break;
-                default:
-                    LOG.error("setStmtTag tag type is error, type:{}", tagParam.getType().getTypeName());
-                    throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_TAOS_TYPE);
+        if (tagParams != null && tagParams.size() > 0) {
+            for (int i = 1; i <= tagParams.size(); i++) {
+                TagParam tagParam = tagParams.get(i - 1);
+                switch (tagParam.getType().getTypeNo()) {
+                    case TaosType.TSDB_DATA_TYPE_BOOL:
+                        pstmt.setTagBoolean(i, (boolean) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_INT:
+                        pstmt.setTagInt(i, (int) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_TINYINT:
+                        pstmt.setTagByte(i, (byte) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
+                        pstmt.setTagTimestamp(i, (long) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_BIGINT:
+                        pstmt.setTagLong(i, (long) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_FLOAT:
+                        pstmt.setTagFloat(i, (float) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_DOUBLE:
+                        pstmt.setTagDouble(i, (double) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_SMALLINT:
+                        pstmt.setTagShort(i, (short) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_BINARY:
+                        pstmt.setTagString(i, (String) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_JSON:
+                        pstmt.setTagJson(i, (String) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_NCHAR:
+                        pstmt.setTagNString(i, (String) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_GEOMETRY:
+                        pstmt.setTagGeometry(i, (byte[]) tagParam.getValue());
+                        break;
+                    case TaosType.TSDB_DATA_TYPE_VARBINARY:
+                        pstmt.setTagVarbinary(i, (byte[]) tagParam.getValue());
+                        break;
+                    default:
+                        LOG.error("setStmtTag tag type is error, type:{}", tagParam.getType().getTypeName());
+                        throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_TAOS_TYPE);
+                }
             }
         }
-
     }
 
     private void setStmtLineParams(TSWSPreparedStatement pstmt, List<List<TagParam>> params) throws Exception {
