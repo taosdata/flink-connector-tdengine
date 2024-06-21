@@ -316,8 +316,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 }
 
                 for (String sql : sqlData.getSqlList()) {
-                    statement.executeUpdate(sql);
+                    statement.addBatch(sql);
                 }
+                statement.executeBatch();
             } catch (SQLException e) {
                 LOG.error("invoke sql exception {}", e.getSQLState());
                 throw e;

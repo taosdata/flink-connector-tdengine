@@ -135,8 +135,36 @@ public class FlinkSinkTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         dataStream.addSink(new TaosSinkConnector<>(url, connProps));
         env.execute("Dynamic Sink Function");
-
     }
+
+    @Test
+    public void testSqlErrorIgnore() throws Exception {
+        String dbname = "case11db";
+        List<String> sqlList = new ArrayList<>();
+        sqlList.add("drop database if exists " + dbname);
+        sqlList.add("CREATE DATABASE IF NOT EXISTS " + dbname);
+        sqlList.add("use " + dbname);
+        sqlList.add("CREATE STABLE IF NOT EXISTS meters (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT) TAGS (groupId INT, location BINARY(24))");
+// 这里 sql 是错误的
+        sqlList.add("CREATE STABLE IF NOT EXISTS meters2 (ts TIMESTAMPss, ts2 TIMESTAMP, current FLOAT, voltage INT, phase FLOAT) TAGS (groupId INT, location BINARY(24))");
+        sqlList.add("drop table meters2");
+        sqlList.add("CREATE TABLE IF NOT EXISTS test (ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT)");
+        sqlList.add("alter table test add column c1 TIMESTAMP");
+        SqlData sqlData = new SqlData("", sqlList);
+
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
+        connProps.put(TSDBDriver.PROPERTY_KEY_BATCH_ERROR_IGNORE, "true");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData);
+        String url  = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
+        dataStream.addSink(new TaosSinkConnector<>(url, connProps));
+        env.execute("Dynamic Sink Function");
+    }
+
     @Test
     public void testNormalTableFlinkSink() throws Exception {
         SuperTableData superTableData = new SuperTableData("power");
