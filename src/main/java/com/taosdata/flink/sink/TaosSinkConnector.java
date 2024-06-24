@@ -194,19 +194,26 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         }
     }
 
-    private String getSuperTableSql(SuperTableData data) {
+    private String getSubTableSql(SuperTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
             LOG.error("StatementData param error:{}", JSON.toJSONString(data));
             return "";
         }
 
-        if (Strings.isNullOrEmpty(data.getSuperTableName()) || data.getTagNames() == null || data.getTagNames().isEmpty() ) {
-            String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
-            for (int i = 1; i < data.getColumnNames().size(); i++) {
-                sql += ",?";
-            }
-            sql += ")";
-            return sql;
+        String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
+        for (int i = 1; i < data.getColumnNames().size(); i++) {
+            sql += ",?";
+        }
+        sql += ")";
+        return sql;
+
+    }
+
+    private String getSuperTableSql(SuperTableData data) {
+        if (Strings.isNullOrEmpty(data.getDbName()) || data.getColumnNames() == null || data.getColumnNames().isEmpty()
+                || Strings.isNullOrEmpty(data.getSuperTableName()) || data.getTagNames() == null || data.getTagNames().isEmpty() ) {
+            LOG.warn("StatementData param error:{}", JSON.toJSONString(data));
+            return "";
         }
 
         String sql = "INSERT INTO ? USING `" + data.getDbName() + "`.`" + data.getSuperTableName() + "` (";
@@ -254,8 +261,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
             }
 
-            String sql = getSuperTableSql(superTableData);
-            if (Strings.isNullOrEmpty(sql)) {
+            String superTableSql = getSuperTableSql(superTableData);
+            String subTableSql = getSubTableSql(superTableData);
+            if (Strings.isNullOrEmpty(superTableSql) && Strings.isNullOrEmpty(subTableSql)) {
                 throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
             }
 
@@ -265,9 +273,16 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 return;
             }
             for (SubTableData subTableData : subTableDataList) {
+                boolean isAutoCreateTable = false;
+                String sql = subTableSql;
+                if (!Strings.isNullOrEmpty(superTableData.getSuperTableName()) && superTableData.getTagNames() != null && superTableData.getTagNames().size() > 0
+                        && subTableData.getTagParams() != null && subTableData.getTagParams().size() > 0) {
+                    sql = superTableSql;
+                    isAutoCreateTable = true;
+                }
                 try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
                     pstmt.setTableName(superTableData.getDbName() + "." + subTableData.getTableName());
-                    if (superTableData.getTagNames() != null && superTableData.getTagNames().size() > 0) {
+                    if (isAutoCreateTable) {
                         setStmtTag(pstmt, subTableData.getTagParams());
                     }
                     setStmtParams(pstmt, subTableData.getColumParams());

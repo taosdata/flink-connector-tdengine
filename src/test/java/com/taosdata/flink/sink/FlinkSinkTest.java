@@ -78,6 +78,8 @@ public class FlinkSinkTest {
     public void testNotTagFlinkSink() throws Exception {
         SuperTableData superTableData = new SuperTableData("power");
         superTableData.setColumnNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        superTableData.setSuperTableName("meters");
+        superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 3; i <= 5; i++ ) {
             SubTableData subTableData = new SubTableData();
