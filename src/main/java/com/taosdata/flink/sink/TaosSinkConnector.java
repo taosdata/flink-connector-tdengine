@@ -21,6 +21,8 @@ import java.sql.*;
 import java.util.List;
 import java.util.Properties;
 
+import static java.sql.Statement.EXECUTE_FAILED;
+
 public class TaosSinkConnector<T> extends RichSinkFunction<T> implements CheckpointListener, CheckpointedFunction {
     private static final Logger LOG = LoggerFactory.getLogger(TaosSinkConnector.class);
     private Properties properties;
@@ -321,7 +323,17 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 for (String sql : sqlData.getSqlList()) {
                     statement.addBatch(sql);
                 }
-                statement.executeBatch();
+                int[] result = statement.executeBatch();
+                if (result == null) {
+                    LOG.error("All executions of this set of sql have failed！");
+                }
+
+                for (int i = 0; i < result.length; i++) {
+                    if (result[i] == EXECUTE_FAILED) {
+                        LOG.warn("sql execution failed, sql:{}", sqlData.getSqlList().get(i));
+                    }
+                }
+
             } catch (SQLException e) {
                 LOG.error("invoke sql exception {}", e.getSQLState());
                 throw e;
