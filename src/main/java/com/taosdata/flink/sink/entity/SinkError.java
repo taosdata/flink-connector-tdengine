@@ -20,7 +20,7 @@ public class SinkError {
 
     public static SQLException createSQLException(int errorCode) {
         String message;
-        if (TSDBErrorNumbers.contains(errorCode))
+        if (SinkErrorNumbers.contains(errorCode))
             message = SinkErrorMap.get(errorCode);
         else
             message = SinkErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
