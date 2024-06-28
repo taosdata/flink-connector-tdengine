@@ -341,6 +341,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 int[] result = statement.executeBatch();
                 if (result == null) {
                     LOG.error("All executions of this set of sql have failed！");
+                    throw SinkError.createSQLException(SinkErrorNumbers.ERROR_SQL_EXECUTION_NO_RESULTS);
                 }
 
                 for (int i = 0; i < result.length; i++) {
