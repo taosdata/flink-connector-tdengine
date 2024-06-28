@@ -22,7 +22,7 @@ public class Main {
 
     private  static void initTable() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
@@ -45,7 +45,7 @@ public class Main {
         SuperTableData superTableData = new SuperTableData("power");
         superTableData.setSuperTableName("meters");
         superTableData.setTagNames(new ArrayList<>(Arrays.asList("groupId", "location")));
-        superTableData.setColumNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
+        superTableData.setColumnNames(new ArrayList<>(Arrays.asList("ts", "current", "voltage", "phase")));
         List<SubTableData> subTableDataList = new ArrayList<>();
         for (int i = 1; i <= 2; i++ ) {
             SubTableData subTableData = getSubTableData(i);
@@ -60,7 +60,7 @@ public class Main {
         NormalTableData normalTableData = getNormalTableData(superTableData);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData, superTableData, normalTableData);
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
@@ -77,21 +77,21 @@ public class Main {
 
         subTableData.setTagParams(new ArrayList<>(Arrays.asList( new TagParam(DataType.DATA_TYPE_INT, i), new TagParam(DataType.DATA_TYPE_VARCHAR, "California.SanFrancisco"))));
 
-        subTableData.setColumParams(new ArrayList<>(Arrays.asList( new ColumParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<Long>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
-                new ColumParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
-                new ColumParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
-                new ColumParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(0.32f, 0.33f, 0.34f)))
+        subTableData.setColumnParams(new ArrayList<>(Arrays.asList( new ColumnParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<Long>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
+                new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
+                new ColumnParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
+                new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(0.32f, 0.33f, 0.34f)))
         )));
         return subTableData;
     }
 
     private static NormalTableData getNormalTableData(SuperTableData superTableData) {
         NormalTableData normalTableData = new NormalTableData("power", "test");
-        normalTableData.setColumNames(superTableData.getColumNames());
-        normalTableData.setColumParams(new ArrayList<>(Arrays.asList( new ColumParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
-                new ColumParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
-                new ColumParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
-                new ColumParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(0.32f, 0.33f, 0.34f)))
+        normalTableData.setColumnNames(superTableData.getColumnNames());
+        normalTableData.setColumnParams(new ArrayList<>(Arrays.asList( new ColumnParam(DataType.DATA_TYPE_TIMESTAMP, new ArrayList<>(Arrays.asList(1709183268577L, 1709183268578L, 1709183268579L))),
+                new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(10.2f, 10.3f, 10.4f))),
+                new ColumnParam(DataType.DATA_TYPE_INT, new ArrayList<>(Arrays.asList(292, 293, 294))),
+                new ColumnParam(DataType.DATA_TYPE_FLOAT, new ArrayList<>(Arrays.asList(0.32f, 0.33f, 0.34f)))
         )));
         return normalTableData;
     }
