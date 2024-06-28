@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class FlinkSinkTest {
-    private static final String host = "192.168.3.60";
+    private static final String host = "127.0.0.1";
     private Connection connection;
 
     @Before
@@ -247,16 +247,16 @@ public class FlinkSinkTest {
 
         return sqls;
     }
-//    @After
-//    public void after() throws SQLException {
-//        if (null != connection) {
-//            try (Statement statement = connection.createStatement()) {
-//                statement.executeUpdate("drop database if exists power");
-//            } catch (SQLException e) {
-//                // do nothing
-//            }
-//            connection.close();
-//        }
-//    }
+    @After
+    public void after() throws SQLException {
+        if (null != connection) {
+            try (Statement statement = connection.createStatement()) {
+                statement.executeUpdate("drop database if exists power");
+            } catch (SQLException e) {
+                // do nothing
+            }
+            connection.close();
+        }
+    }
 
 }

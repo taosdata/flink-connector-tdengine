@@ -22,7 +22,7 @@ public class Main {
 
     private  static void initTable() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
@@ -60,7 +60,7 @@ public class Main {
         NormalTableData normalTableData = getNormalTableData(superTableData);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData, superTableData, normalTableData);
-        String url  = "jdbc:TAOS-RS://192.168.1.95:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
