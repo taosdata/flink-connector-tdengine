@@ -30,7 +30,7 @@ public class Main {
     }
 
     private  static void initTable() throws Exception {
-        String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
         TaosSinkConnector sinkConnector = createTaosSinkConnector(url);
         SqlData sqlData = new SqlData("", getInitDbSqls());
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

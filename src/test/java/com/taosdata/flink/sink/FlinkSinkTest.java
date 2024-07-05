@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class FlinkSinkTest {
-    private static final String host = "192.168.1.98";
+    private static final String host = "127.0.0.1";
     private Connection connection;
 
     @Before
