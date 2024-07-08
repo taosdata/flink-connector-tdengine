@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.sql.Statement.EXECUTE_FAILED;
 
@@ -28,6 +29,9 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     private Properties properties;
     private String url;
     private Connection conn;
+
+    private static final AtomicLong counter = new AtomicLong(0);
+
     public TaosSinkConnector(String url, Properties properties) {
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
@@ -246,6 +250,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     }
     @Override
     public void invoke(T value, Context context) throws Exception {
+        long startTime = System.currentTimeMillis();
         if (value == null) {
             LOG.error("invoke value is null");
             return;
@@ -338,6 +343,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 for (String sql : sqlData.getSqlList()) {
                     statement.addBatch(sql);
                 }
+
                 int[] result = statement.executeBatch();
                 if (result == null) {
                     LOG.error("All executions of this set of sql have failed！");
@@ -358,6 +364,8 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             LOG.error("invoke input params data type wrong:{}", JSON.toJSONString(value));
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
+        long endTime = System.currentTimeMillis();
+        counter.addAndGet(endTime- startTime);
     }
 
     @Override
@@ -372,6 +380,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             conn = null;
         }
         super.finish();
+        LOG.info("-------------Time-consuming-----------{}", this.counter.get());
     }
 
     @Override

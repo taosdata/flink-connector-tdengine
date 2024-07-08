@@ -2,22 +2,31 @@ package com.taosdata.flink;
 
 import com.taosdata.flink.sink.*;
 import com.taosdata.flink.sink.entity.*;
+import com.taosdata.flink.source.TestMakeDataSource;
 import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args)  throws Exception {
         if (args != null && args.length > 0 &&  args[0].equals("init")) {
             initTable();
-        }else {
+        } else if (args != null && args.length > 0 && args[0].equals("source")) {
+            testSoureInsert();
+        } else {
             insertData();
         }
+    }
+
+    private static void testSoureInsert() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<TaosSinkData> infiniteStream = env.addSource(new TestMakeDataSource("db", "meters", "meters_d00"
+                , 20000, 100, 200000)).setParallelism(1);
+        String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
+        infiniteStream.addSink(createTaosSinkConnector(url));
+        env.execute("InfiniteSqlSource Interlace Sink");
     }
 
     private static TaosSinkConnector createTaosSinkConnector(String url) throws Exception {
@@ -30,7 +39,7 @@ public class Main {
     }
 
     private  static void initTable() throws Exception {
-        String url  = "jdbc:TAOS-RS://127.0.0.1:6041/?user=root&password=taosdata";
+        String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
         TaosSinkConnector sinkConnector = createTaosSinkConnector(url);
         SqlData sqlData = new SqlData("", getInitDbSqls());
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -53,13 +62,13 @@ public class Main {
         SuperTableData superTableData = getSuperTableData();
 
         //sql insert
-        SqlData sqlData = new SqlData("", getSqlData());
+        SqlData sqlData = new SqlData("", getSqlData(4000));
 
         // normal table  stmt insert
         NormalTableData normalTableData = getNormalTableData(superTableData);
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData, superTableData, normalTableData);
+        DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData/*, superTableData, normalTableData*/);
 
         String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
         TaosSinkConnector sinkConnector = createTaosSinkConnector(url);
@@ -105,10 +114,11 @@ public class Main {
         return normalTableData;
     }
 
-    private static List<String> getSqlData() {
-        List<String> sqlList = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            String insertQuery = "INSERT INTO " +
+    private static List<String> getSqlData(int nCount) {
+        String insertQuery = "";
+        long ts = System.currentTimeMillis();
+        for (int i = 0; i < nCount; i++) {
+            insertQuery += "INSERT INTO " +
                     "power.d100" + i + " USING power.meters TAGS(2,'California.SanFrancisco') " +
                     "VALUES " +
                     "(NOW + 1a, 10.30000, 219, 0.31000) " +
@@ -116,9 +126,9 @@ public class Main {
                     "(NOW + 3a, 12.30000, 221, 0.31000) " +
                     "power.d100"+ (i + 1)+" USING power.meters TAGS(3, 'California.SanFrancisco') " +
                     "VALUES " +
-                    "(NOW + 1a, 10.30000, 218, 0.25000) ";
-            sqlList.add(insertQuery);
+                    "(NOW + 1a, 10.30000, 218, 0.25000);";
+
         }
-        return sqlList;
+        return Collections.singletonList(insertQuery);
     }
 }
