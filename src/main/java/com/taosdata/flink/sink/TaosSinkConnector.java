@@ -45,6 +45,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             this.conn = DriverManager.getConnection(this.url, this.properties);
         } catch (SQLException e) {
             LOG.error("open exception url:" + this.url, e.getSQLState());
+            throw e;
         }
 
         LOG.info("connect websocket url:" + this.url);
@@ -374,13 +375,22 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     }
 
     @Override
+    public void close() throws Exception {
+        LOG.debug("---------close----Time-consuming-----------{}", this.counter.get());
+        if (conn != null) {
+            conn.close();
+            conn = null;
+        }
+        super.close();
+    }
+
+    @Override
     public void finish() throws Exception {
         if (conn != null) {
             conn.close();
             conn = null;
         }
         super.finish();
-        LOG.info("-------------Time-consuming-----------{}", this.counter.get());
     }
 
     @Override

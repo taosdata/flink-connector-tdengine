@@ -31,6 +31,7 @@ public class TestMakeDataSource  implements SourceFunction<TaosSinkData> {
     public void run(SourceContext<TaosSinkData> sourceContext) throws Exception {
 
         long ts = System.currentTimeMillis();
+        int count = 0;
         for (int j = 0; j < rows / interlace; j++) {
             for (int i = 0; i < subTableCount; i++) {
                 String subTableName = subTablePrefix + i;
@@ -38,7 +39,7 @@ public class TestMakeDataSource  implements SourceFunction<TaosSinkData> {
                 StringBuilder appendSuffix = new StringBuilder();
                 for (int k = 0; k < interlace; k++) {
                     appendSuffix.append("(")
-                            .append(ts + j).append(",")
+                            .append(ts + count).append(",")
                             .append(j).append(",")
                             .append(j).append(",")
                             .append(j).append(",")
@@ -50,6 +51,7 @@ public class TestMakeDataSource  implements SourceFunction<TaosSinkData> {
                             .append(j).append(",")
                             .append(j).append(")");
                     counter.incrementAndGet();
+                    count++;
                 }
                 insertSQL.append(appendSuffix);
                 List<String> sqlList = new ArrayList<>();
@@ -60,6 +62,7 @@ public class TestMakeDataSource  implements SourceFunction<TaosSinkData> {
                 sourceContext.collect(newSqlData);
             }
         }
+        sourceContext.close();
     }
 
     @Override

@@ -23,8 +23,8 @@ public class Main {
     private static void testSoureInsert() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<TaosSinkData> infiniteStream = env.addSource(new TestMakeDataSource("db", "meters", "meters_d00"
-                , 20000, 100, 200000)).setParallelism(1);
-        String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
+                , 1, 1000000, 200000)).setParallelism(1);
+        String url  = "jdbc:TAOS-RS://192.168.1.62:6041/?user=root&password=taosdata";
         infiniteStream.addSink(createTaosSinkConnector(url));
         env.execute("InfiniteSqlSource Interlace Sink");
     }
