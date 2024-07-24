@@ -178,7 +178,7 @@ public class FlinkSinkTest {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<TaosSinkData> dataStream = env.fromElements(TaosSinkData.class, sqlData);
-        String url = "jdbc:TAOS-RS://" + host + ":6041/?user=test&password=test";
+        String url = "jdbc:TAOS-RS://" + host + ":6041/?user=root&password=taosdata";
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
