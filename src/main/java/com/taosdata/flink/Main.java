@@ -25,7 +25,7 @@ public class Main {
         DataStream<TaosSinkData> infiniteStream = env.addSource(new TestMakeDataSource("db", "meters", "meters_d00"
                 , 1, 1000000, 200000)).setParallelism(1);
         String url  = "jdbc:TAOS-RS://192.168.1.62:6041/?user=root&password=taosdata";
-        infiniteStream.addSink(createTaosSinkConnector(url));
+        infiniteStream.addSink(createTaosSinkConnector(url)).setParallelism(20);
         env.execute("InfiniteSqlSource Interlace Sink");
     }
 
@@ -72,7 +72,7 @@ public class Main {
 
         String url  = "jdbc:TAOS-RS://192.168.1.98:6041/?user=root&password=taosdata";
         TaosSinkConnector sinkConnector = createTaosSinkConnector(url);
-        dataStream.addSink(sinkConnector).name("TaosSinkConnector");
+        dataStream.addSink(sinkConnector).name("TaosSinkConnector").setParallelism(20);
         env.execute("Taos Sink Connector");
     }
     private static SuperTableData getSuperTableData() {

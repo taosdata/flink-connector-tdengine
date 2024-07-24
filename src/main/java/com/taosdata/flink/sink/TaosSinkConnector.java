@@ -42,6 +42,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     @Override
     public void open(Configuration parameters) throws Exception {
         try {
+            Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
             this.conn = DriverManager.getConnection(this.url, this.properties);
         } catch (SQLException e) {
             LOG.error("open exception url:" + this.url, e.getSQLState());
@@ -386,6 +387,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
     @Override
     public void finish() throws Exception {
+        LOG.debug("---------close----Time-consuming-----------{}", this.counter.get());
         if (conn != null) {
             conn.close();
             conn = null;
