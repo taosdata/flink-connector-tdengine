@@ -36,7 +36,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
         this.url = url;
-        LOG.info("init connect websocket url:" + this.url);
+        LOG.info("init connect websocket ok！");
     }
 
     @Override
@@ -45,11 +45,11 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
             Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
             this.conn = DriverManager.getConnection(this.url, this.properties);
         } catch (SQLException e) {
-            LOG.error("open exception url:" + this.url, e.getSQLState());
+            LOG.error("open exception error:{}", e.getSQLState());
             throw e;
         }
 
-        LOG.info("connect websocket url:" + this.url);
+        LOG.info("connect websocket url ok");
     }
     private void setStmtTag(TSWSPreparedStatement pstmt, List<TagParam> tagParams) throws Exception {
         if (tagParams != null && tagParams.size() > 0) {
