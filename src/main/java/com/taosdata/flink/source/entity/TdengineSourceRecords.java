@@ -1,11 +1,11 @@
 package com.taosdata.flink.source.entity;
 
+import com.taosdata.flink.source.TdengineSplit;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord> {
 
@@ -13,21 +13,26 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
     private String splitId;
     @Nullable private Iterator<SourceRecord> recordsForCurrentSplit;
     @Nullable private final Iterator<SourceRecord> recordsForSplit;
-    private final Set<String> finishedSnapshotSplits;
-
+    private final Deque<TdengineSplit> currSplits;
+    private final Deque<TdengineSplit> finishedSplits;
     public TdengineSourceRecords(
             @Nullable String splitId,
             @Nullable SourceRecords records,
-            Set<String> finishedSnapshotSplits) {
+            Deque<TdengineSplit> currSplits,
+            Deque<TdengineSplit> finishedSplits) {
         this.splitId = splitId;
         this.recordsForSplit = records.iterator();
-        this.finishedSnapshotSplits = finishedSnapshotSplits;
+        this.currSplits = currSplits;
+        this.finishedSplits = finishedSplits;
     }
 
     @Nullable
     @Override
     public String nextSplit() {
         // move the split one (from current value to null)
+        if (this.currSplits != null && !this.currSplits.isEmpty()) {
+            return this.currSplits.iterator().next().getSql();
+        }
         final String nextSplit = this.splitId;
         this.splitId = null;
 
@@ -53,13 +58,14 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
 
     @Override
     public Set<String> finishedSplits() {
-        return finishedSnapshotSplits;
+        return finishedSplits.stream().map(split -> split.getSql()).collect(Collectors.toSet());
     }
     public static TdengineSourceRecords forRecords(
-            final String splitId, SourceRecords records) {
-        return new TdengineSourceRecords(splitId, records, Collections.singleton(splitId));
+            final String splitId, SourceRecords records,Deque<TdengineSplit> currSplits,
+            Deque<TdengineSplit> finishedSplits) {
+        return new TdengineSourceRecords(splitId, records, currSplits, finishedSplits);
     }
-    public static TdengineSourceRecords forFinishedSplit(final String splitId) {
-        return new TdengineSourceRecords(null, null, Collections.singleton(splitId));
+    public static TdengineSourceRecords forFinishedSplit(final String splitId, Deque<TdengineSplit> finishedSplits) {
+        return new TdengineSourceRecords(null, new SourceRecords(), null, finishedSplits);
     }
 }

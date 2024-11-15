@@ -2,7 +2,9 @@ package com.taosdata.flink.source;
 
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
+import com.taosdata.flink.source.entity.TimestampSplitInfo;
 import com.taosdata.jdbc.TSDBDriver;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.configuration.Configuration;
@@ -14,11 +16,13 @@ import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 
 import org.apache.flink.test.util.MiniClusterWithClientResource;
-import org.apache.flink.util.CloseableIterator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.text.SimpleDateFormat;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TDFlinkSourceTest {
@@ -33,7 +37,7 @@ public class TDFlinkSourceTest {
                 new MiniClusterWithClientResource(
                         new MiniClusterResourceConfiguration.Builder()
                                 .setNumberTaskManagers(1)
-                                .setNumberSlotsPerTaskManager(2)
+                                .setNumberSlotsPerTaskManager(1)
                                 .setConfiguration(
                                         reporter.addToConfiguration(new Configuration()))
                                 .build());
@@ -48,8 +52,8 @@ public class TDFlinkSourceTest {
     @Test
     void testBasicMultiClusterRead() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
-
+        env.setParallelism(3);
+        AtomicLong nCount = new AtomicLong();
         Properties connProps = new Properties();
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -67,13 +71,12 @@ public class TDFlinkSourceTest {
                     ", phase: " + row.getFloat(3) +
                     ", location: " + new String(row.getBinary(4)));
             sb.append("\n");
-            System.out.println(sb);
+            nCount.getAndIncrement();
+            System.out.println(nCount.get());
             return sb.toString();
         });
 
-        CloseableIterator<RowData> iterator = input.executeAndCollect();
-
-
+        env.execute("flink tdengine source");
     }
 
 

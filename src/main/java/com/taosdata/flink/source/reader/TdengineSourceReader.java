@@ -1,5 +1,7 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.reader;
 
+import com.taosdata.flink.source.TdengineSplit;
+import com.taosdata.flink.source.TdengineSplitsState;
 import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.entity.SourceRecords;
 import org.apache.flink.api.connector.source.SourceReaderContext;

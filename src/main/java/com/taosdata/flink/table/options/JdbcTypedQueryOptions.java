@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,33 +15,35 @@
  * limitations under the License.
  */
 
-package com.taosdata.flink.source.entity;
+package com.taosdata.flink.table.options;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import javax.annotation.Nullable;
+import java.io.Serializable;
 
-/** Data structure to describe a set of T. */
-public final class SourceRecord {
+/**
+ * Jdbc query type options.
+ */
+abstract class JdbcTypedQueryOptions implements Serializable {
 
-    private final List<Object> sourceRecord;
+	@Nullable
+	private final int[] fieldTypes;
 
-    public SourceRecord(List<Object> sourceRecord) {
-        this.sourceRecord = sourceRecord;
-    }
-    public SourceRecord() {
-        this.sourceRecord = new ArrayList<>();
-    }
-    public void addObject(Object o) {
-        sourceRecord.add(o);
-    }
-    public List<Object> getSourceRecordList() {
-        return sourceRecord;
-    }
+	JdbcTypedQueryOptions(int[] fieldTypes) {
+		this.fieldTypes = fieldTypes;
+	}
 
-    public Iterator<Object> iterator() {
-        return sourceRecord.iterator();
-    }
+	public int[] getFieldTypes() {
+		return fieldTypes;
+	}
 
+	public abstract static class JdbcUpdateQueryOptionsBuilder<T extends JdbcUpdateQueryOptionsBuilder<T>> {
+		int[] fieldTypes;
+
+		protected abstract T self();
+
+		public T withFieldTypes(int[] fieldTypes) {
+			this.fieldTypes = fieldTypes;
+			return self();
+		}
+	}
 }

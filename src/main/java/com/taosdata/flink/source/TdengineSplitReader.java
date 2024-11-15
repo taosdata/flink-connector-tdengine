@@ -28,8 +28,16 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
     private volatile int interval = 0;
     private volatile int batchSize = 2000;
     private int subtaskId;
-    public TdengineSplitReader(String url, Properties properties, String sql, SourceReaderContext context) throws ClassNotFoundException {
-        this.subtaskId = context.getIndexOfSubtask();;
+    private Deque<TdengineSplit> tdengineSplits;
+
+    private Deque<TdengineSplit> finishedSplits;
+
+    private TdengineSplit currSplit;
+    private boolean isEnd = false;
+    public TdengineSplitReader(String url, Properties properties, String sql, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+        this.subtaskId = context.getIndexOfSubtask();
+        this.tdengineSplits = new ArrayDeque<>();
+        this.finishedSplits = new ArrayDeque<>();
         this.properties = properties;
         this.sql = sql;
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
@@ -38,36 +46,55 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
         LOG.info("init connect websocket ok！");
 
         Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
-        try {
-            this.conn = DriverManager.getConnection(this.url, this.properties);
-            this.stmt = this.conn.createStatement();
-            this.resultSet = stmt.executeQuery(this.sql);
-            this.metaData = resultSet.getMetaData();
-        } catch (Exception ex) {
-            // please refer to the JDBC specifications for detailed exceptions info
-            System.out.printf("Failed to connect to %s, %sErrMessage: %s%n",
-                    this.url,
-                    ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
-                    ex.getMessage());
-            ex.printStackTrace();
+        this.conn = DriverManager.getConnection(this.url, this.properties);
+        this.stmt = this.conn.createStatement();
+
+    }
+    private SourceRecord getRowData() throws SQLException {
+        if (this.resultSet == null) {
+            if (tdengineSplits.isEmpty()) {
+                return null;
+            }
+            currSplit = tdengineSplits.pop();
+            if (currSplit != null && !currSplit.getSql().isEmpty()) {
+                this.resultSet = stmt.executeQuery(this.sql);
+                this.metaData = resultSet.getMetaData();
+            } else {
+                return null;
+            }
         }
 
+        if (resultSet.next()) {
+            SourceRecord rowData = new SourceRecord();
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                Object value = resultSet.getObject(i);
+                rowData.addObject(value);
+            }
+            return rowData;
+        }
+        return null;
     }
 
     @Override
     public RecordsWithSplitIds<SourceRecord> fetch() throws IOException {
         try {
-            List<Object> rowData = new ArrayList<>(metaData.getColumnCount());
-            while (resultSet.next()) {
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    Object value = resultSet.getObject(i);
-                    rowData.add(value);
+            SourceRecords sourceRecords = new SourceRecords();
+            for (int i = 0; i < batchSize; i++) {
+                SourceRecord sourceRecord = getRowData();
+                if (sourceRecord != null) {
+                    sourceRecords.addSourceRecord(sourceRecord);
+                } else {
+                    this.resultSet = null;
+                    break;
                 }
             }
-            SourceRecord sourceRecord = new SourceRecord(rowData);
-
-            SourceRecords sourceRecords = new SourceRecords<>(resultSet.getMetaData(), Arrays.asList(sourceRecord));
-            return TdengineSourceRecords.forRecords("" + this.subtaskId, sourceRecords);
+            if (sourceRecords.getSourceRecordList().isEmpty()) {
+                finishedSplits.push(currSplit);
+                currSplit = null;
+                return TdengineSourceRecords.forFinishedSplit("" + this.subtaskId, finishedSplits);
+            }
+            sourceRecords.setMetaData(this.metaData);
+            return  TdengineSourceRecords.forRecords("" + this.subtaskId, sourceRecords, tdengineSplits, finishedSplits);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -75,7 +102,8 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
 
     @Override
     public void handleSplitsChanges(SplitsChange<TdengineSplit> splitsChange) {
-
+        List<TdengineSplit> splits = splitsChange.splits();
+        this.tdengineSplits.addAll(splits);
     }
 
     @Override
@@ -85,7 +113,14 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
 
     @Override
     public void close() throws Exception {
-
+        if (this.stmt != null) {
+            this.stmt.close();
+            this.stmt = null;
+        }
+        if (this.conn != null) {
+            this.conn.close();
+            this.conn = null;
+        }
     }
 
 }

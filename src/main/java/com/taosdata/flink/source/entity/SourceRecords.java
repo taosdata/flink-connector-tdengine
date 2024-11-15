@@ -24,14 +24,21 @@ import java.util.List;
 import java.util.Set;
 
 /** Data structure to describe a set of T. */
-public final class SourceRecords<SourceRecord> {
+public final class SourceRecords {
 
-    private final ResultSetMetaData metaData;
+    private ResultSetMetaData metaData;
     private final List<SourceRecord> sourceRecords;
 
     public SourceRecords(ResultSetMetaData metaData, List<SourceRecord> sourceRecords) {
         this.metaData = metaData;
         this.sourceRecords = sourceRecords;
+    }
+    public SourceRecords() {
+        this.sourceRecords = new ArrayList<>();
+    }
+
+    public void addSourceRecord(SourceRecord sourceRecord) {
+        sourceRecords.add(sourceRecord);
     }
 
     public List<SourceRecord> getSourceRecordList() {
@@ -45,4 +52,5 @@ public final class SourceRecords<SourceRecord> {
     public ResultSetMetaData getMetaData() {
         return metaData;
     }
+    public void setMetaData(ResultSetMetaData metaData) {this.metaData = metaData;}
 }

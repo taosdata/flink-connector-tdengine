@@ -9,11 +9,11 @@ import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.client.program.MiniClusterClient;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.runtime.jobgraph.JobGraph;
-import org.apache.flink.runtime.minicluster.MiniCluster;
-import org.apache.flink.runtime.minicluster.MiniClusterConfiguration;
+//import org.apache.flink.client.program.MiniClusterClient;
+//import org.apache.flink.configuration.Configuration;
+//import org.apache.flink.runtime.jobgraph.JobGraph;
+//import org.apache.flink.runtime.minicluster.MiniCluster;
+//import org.apache.flink.runtime.minicluster.MiniClusterConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -23,19 +23,21 @@ import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import java.util.*;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 public class Main {
 
     public static void main(String[] args)  throws Exception {
         if (args != null && args.length > 0 &&  args[0].equals("init")) {
             initTable();
         } else if (args != null && args.length > 0 && args[0].equals("source")) {
-            testTdSource();
+//            testTdSource();
 //            testSource();
 //            testCdc();
 //            testTypeSource();
 //            testSourceTypeTable();
 //            testSourceTable();
-//            testTable();
+            testTable();
 //            testSoureInsert();
         } else {
             insertData();
@@ -114,7 +116,19 @@ public class Main {
     }
 
 
-//    private static void testSource() throws Exception {
+    private static void testSource() throws Exception {
+        EnvironmentSettings settings = EnvironmentSettings
+                .newInstance()
+                .inStreamingMode()
+                .build();
+
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+        tEnv.executeSql("CREATE TABLE orders ( ... ) WITH ( 'connector'='mongodb-cdc',... )");
+        Table orders = tEnv.from("Orders");
+        Table counts = orders
+                .groupBy($("a"))
+                .select($("a"), $("b").count().as("cnt"));
+    }
 //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 //        Properties connProps = new Properties();
 //        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
@@ -299,6 +313,7 @@ public class Main {
         "  'table-name' = 'meters'," +
         "  'username' = 'root'," +
         "  'password' = 'taosdata'," +
+        "  'scan.query'='SELECT ts, `current`, voltage, phase, location FROM `meters`'," +
         "  'driver' = 'com.taosdata.jdbc.rs.RestfulDriver'" +
         ")";
 

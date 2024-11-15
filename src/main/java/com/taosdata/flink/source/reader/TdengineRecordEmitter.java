@@ -1,5 +1,7 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.reader;
 
+import com.taosdata.flink.source.TdengineRecordDeserialization;
+import com.taosdata.flink.source.TdengineSplitsState;
 import com.taosdata.flink.source.entity.SourceRecord;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;

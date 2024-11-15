@@ -1,5 +1,6 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.enumerator;
 
+import com.taosdata.flink.source.TdengineSplit;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
@@ -74,27 +75,21 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TdengineSplit, 
                                    + " and " + this.sourceSql.getWhere();
                            this.unassignedSqls.push(new TdengineSplit("" + nCount, sql));
                    }
-
                }
-            } else {
-                String sql = "select " + this.sourceSql.getSelect()
-                        + " from `" + this.sourceSql.getTableName()
-                        + "` where " + this.sourceSql.getWhere();
-                this.unassignedSqls.push(new TdengineSplit("0", sql));
             }
+        } else {
+            String sql = "select " + this.sourceSql.getSelect()
+                    + " from `" + this.sourceSql.getTableName() + "` ";
+            if (!this.sourceSql.getWhere().isEmpty()) {
+                sql += "where " + this.sourceSql.getWhere();
+            }
+            this.unassignedSqls.push(new TdengineSplit("0", sql));
         }
     }
 
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-        checkReaderRegistered(subtaskId);
-        if (!unassignedSqls.isEmpty()) {
-            TdengineSplit split = unassignedSqls.pop();
-            context.assignSplit(split, subtaskId);
-            assignmentSqls.put(subtaskId, split);
-        }else{
-            context.signalNoMoreSplits(subtaskId);
-        }
+        int i = 0;
     }
 
     private void checkReaderRegistered(int readerId) {
@@ -105,12 +100,20 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TdengineSplit, 
     }
     @Override
     public void addSplitsBack(List<TdengineSplit> list, int i) {
-
+        int ii = 0;
     }
 
     @Override
-    public void addReader(int i) {
-        readersAwaitingSplit.add(i);
+    public void addReader(int subtaskId) {
+        readersAwaitingSplit.add(subtaskId);
+        checkReaderRegistered(subtaskId);
+        if (!unassignedSqls.isEmpty()) {
+            TdengineSplit split = unassignedSqls.pop();
+            context.assignSplit(split, subtaskId);
+            assignmentSqls.put(subtaskId, split);
+        }else{
+            context.signalNoMoreSplits(subtaskId);
+        }
     }
 
     @Override

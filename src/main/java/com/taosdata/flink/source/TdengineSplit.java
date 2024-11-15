@@ -34,4 +34,7 @@ public class TdengineSplit implements SourceSplit {
         return Objects.hash(splitId);
     }
 
+    public String getSql() {
+        return sql;
+    }
 }

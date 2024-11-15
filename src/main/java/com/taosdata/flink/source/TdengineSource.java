@@ -1,13 +1,22 @@
 package com.taosdata.flink.source;
 
 import com.taosdata.flink.source.entity.SourceSplitSql;
+import com.taosdata.flink.source.entity.TdengineSourceRecords;
+import com.taosdata.flink.source.enumerator.TDengineSourceEnumStateSerializer;
+import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
+import com.taosdata.flink.source.reader.TDenginePartitionSplitSerializer;
+import com.taosdata.flink.source.reader.TdengineRecordEmitter;
+import com.taosdata.flink.source.reader.TdengineSourceReader;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -29,20 +38,26 @@ public class TdengineSource<OUT> implements Source<OUT, TdengineSplit, TdengineS
     }
     @Override
     public SourceReader<OUT, TdengineSplit> createReader(SourceReaderContext sourceReaderContext) throws Exception {
-        Supplier<TdengineSplitReader> splitFetcherManager =
+        Supplier<TdengineSplitReader> splitReaderSupplier =
                 ()-> {
+                    String sql = this.sourceSql.getSql();
+                    if (sql.isEmpty()) {
+                            sql = "select " + this.sourceSql.getSelect() + " from `" + this.sourceSql.getTableName() +  "` limit 1000";
+                    }
 
-                        String sql = "select " + this.sourceSql.getSelect()
-                                + " from `" + this.sourceSql.getTableName()
-                                + "` where " + this.sourceSql.getWhere();
                     try {
                         return new TdengineSplitReader(this.url, this.properties, sql, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
                     }
 
                 };
-        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitFetcherManager);
+
+        FutureCompletingBlockingQueue<RecordsWithSplitIds<TdengineSourceRecords>>
+                elementsQueue = new FutureCompletingBlockingQueue<>();
+        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(elementsQueue, splitReaderSupplier);
 
         return new TdengineSourceReader<>(fetcherManager, new TdengineRecordEmitter<OUT>(this.tdengineRecordDeserialization), toConfiguration(this.properties), sourceReaderContext);
     }
@@ -54,17 +69,17 @@ public class TdengineSource<OUT> implements Source<OUT, TdengineSplit, TdengineS
 
     @Override
     public SplitEnumerator<TdengineSplit, TdengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TdengineSplit> splitEnumeratorContext, TdengineSourceEnumState TdengineSplitsState) throws Exception {
-        return null;
+        return new TdengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql);
     }
 
     @Override
     public SimpleVersionedSerializer<TdengineSplit> getSplitSerializer() {
-        return null;
+        return new TDenginePartitionSplitSerializer();
     }
 
     @Override
     public SimpleVersionedSerializer<TdengineSourceEnumState> getEnumeratorCheckpointSerializer() {
-        return null;
+        return new TDengineSourceEnumStateSerializer();
     }
 
     @Override
