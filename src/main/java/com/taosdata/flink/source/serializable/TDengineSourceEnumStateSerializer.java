@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.taosdata.flink.source.enumerator;
+package com.taosdata.flink.source.serializable;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;

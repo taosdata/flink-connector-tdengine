@@ -1,6 +1,6 @@
-package com.taosdata.flink.source.reader;
+package com.taosdata.flink.source.serializable;
 
-import com.taosdata.flink.source.TdengineSplit;
+import com.taosdata.flink.source.split.TdengineSplit;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import java.io.*;

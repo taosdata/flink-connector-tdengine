@@ -1,6 +1,6 @@
 package com.taosdata.flink.table;
 
-import com.taosdata.flink.source.TdengineRowDataDeserialization;
+import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
 import com.taosdata.flink.source.TdengineSource;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.table.options.JdbcLookupOptions;
@@ -16,16 +16,10 @@ import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.ProviderContext;
 import org.apache.flink.table.connector.source.DataStreamScanProvider;
 import org.apache.flink.table.connector.source.DynamicTableSource;
-import org.apache.flink.table.connector.source.LookupTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
-import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata;
-import org.apache.flink.table.connector.source.abilities.SupportsWatermarkPushDown;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.DataType;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 public class TDengineTableSource implements ScanTableSource, SupportsProjectionPushDown {

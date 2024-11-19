@@ -1,4 +1,4 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.split;
 
 import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.entity.SourceRecords;
@@ -34,12 +34,11 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
 
     private TdengineSplit currSplit;
     private boolean isEnd = false;
-    public TdengineSplitReader(String url, Properties properties, String sql, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.tdengineSplits = new ArrayDeque<>();
         this.finishedSplits = new ArrayDeque<>();
         this.properties = properties;
-        this.sql = sql;
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
         this.url = url;

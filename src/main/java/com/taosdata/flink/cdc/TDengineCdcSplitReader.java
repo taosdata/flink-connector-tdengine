@@ -1,6 +1,6 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.cdc;
 
-import com.taosdata.flink.source.entity.SourceRecord;
+import com.taosdata.flink.source.split.TdengineSplit;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;

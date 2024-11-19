@@ -1,22 +1,16 @@
 package com.taosdata.flink.source.reader;
 
-import com.taosdata.flink.source.TdengineSplit;
-import com.taosdata.flink.source.TdengineSplitsState;
-import com.taosdata.flink.source.entity.SourceRecord;
+import com.taosdata.flink.source.split.TdengineSplit;
 import com.taosdata.flink.source.entity.SourceRecords;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
-import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SourceRecords, T, TdengineSplit, TdengineSplitsState> {
+public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SourceRecords, T, TdengineSplit, TdengineSplit> {
 
     public TdengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
                                 RecordEmitter recordEmitter,
@@ -44,12 +38,12 @@ public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBa
     }
 
     @Override
-    protected TdengineSplitsState initializedState(TdengineSplit tdengineSplit) {
+    protected TdengineSplit initializedState(TdengineSplit tdengineSplit) {
         return null;
     }
 
     @Override
-    protected TdengineSplit toSplitType(String s, TdengineSplitsState tdengineSplitsState) {
+    protected TdengineSplit toSplitType(String s, TdengineSplit tdengineSplitsState) {
         return null;
     }
 }

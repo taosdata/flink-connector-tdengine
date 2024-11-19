@@ -1,4 +1,4 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.serializable;
 
 import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.entity.SourceRecords;

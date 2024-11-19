@@ -2,9 +2,8 @@ package com.taosdata.flink.source;
 
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
-import com.taosdata.flink.source.entity.TimestampSplitInfo;
+import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.configuration.Configuration;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 

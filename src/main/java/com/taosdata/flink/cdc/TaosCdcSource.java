@@ -1,4 +1,4 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.cdc;
 
 import com.taosdata.flink.sink.TaosSinkConnector;
 import com.taosdata.flink.source.entity.SourceError;

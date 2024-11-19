@@ -1,4 +1,4 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.source.serializable;
 
 import com.taosdata.flink.source.entity.SourceRecord;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -7,8 +7,6 @@ import org.apache.flink.table.data.RowData;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-
-import static org.apache.flink.api.java.typeutils.TypeExtractor.getForClass;
 
 public class TdengineRowDataDeserialization implements TdengineRecordDeserialization<RowData> {
     /**

@@ -5,6 +5,7 @@ import com.taosdata.flink.sink.entity.*;
 import com.taosdata.flink.source.*;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
+import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;

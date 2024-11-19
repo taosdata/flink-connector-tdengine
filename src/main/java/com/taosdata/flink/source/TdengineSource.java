@@ -2,11 +2,15 @@ package com.taosdata.flink.source;
 
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.TdengineSourceRecords;
-import com.taosdata.flink.source.enumerator.TDengineSourceEnumStateSerializer;
+import com.taosdata.flink.source.enumerator.TdengineSourceEnumerator;
+import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
-import com.taosdata.flink.source.reader.TDenginePartitionSplitSerializer;
+import com.taosdata.flink.source.serializable.TDenginePartitionSplitSerializer;
 import com.taosdata.flink.source.reader.TdengineRecordEmitter;
 import com.taosdata.flink.source.reader.TdengineSourceReader;
+import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
+import com.taosdata.flink.source.split.TdengineSplit;
+import com.taosdata.flink.source.split.TdengineSplitReader;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
@@ -40,13 +44,8 @@ public class TdengineSource<OUT> implements Source<OUT, TdengineSplit, TdengineS
     public SourceReader<OUT, TdengineSplit> createReader(SourceReaderContext sourceReaderContext) throws Exception {
         Supplier<TdengineSplitReader> splitReaderSupplier =
                 ()-> {
-                    String sql = this.sourceSql.getSql();
-                    if (sql.isEmpty()) {
-                            sql = "select " + this.sourceSql.getSelect() + " from `" + this.sourceSql.getTableName() +  "` limit 1000";
-                    }
-
                     try {
-                        return new TdengineSplitReader(this.url, this.properties, sql, sourceReaderContext);
+                        return new TdengineSplitReader(this.url, this.properties, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
