@@ -1,6 +1,6 @@
 package com.taosdata.flink.source.entity;
 
-import com.taosdata.flink.source.split.TdengineSplit;
+import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 
 import javax.annotation.Nullable;
@@ -11,18 +11,17 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
 
     @Nullable
     private String splitId;
-    @Nullable private Iterator<SourceRecord> recordsForCurrentSplit;
     @Nullable private final Iterator<SourceRecord> recordsForSplit;
-    private final Deque<TdengineSplit> currSplits;
-    private final Deque<TdengineSplit> finishedSplits;
+    private final List<TDengineSplit> assignmentSplits;
+    private final List<TDengineSplit> finishedSplits;
     public TdengineSourceRecords(
             @Nullable String splitId,
             @Nullable SourceRecords records,
-            Deque<TdengineSplit> currSplits,
-            Deque<TdengineSplit> finishedSplits) {
+            List<TDengineSplit> currSplits,
+            List<TDengineSplit> finishedSplits) {
         this.splitId = splitId;
         this.recordsForSplit = records.iterator();
-        this.currSplits = currSplits;
+        this.assignmentSplits = currSplits;
         this.finishedSplits = finishedSplits;
     }
 
@@ -30,21 +29,18 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
     @Override
     public String nextSplit() {
         // move the split one (from current value to null)
-        if (this.currSplits != null && !this.currSplits.isEmpty()) {
-            return this.currSplits.iterator().next().getSql();
+        if (this.assignmentSplits != null && !this.assignmentSplits.isEmpty()) {
+            this.splitId = this.assignmentSplits.iterator().next().splitId();
+        } else {
+            this.splitId = null;
         }
-        final String nextSplit = this.splitId;
-        this.splitId = null;
-
-        // move the iterator, from null to value (if first move) or to null (if second move)
-        this.recordsForCurrentSplit = nextSplit != null ? this.recordsForSplit : null;
-        return nextSplit;
+        return this.splitId;
     }
 
     @Nullable
     @Override
     public SourceRecord nextRecordFromSplit() {
-        final Iterator<SourceRecord> recordsForSplit = this.recordsForCurrentSplit;
+        final Iterator<SourceRecord> recordsForSplit = this.recordsForSplit;
         if (recordsForSplit != null) {
             if (recordsForSplit.hasNext()) {
                 return recordsForSplit.next();
@@ -58,14 +54,17 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
 
     @Override
     public Set<String> finishedSplits() {
-        return finishedSplits.stream().map(split -> split.getSql()).collect(Collectors.toSet());
+        Set<String> set = new HashSet<>();
+        finishedSplits.stream().map(split -> set.addAll(split.getFinishList()));
+        return set;
     }
+
     public static TdengineSourceRecords forRecords(
-            final String splitId, SourceRecords records,Deque<TdengineSplit> currSplits,
-            Deque<TdengineSplit> finishedSplits) {
-        return new TdengineSourceRecords(splitId, records, currSplits, finishedSplits);
+            final String splitId, SourceRecords records, List<TDengineSplit> assignmentSplits,
+            List<TDengineSplit> finishedSplits) {
+        return new TdengineSourceRecords(splitId, records, assignmentSplits, finishedSplits);
     }
-    public static TdengineSourceRecords forFinishedSplit(final String splitId, Deque<TdengineSplit> finishedSplits) {
+    public static TdengineSourceRecords forFinishedSplit(final String splitId, List<TDengineSplit> finishedSplits) {
         return new TdengineSourceRecords(null, new SourceRecords(), null, finishedSplits);
     }
 }

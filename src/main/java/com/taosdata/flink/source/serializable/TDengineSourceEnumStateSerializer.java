@@ -21,6 +21,10 @@ import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import java.io.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 
 /**
@@ -53,12 +57,45 @@ public class TDengineSourceEnumStateSerializer
 
     @Override
     public byte[] serialize(TdengineSourceEnumState enumState) throws IOException {
-       return new byte[0];
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             DataOutputStream out = new DataOutputStream(baos)) {
+            out.writeBoolean(enumState.isInitFinished());
+            List<String> taskList = enumState.getAssignmentSqls();
+            out.writeInt(taskList.size());
+            for (String task : taskList) {
+                out.writeUTF(task);
+            }
+
+            Deque<String> finishList = enumState.getUnassignedSqls();
+            out.writeInt(finishList.size());
+            for (String task : finishList) {
+                out.writeUTF(task);
+            }
+            out.flush();
+
+            return baos.toByteArray();
+        }
     }
 
     @Override
     public TdengineSourceEnumState deserialize(int version, byte[] serialized) throws IOException {
-        return new TdengineSourceEnumState();
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
+             DataInputStream in = new DataInputStream(bais)) {
+            boolean isInitFinished = in.readBoolean();
+            int count = in.readInt();
+            List<String> assignmentSqls = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                assignmentSqls.add(in.readUTF());
+            }
+
+            count = in.readInt();
+            Deque<String> unassignedSqls = new ArrayDeque<>(count);
+            for (int i = 0; i < count; i++) {
+                unassignedSqls.push(in.readUTF());
+            }
+
+            return new TdengineSourceEnumState(unassignedSqls, assignmentSqls, isInitFinished);
+        }
     }
 
 }

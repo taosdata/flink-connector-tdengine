@@ -1,17 +1,16 @@
 package com.taosdata.flink.source.enumerator;
 
-import com.taosdata.flink.source.split.TdengineSplit;
+import com.taosdata.flink.source.split.TDengineSplit;
 
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 public class TdengineSourceEnumState {
     private boolean isInitFinished;
     private final Deque<String> unassignedSqls;
-    private final Map<Integer, TdengineSplit> assignmentSqls;
-    public TdengineSourceEnumState(Deque<String> unassignedSqls, Map<Integer, TdengineSplit> assignmentSqls, boolean isInitFinished) {
+    private final List<String> assignmentSqls;
+    public TdengineSourceEnumState(Deque<String> unassignedSqls, List<String> assignmentSqls, boolean isInitFinished) {
         this.isInitFinished = isInitFinished;
         this.unassignedSqls = unassignedSqls;
         this.assignmentSqls = assignmentSqls;
@@ -19,11 +18,15 @@ public class TdengineSourceEnumState {
 
 
 
-    public Deque<String> getReadersAwaitingSplit() {
+    public Deque<String> getUnassignedSqls() {
         return unassignedSqls;
     }
 
-    public Map<Integer, TdengineSplit> getAssignmentSqls() {
+    public List<String> getAssignmentSqls() {
         return assignmentSqls;
+    }
+
+    public boolean isInitFinished() {
+        return isInitFinished;
     }
 }

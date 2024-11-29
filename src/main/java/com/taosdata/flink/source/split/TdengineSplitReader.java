@@ -1,5 +1,6 @@
 package com.taosdata.flink.source.split;
 
+import com.google.common.base.Strings;
 import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.TdengineSourceRecords;
@@ -15,10 +16,9 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSplit> {
+public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSplit> {
     private static final Logger LOG = LoggerFactory.getLogger(TdengineSplitReader.class);
     private Properties properties;
-    private String sql;
     private volatile boolean running = true;
     private String url;
     private Connection conn;
@@ -28,16 +28,21 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
     private volatile int interval = 0;
     private volatile int batchSize = 2000;
     private int subtaskId;
-    private Deque<TdengineSplit> tdengineSplits;
+    private List<TDengineSplit> tdengineSplits;
 
-    private Deque<TdengineSplit> finishedSplits;
+    private List<TDengineSplit> finishedSplits;
 
-    private TdengineSplit currSplit;
+    private Iterator<TDengineSplit> currSplitIter;
+    private TDengineSplit currSplit;
+
+    private String currTask;
+
     private boolean isEnd = false;
     public TdengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
-        this.tdengineSplits = new ArrayDeque<>();
-        this.finishedSplits = new ArrayDeque<>();
+        this.finishedSplits = new ArrayList<>();
+        tdengineSplits = new ArrayList<>();
+        currSplitIter = tdengineSplits.iterator();
         this.properties = properties;
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
@@ -50,28 +55,52 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
 
     }
     private SourceRecord getRowData() throws SQLException {
-        if (this.resultSet == null) {
-            if (tdengineSplits.isEmpty()) {
-                return null;
-            }
-            currSplit = tdengineSplits.pop();
-            if (currSplit != null && !currSplit.getSql().isEmpty()) {
-                this.resultSet = stmt.executeQuery(this.sql);
+        if (resultSet == null || !resultSet.next()) {
+            String task = getSplitTask();
+            if (!Strings.isNullOrEmpty(task)) {
+                this.resultSet = stmt.executeQuery(task);
                 this.metaData = resultSet.getMetaData();
             } else {
+                this.resultSet = null;
                 return null;
             }
         }
 
-        if (resultSet.next()) {
-            SourceRecord rowData = new SourceRecord();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                Object value = resultSet.getObject(i);
-                rowData.addObject(value);
-            }
-            return rowData;
+        SourceRecord rowData = new SourceRecord();
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            Object value = resultSet.getObject(i);
+            rowData.addObject(value);
         }
-        return null;
+        return rowData;
+
+    }
+
+    private String getSplitTask() {
+        if (currSplit != null) {
+            setFinishedSplit(currTask);
+            currTask = currSplit.getNextTaskSplit();
+            if (Strings.isNullOrEmpty(currTask)) {
+                finishedSplits.add(currSplit);
+                currSplit = null;
+            }
+        }
+
+        if (Strings.isNullOrEmpty(currTask)) {
+            if (this.currSplitIter != null && this.currSplitIter.hasNext()) {
+                currSplit = currSplitIter.next();
+                currTask = currSplit.getNextTaskSplit();
+            }
+        }
+        return currTask;
+
+    }
+
+    private void setFinishedSplit(String task) {
+        if (Strings.isNullOrEmpty(task)) {
+            return;
+        }
+
+        currSplit.finishTaskSplit(task);
     }
 
     @Override
@@ -83,25 +112,23 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TdengineSp
                 if (sourceRecord != null) {
                     sourceRecords.addSourceRecord(sourceRecord);
                 } else {
-                    this.resultSet = null;
                     break;
                 }
             }
+
             if (sourceRecords.getSourceRecordList().isEmpty()) {
-                finishedSplits.push(currSplit);
-                currSplit = null;
                 return TdengineSourceRecords.forFinishedSplit("" + this.subtaskId, finishedSplits);
             }
             sourceRecords.setMetaData(this.metaData);
-            return  TdengineSourceRecords.forRecords("" + this.subtaskId, sourceRecords, tdengineSplits, finishedSplits);
+            return  TdengineSourceRecords.forRecords("" + this.subtaskId, sourceRecords, this.tdengineSplits, finishedSplits);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void handleSplitsChanges(SplitsChange<TdengineSplit> splitsChange) {
-        List<TdengineSplit> splits = splitsChange.splits();
+    public void handleSplitsChanges(SplitsChange<TDengineSplit> splitsChange) {
+        List<TDengineSplit> splits = splitsChange.splits();
         this.tdengineSplits.addAll(splits);
     }
 

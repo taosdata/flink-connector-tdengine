@@ -1,20 +1,23 @@
 package com.taosdata.flink.source.split;
 
+import com.google.common.base.Strings;
 import org.apache.flink.api.connector.source.SourceSplit;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class TdengineSplit implements SourceSplit {
+public class TDengineSplit implements SourceSplit {
     protected final String splitId;
     private final List<String> taskList;
 
+    private Iterator<String> currTaskIterator;
+
     private List<String> finishList;
-    public TdengineSplit(String splitId) {
+    public TDengineSplit(String splitId) {
         this.splitId = splitId;
         this.finishList = new ArrayList<>();
         this.taskList = new ArrayList<>();
+        currTaskIterator = this.taskList.iterator();
+
     }
 
     @Override
@@ -22,12 +25,28 @@ public class TdengineSplit implements SourceSplit {
         return this.splitId;
     }
 
-    public void addTaskSplit(String taskSplit) {
-        taskList.add(taskSplit);
+    public void addTaskSplit(List<String> taskList) {
+        taskList.addAll(taskList);
+
     }
-    public List<String> getTaskSplit(String taskSplit) {
+    public List<String> getTaskSplit() {
         return taskList;
     }
+
+    public String getNextTaskSplit() {
+        if (taskList.isEmpty()) {
+            return "";
+        }
+        if (currTaskIterator.hasNext()) {
+            return currTaskIterator.next();
+        }
+        return "";
+    }
+
+    public void finishTaskSplit(String task) {
+        this.finishList.add(task);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -36,17 +55,13 @@ public class TdengineSplit implements SourceSplit {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        TdengineSplit that = (TdengineSplit) o;
+        TDengineSplit that = (TDengineSplit) o;
         return Objects.equals(splitId, that.splitId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(splitId);
-    }
-
-    public String getSql() {
-        return sql;
     }
 
     public List<String> getFinishList() {

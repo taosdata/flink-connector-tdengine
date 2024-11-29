@@ -1,6 +1,6 @@
 package com.taosdata.flink.source.reader;
 
-import com.taosdata.flink.source.split.TdengineSplit;
+import com.taosdata.flink.source.split.TDengineSplit;
 import com.taosdata.flink.source.entity.SourceRecords;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
@@ -10,7 +10,7 @@ import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcher
 
 import java.util.Map;
 
-public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SourceRecords, T, TdengineSplit, TdengineSplit> {
+public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SourceRecords, T, TDengineSplit, TDengineSplit> {
 
     public TdengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
                                 RecordEmitter recordEmitter,
@@ -26,7 +26,6 @@ public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBa
 
     }
 
-
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
         super.notifyCheckpointComplete(checkpointId);
@@ -38,12 +37,12 @@ public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBa
     }
 
     @Override
-    protected TdengineSplit initializedState(TdengineSplit tdengineSplit) {
+    protected TDengineSplit initializedState(TDengineSplit tdengineSplit) {
         return null;
     }
 
     @Override
-    protected TdengineSplit toSplitType(String s, TdengineSplit tdengineSplitsState) {
+    protected TDengineSplit toSplitType(String s, TDengineSplit TDengineSplitsState) {
         return null;
     }
 }
