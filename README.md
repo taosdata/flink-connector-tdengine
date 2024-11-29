@@ -1,2 +1,2 @@
 # flink-connector-tdengine
-flink connector tdengin 
+flink connector tdengine 
