@@ -8,6 +8,6 @@ import java.io.Serializable;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-public interface TdengineRecordDeserialization <T> extends Serializable, ResultTypeQueryable<T> {
-        public T convert(SourceRecord sourceRecord, ResultSetMetaData metaData) throws SQLException;
+public interface TdengineRecordDeserialization<T> extends Serializable, ResultTypeQueryable<T> {
+    public T convert(SourceRecord sourceRecord) throws SQLException;
 }

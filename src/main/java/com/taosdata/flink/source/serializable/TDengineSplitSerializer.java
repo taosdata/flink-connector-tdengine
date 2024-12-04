@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TDenginePartitionSplitSerializer  implements SimpleVersionedSerializer<TDengineSplit> {
+public class TDengineSplitSerializer implements SimpleVersionedSerializer<TDengineSplit> {
     private static final int CURRENT_VERSION = 0;
     @Override
     public int getVersion() {
@@ -19,7 +19,7 @@ public class TDenginePartitionSplitSerializer  implements SimpleVersionedSeriali
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
-            List<String> taskList = split.getTaskSplit();
+            List<String> taskList = split.gettasksplits();
             out.writeInt(taskList.size());
             for (String task : taskList) {
                 out.writeUTF(task);
@@ -45,16 +45,22 @@ public class TDenginePartitionSplitSerializer  implements SimpleVersionedSeriali
 
             List<String> taskList = new ArrayList<>();
             int count = in.readInt();
-            for (int i = 0; i < count; i++) {
-                String task = in.readUTF();
-                taskList.add(task);
+            if (count > 0) {
+                for (int i = 0; i < count; i++) {
+                    String task = in.readUTF();
+                    taskList.add(task);
+                }
+                tdSplit.setTaskSplits(taskList);
             }
 
             List<String> finishList = new ArrayList<>();
             count = in.readInt();
-            for (int i = 0; i < count; i++) {
-                String task = in.readUTF();
-                finishList.add(task);
+            if (count > 0) {
+                for (int i = 0; i < count; i++) {
+                    String task = in.readUTF();
+                    finishList.add(task);
+                }
+                tdSplit.setFinishList(finishList);
             }
             return tdSplit;
         }

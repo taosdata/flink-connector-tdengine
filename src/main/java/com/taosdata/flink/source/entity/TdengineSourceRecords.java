@@ -5,23 +5,19 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord> {
 
     @Nullable
     private String splitId;
-    @Nullable private final Iterator<SourceRecord> recordsForSplit;
-    private final List<TDengineSplit> assignmentSplits;
+    @Nullable private final Iterator<SourceRecord> recordsForSplitItor;
     private final List<TDengineSplit> finishedSplits;
     public TdengineSourceRecords(
             @Nullable String splitId,
             @Nullable SourceRecords records,
-            List<TDengineSplit> currSplits,
             List<TDengineSplit> finishedSplits) {
         this.splitId = splitId;
-        this.recordsForSplit = records.iterator();
-        this.assignmentSplits = currSplits;
+        this.recordsForSplitItor = records.iterator();
         this.finishedSplits = finishedSplits;
     }
 
@@ -29,18 +25,15 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
     @Override
     public String nextSplit() {
         // move the split one (from current value to null)
-        if (this.assignmentSplits != null && !this.assignmentSplits.isEmpty()) {
-            this.splitId = this.assignmentSplits.iterator().next().splitId();
-        } else {
-            this.splitId = null;
-        }
-        return this.splitId;
+        final String nextSplit = this.splitId;
+        this.splitId = null;
+        return nextSplit;
     }
 
     @Nullable
     @Override
     public SourceRecord nextRecordFromSplit() {
-        final Iterator<SourceRecord> recordsForSplit = this.recordsForSplit;
+        final Iterator<SourceRecord> recordsForSplit = this.recordsForSplitItor;
         if (recordsForSplit != null) {
             if (recordsForSplit.hasNext()) {
                 return recordsForSplit.next();
@@ -55,16 +48,22 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
     @Override
     public Set<String> finishedSplits() {
         Set<String> set = new HashSet<>();
-        finishedSplits.stream().map(split -> set.addAll(split.getFinishList()));
+        if (this.finishedSplits != null) {
+            for (TDengineSplit split : finishedSplits) {
+                if (split != null) {
+                    set.add(split.splitId());
+                }
+
+            }
+        }
         return set;
     }
 
     public static TdengineSourceRecords forRecords(
-            final String splitId, SourceRecords records, List<TDengineSplit> assignmentSplits,
-            List<TDengineSplit> finishedSplits) {
-        return new TdengineSourceRecords(splitId, records, assignmentSplits, finishedSplits);
+            final String splitId, SourceRecords records, List<TDengineSplit> finishedSplits) {
+        return new TdengineSourceRecords(splitId, records, null);
     }
     public static TdengineSourceRecords forFinishedSplit(final String splitId, List<TDengineSplit> finishedSplits) {
-        return new TdengineSourceRecords(null, new SourceRecords(), null, finishedSplits);
+        return new TdengineSourceRecords(null, new SourceRecords(), finishedSplits);
     }
 }

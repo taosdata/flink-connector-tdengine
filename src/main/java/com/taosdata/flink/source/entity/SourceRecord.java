@@ -17,6 +17,7 @@
 
 package com.taosdata.flink.source.entity;
 
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,11 +27,17 @@ import java.util.Set;
 public final class SourceRecord {
 
     private final List<Object> sourceRecord;
+    private final List<String> finishTaskList;
 
-    public SourceRecord(List<Object> sourceRecord) {
+    private ResultSetMetaData metaData;
+    public SourceRecord(List<Object> sourceRecord, ResultSetMetaData metaData, List<String> finishTaskList) {
         this.sourceRecord = sourceRecord;
+        this.finishTaskList = finishTaskList;
+        this.metaData = metaData;
     }
-    public SourceRecord() {
+    public SourceRecord(ResultSetMetaData metaData, List<String> finishTaskList) {
+        this.finishTaskList = finishTaskList;
+        this.metaData = metaData;
         this.sourceRecord = new ArrayList<>();
     }
     public void addObject(Object o) {
@@ -44,4 +51,7 @@ public final class SourceRecord {
         return sourceRecord.iterator();
     }
 
+    public List<String> getFinishTaskList() {
+        return finishTaskList;
+    }
 }

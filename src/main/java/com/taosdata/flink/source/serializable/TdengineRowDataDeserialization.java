@@ -11,12 +11,11 @@ import java.sql.SQLException;
 public class TdengineRowDataDeserialization implements TdengineRecordDeserialization<RowData> {
     /**
      * @param sourceRecord A record of information containing an object list
-     * @param metaData Meta information
      * @return Data format after data conversion
      * @throws SQLException
      */
     @Override
-    public RowData convert(SourceRecord sourceRecord, ResultSetMetaData metaData) throws SQLException {
+    public RowData convert(SourceRecord sourceRecord) throws SQLException {
         return GenericRowData.of(sourceRecord.getSourceRecordList().toArray());
     }
 

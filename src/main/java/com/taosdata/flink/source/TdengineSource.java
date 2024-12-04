@@ -5,7 +5,7 @@ import com.taosdata.flink.source.entity.TdengineSourceRecords;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumerator;
 import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
-import com.taosdata.flink.source.serializable.TDenginePartitionSplitSerializer;
+import com.taosdata.flink.source.serializable.TDengineSplitSerializer;
 import com.taosdata.flink.source.reader.TdengineRecordEmitter;
 import com.taosdata.flink.source.reader.TdengineSourceReader;
 import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
@@ -73,7 +73,7 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
 
     @Override
     public SimpleVersionedSerializer<TDengineSplit> getSplitSerializer() {
-        return new TDenginePartitionSplitSerializer();
+        return new TDengineSplitSerializer();
     }
 
     @Override

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, TdengineSourceEnumState> {
-
     private final Deque<String> unassignedSqls;
     private final List<String> assignmentSqls;
     private final SplitEnumeratorContext<TDengineSplit> context;
@@ -157,11 +156,20 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 taskSplits.add(taskSplit);
                 assignmentSqls.add(taskSplit);
             }
-            tdengineSplit.addTaskSplit(taskSplits);
+            tdengineSplit.setTaskSplits(taskSplits);
             context.assignSplit(tdengineSplit, subtaskId);
-        } else {
-            context.signalNoMoreSplits(subtaskId);
         }
+
+        if (unassignedSqls.isEmpty()) {
+            Set<Integer> taskIds = context.registeredReaders().keySet();
+            if (taskIds != null && taskIds.size() > 0) {
+                for (Integer taskId : taskIds) {
+                    context.signalNoMoreSplits(taskId);
+                }
+            }
+
+        }
+
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.taosdata.flink.source.split;
 
-import com.google.common.base.Strings;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 import java.util.*;
@@ -16,8 +15,12 @@ public class TDengineSplit implements SourceSplit {
         this.splitId = splitId;
         this.finishList = new ArrayList<>();
         this.taskList = new ArrayList<>();
-        currTaskIterator = this.taskList.iterator();
+    }
 
+    public TDengineSplit(String splitId, List<String> taskList, List<String> finishList) {
+        this.splitId = splitId;
+        this.finishList = taskList;
+        this.taskList = finishList;
     }
 
     @Override
@@ -25,11 +28,11 @@ public class TDengineSplit implements SourceSplit {
         return this.splitId;
     }
 
-    public void addTaskSplit(List<String> taskList) {
-        taskList.addAll(taskList);
-
+    public void setTaskSplits(List<String> taskList) {
+        this.taskList.addAll(taskList);
+        currTaskIterator = this.taskList.iterator();
     }
-    public List<String> getTaskSplit() {
+    public List<String> gettasksplits() {
         return taskList;
     }
 
@@ -43,7 +46,7 @@ public class TDengineSplit implements SourceSplit {
         return "";
     }
 
-    public void finishTaskSplit(String task) {
+    public void addFinishTaskSplit(String task) {
         this.finishList.add(task);
     }
 
