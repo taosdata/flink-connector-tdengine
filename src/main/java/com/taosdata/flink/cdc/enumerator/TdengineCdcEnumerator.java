@@ -1,5 +1,6 @@
 package com.taosdata.flink.cdc.enumerator;
 
+import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumerator;
@@ -18,23 +19,26 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     private final int readerCount;
     private int taskCount = 1;
     private String topic;
+    private Properties properties;
     private boolean isInitFinished = false;
 
     public TdengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
-                                 Boundedness boundedness, String topic) {
+                                 Boundedness boundedness, String topic, Properties properties) {
         this.context = context;
         this.boundedness = boundedness;
         this.readerCount = context.currentParallelism();
         this.topic = topic;
+        this.properties = properties;
         assignmentCdcSplits = new ArrayList<>();
     }
 
     public TdengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
-                                 Boundedness boundedness, String topic, TdengineCdcEnumState checkpoint) {
+                                 Boundedness boundedness, String topic, Properties properties, TdengineCdcEnumState checkpoint) {
         this.context = context;
         this.boundedness = boundedness;
         this.readerCount = context.currentParallelism();
         this.topic = topic;
+        this.properties = properties;
         if (checkpoint != null && checkpoint.isInitFinished()) {
             assignmentCdcSplits = checkpoint.getAssignmentCdcSplits();
             unassignedCdcSplits = checkpoint.getUnassignedCdcSplits();
@@ -45,9 +49,10 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     @Override
     public void start() {
         if (!this.isInitFinished) {
+            String groupId = properties.getProperty("group.id");
             unassignedCdcSplits = new ArrayDeque<>(readerCount);
             for (int i = 0; i < readerCount; i++) {
-                TDengineCdcSplit cdcSplit = new TDengineCdcSplit(topic, "groupId_" + i, "clientId_" + i, null);
+                TDengineCdcSplit cdcSplit = new TDengineCdcSplit(topic, groupId, "clientId_" + i,  (List<CdcTopicPartition>)null);
                 unassignedCdcSplits.add(cdcSplit);
             }
             isInitFinished = true;

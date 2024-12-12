@@ -1,6 +1,7 @@
 package com.taosdata.flink.sink;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.taosdata.flink.sink.entity.*;
 import com.taosdata.jdbc.TSDBDriver;
@@ -202,7 +203,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
 
     private String getSubTableSql(SuperTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
-            LOG.error("StatementData param error:{}", JSON.toJSONString(data));
+            LOG.error("StatementData param error:{}", data);
             return "";
         }
 
@@ -218,7 +219,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     private String getSuperTableSql(SuperTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || data.getColumnNames() == null || data.getColumnNames().isEmpty()
                 || Strings.isNullOrEmpty(data.getSuperTableName()) || data.getTagNames() == null || data.getTagNames().isEmpty() ) {
-            LOG.warn("StatementData param error:{}", JSON.toJSONString(data));
+            LOG.warn("StatementData param error:{}", data);
             return "";
         }
 
@@ -240,7 +241,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
     private String getNormalTableSql(NormalTableData data) {
         if (Strings.isNullOrEmpty(data.getDbName()) || Strings.isNullOrEmpty(data.getTableName())
                 ||data.getColumnNames() == null || data.getColumnNames().isEmpty()) {
-            LOG.error("NormalTableData param error:{}", JSON.toJSONString(data));
+            LOG.error("NormalTableData param error:{}", data);
             return "";
         }
         String sql = "INSERT INTO ? (" + String.join(",", data.getColumnNames()) + ") VALUES (?";
@@ -363,7 +364,7 @@ public class TaosSinkConnector<T> extends RichSinkFunction<T> implements Checkpo
                 throw e;
             }
         } else {
-            LOG.error("invoke input params data type wrong:{}", JSON.toJSONString(value));
+            LOG.error("invoke input params data type wrong!");
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
         long endTime = System.currentTimeMillis();

@@ -42,11 +42,18 @@ public class TDengineConnectorOptions {
     // Format options
     // --------------------------------------------------------------------------------------------
 
-    public static final ConfigOption<String> URL =
-            ConfigOptions.key("url")
+    public static final ConfigOption<String> TD_JDBC_URL =
+            ConfigOptions.key("td.jdbc.url")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("Url address or hostname of the database server.");
+
+    public static final ConfigOption<String> TD_JDBC_MODE =
+            ConfigOptions.key("td.jdbc.mode")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("Url address or hostname of the database server.");
+
     public static final ConfigOption<String> HOSTNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_HOST)
                     .stringType()
@@ -101,318 +108,89 @@ public class TDengineConnectorOptions {
                             "query sql.");
 
 
+    // --------------------------------------------------------------------------------------------
+    // Tmq specific options
+    // --------------------------------------------------------------------------------------------
+    public static final ConfigOption<String> BOOTSTRAP_SERVERS =
+            ConfigOptions.key("bootstrap.servers")
+                    .stringType()
+                    .defaultValue("localhost:6041")
+                    .withDescription(
+                            "Topic name to read data from when the table is used as source. It also supports topic list for source by separating topic by semicolon like 'topic-1;topic-2'. Note, only one of 'topic-pattern' and 'topic' can be specified for sources. "
+                                    + "When the table is used as sink, the topic name is the topic to write data. It also supports topic list for sinks. The provided topic-list is treated as a allow list of valid values for the `topic` metadata column. If  a list is provided, for sink table, 'topic' metadata column is writable and must be specified.");
 
-    public static final ConfigOption<String> KEY_FORMAT =
-            ConfigOptions.key("key" + FORMAT_SUFFIX)
+    public static final ConfigOption<String> TOPIC =
+            ConfigOptions.key("topic")
                     .stringType()
                     .noDefaultValue()
                     .withDescription(
-                            "Defines the format identifier for encoding key data. "
-                                    + "The identifier is used to discover a suitable format factory.");
+                            "Topic name to read data from when the table is used as source. It also supports topic list for source by separating topic by semicolon like 'topic-1;topic-2'. Note, only one of 'topic-pattern' and 'topic' can be specified for sources. "
+                                    + "When the table is used as sink, the topic name is the topic to write data. It also supports topic list for sinks. The provided topic-list is treated as a allow list of valid values for the `topic` metadata column. If  a list is provided, for sink table, 'topic' metadata column is writable and must be specified.");
 
-    public static final ConfigOption<String> VALUE_FORMAT =
-            ConfigOptions.key("value" + FORMAT_SUFFIX)
+    public static final ConfigOption<String> GROUP_ID =
+            ConfigOptions.key("group.id")
                     .stringType()
                     .noDefaultValue()
                     .withDescription(
-                            "Defines the format identifier for encoding value data. "
-                                    + "The identifier is used to discover a suitable format factory.");
+                            "Initial position of the consumer group subscription. Maximum length: 192. Each topic can have up to 100 consumer groups");
 
-    public static final ConfigOption<List<String>> KEY_FIELDS =
-            ConfigOptions.key("key.fields")
-                    .stringType()
-                    .asList()
-                    .defaultValues()
-                    .withDescription(
-                            "Defines an explicit list of physical columns from the table schema "
-                                    + "that configure the data type for the key format. By default, this list is "
-                                    + "empty and thus a key is undefined.");
-
-    public static final ConfigOption<ValueFieldsStrategy> VALUE_FIELDS_INCLUDE =
-            ConfigOptions.key("value.fields-include")
-                    .enumType(ValueFieldsStrategy.class)
-                    .defaultValue(ValueFieldsStrategy.ALL)
-                    .withDescription(
-                            String.format(
-                                    "Defines a strategy how to deal with key columns in the data type "
-                                            + "of the value format. By default, '%s' physical columns of the table schema "
-                                            + "will be included in the value format which means that the key columns "
-                                            + "appear in the data type for both the key and value format.",
-                                    ValueFieldsStrategy.ALL));
-
-    public static final ConfigOption<String> KEY_FIELDS_PREFIX =
-            ConfigOptions.key("key.fields-prefix")
+    public static final ConfigOption<String> CLIENT_ID =
+            ConfigOptions.key("client.id")
                     .stringType()
                     .noDefaultValue()
                     .withDescription(
-                            Description.builder()
-                                    .text(
-                                            "Defines a custom prefix for all fields of the key format to avoid "
-                                                    + "name clashes with fields of the value format. "
-                                                    + "By default, the prefix is empty.")
-                                    .linebreak()
-                                    .text(
-                                            String.format(
-                                                    "If a custom prefix is defined, both the table schema and '%s' will work with prefixed names.",
-                                                    KEY_FIELDS.key()))
-                                    .linebreak()
-                                    .text(
-                                            "When constructing the data type of the key format, the prefix "
-                                                    + "will be removed and the non-prefixed names will be used within the key format.")
-                                    .linebreak()
-                                    .text(
-                                            String.format(
-                                                    "Please note that this option requires that '%s' must be '%s'.",
-                                                    VALUE_FIELDS_INCLUDE.key(),
-                                                    ValueFieldsStrategy.EXCEPT_KEY))
-                                    .build());
+                            "Client ID, Maximum length: 192.");
+
+    public static final ConfigOption<String> AUTO_OFFSET_RESET =
+            ConfigOptions.key("auto.offset.reset")
+                    .stringType()
+                    .defaultValue("latest")
+                    .withDescription(
+                            "Initial position of the consumer group subscription.");
+
+
+    public static final ConfigOption<String> ENABLE_AUTO_COMMIT =
+            ConfigOptions.key("enable.auto.commit")
+                    .stringType()
+                    .defaultValue("true")
+                    .withDescription(
+                            "Whether to enable automatic consumption point submission, " +
+                                    "'true: automatic submission, client application does not need to commit;" +
+                                    " false: client application needs to commit manually.");
+
+    public static final ConfigOption<String> VALUE_DESERIALIZER_ENCODING =
+            ConfigOptions.key("value.deserializer.encoding")
+                    .stringType()
+                    .defaultValue("UTF-8")
+                    .withDescription(
+                            "value.deserializer.encoding default utf8.");
+
+    public static final ConfigOption<String> AUTO_COMMIT_INTERVAL =
+            ConfigOptions.key("auto.commit.interval.ms")
+                    .stringType()
+                    .defaultValue("5000")
+                    .withDescription(
+                            "Time interval for automatically submitting consumption records, in milliseconds.");
+
+    // sink config options
+    public static final ConfigOption<String> SINK_SUPERTABLE_NAME = ConfigOptions
+            .key("sink.supertable.name")
+            .stringType()
+            .defaultValue("")
+            .withDescription("tdengine supertable name");
+
+    public static final ConfigOption<String> SINK_TABLE_NAME = ConfigOptions
+            .key("sink.table.name")
+            .stringType()
+            .defaultValue("")
+            .withDescription("tdengine subtable or normal name");
+
+    public static final ConfigOption<String> SINK_DBNAME_NAME = ConfigOptions
+            .key("sink.db.name")
+            .stringType()
+            .defaultValue("")
+            .withDescription("tdengine database name");
 
     public static final ConfigOption<Integer> SINK_PARALLELISM = FactoryUtil.SINK_PARALLELISM;
 
-    // --------------------------------------------------------------------------------------------
-    // Kafka specific options
-    // --------------------------------------------------------------------------------------------
-
-    public static final ConfigOption<List<String>> TOPIC =
-            ConfigOptions.key("topic")
-                    .stringType()
-                    .asList()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Topic name(s) to read data from when the table is used as source. It also supports topic list for source by separating topic by semicolon like 'topic-1;topic-2'. Note, only one of 'topic-pattern' and 'topic' can be specified for sources. "
-                                    + "When the table is used as sink, the topic name is the topic to write data. It also supports topic list for sinks. The provided topic-list is treated as a allow list of valid values for the `topic` metadata column. If  a list is provided, for sink table, 'topic' metadata column is writable and must be specified.");
-
-    public static final ConfigOption<String> TOPIC_PATTERN =
-            ConfigOptions.key("topic-pattern")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Optional topic pattern from which the table is read for source, or topic pattern that must match the provided `topic` metadata column for sink. Either 'topic' or 'topic-pattern' must be set.");
-
-    public static final ConfigOption<String> PROPS_BOOTSTRAP_SERVERS =
-            ConfigOptions.key("properties.bootstrap.servers")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription("Required Kafka server connection string");
-
-    public static final ConfigOption<String> PROPS_GROUP_ID =
-            ConfigOptions.key("properties.group.id")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Required consumer group in Kafka consumer, no need for Kafka producer");
-
-    // --------------------------------------------------------------------------------------------
-    // Scan specific options
-    // --------------------------------------------------------------------------------------------
-
-    public static final ConfigOption<ScanStartupMode> SCAN_STARTUP_MODE =
-            ConfigOptions.key("scan.startup.mode")
-                    .enumType(ScanStartupMode.class)
-                    .defaultValue(ScanStartupMode.GROUP_OFFSETS)
-                    .withDescription("Startup mode for Kafka consumer.");
-
-    public static final ConfigOption<ScanBoundedMode> SCAN_BOUNDED_MODE =
-            ConfigOptions.key("scan.bounded.mode")
-                    .enumType(ScanBoundedMode.class)
-                    .defaultValue(ScanBoundedMode.UNBOUNDED)
-                    .withDescription("Bounded mode for Kafka consumer.");
-
-    public static final ConfigOption<String> SCAN_STARTUP_SPECIFIC_OFFSETS =
-            ConfigOptions.key("scan.startup.specific-offsets")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Optional offsets used in case of \"specific-offsets\" startup mode");
-
-    public static final ConfigOption<String> SCAN_BOUNDED_SPECIFIC_OFFSETS =
-            ConfigOptions.key("scan.bounded.specific-offsets")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Optional offsets used in case of \"specific-offsets\" bounded mode");
-
-    public static final ConfigOption<Long> SCAN_STARTUP_TIMESTAMP_MILLIS =
-            ConfigOptions.key("scan.startup.timestamp-millis")
-                    .longType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Optional timestamp used in case of \"timestamp\" startup mode");
-
-    public static final ConfigOption<Long> SCAN_BOUNDED_TIMESTAMP_MILLIS =
-            ConfigOptions.key("scan.bounded.timestamp-millis")
-                    .longType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Optional timestamp used in case of \"timestamp\" bounded mode");
-
-    public static final ConfigOption<Duration> SCAN_TOPIC_PARTITION_DISCOVERY =
-            ConfigOptions.key("scan.topic-partition-discovery.interval")
-                    .durationType()
-                    .defaultValue(Duration.ofMinutes(5))
-                    .withDescription(
-                            "Optional interval for consumer to discover dynamically created Kafka partitions periodically."
-                                    + "The value 0 disables the partition discovery."
-                                    + "The default value is 5 minutes, which is equal to the default value of metadata.max.age.ms in Kafka.");
-
-    // --------------------------------------------------------------------------------------------
-    // Sink specific options
-    // --------------------------------------------------------------------------------------------
-
-    public static final ConfigOption<String> SINK_PARTITIONER =
-            ConfigOptions.key("sink.partitioner")
-                    .stringType()
-                    .defaultValue("default")
-                    .withDescription(
-                            Description.builder()
-                                    .text(
-                                            "Optional output partitioning from Flink's partitions into Kafka's partitions. Valid enumerations are")
-                                    .list(
-                                            text(
-                                                    "'default' (use kafka default partitioner to partition records)"),
-                                            text(
-                                                    "'fixed' (each Flink partition ends up in at most one Kafka partition)"),
-                                            text(
-                                                    "'round-robin' (a Flink partition is distributed to Kafka partitions round-robin when 'key.fields' is not specified)"),
-                                            text(
-                                                    "custom class name (use custom FlinkKafkaPartitioner subclass)"))
-                                    .build());
-
-    // Disable this feature by default
-    public static final ConfigOption<Integer> SINK_BUFFER_FLUSH_MAX_ROWS =
-            ConfigOptions.key("sink.buffer-flush.max-rows")
-                    .intType()
-                    .defaultValue(0)
-                    .withDescription(
-                            Description.builder()
-                                    .text(
-                                            "The max size of buffered records before flushing. "
-                                                    + "When the sink receives many updates on the same key, "
-                                                    + "the buffer will retain the last records of the same key. "
-                                                    + "This can help to reduce data shuffling and avoid possible tombstone messages to the Kafka topic.")
-                                    .linebreak()
-                                    .text("Can be set to '0' to disable it.")
-                                    .linebreak()
-                                    .text(
-                                            "Note both 'sink.buffer-flush.max-rows' and 'sink.buffer-flush.interval' "
-                                                    + "must be set to be greater than zero to enable sink buffer flushing.")
-                                    .build());
-
-    // Disable this feature by default
-    public static final ConfigOption<Duration> SINK_BUFFER_FLUSH_INTERVAL =
-            ConfigOptions.key("sink.buffer-flush.interval")
-                    .durationType()
-                    .defaultValue(Duration.ofSeconds(0))
-                    .withDescription(
-                            Description.builder()
-                                    .text(
-                                            "The flush interval millis. Over this time, asynchronous threads "
-                                                    + "will flush data. When the sink receives many updates on the same key, "
-                                                    + "the buffer will retain the last record of the same key.")
-                                    .linebreak()
-                                    .text("Can be set to '0' to disable it.")
-                                    .linebreak()
-                                    .text(
-                                            "Note both 'sink.buffer-flush.max-rows' and 'sink.buffer-flush.interval' "
-                                                    + "must be set to be greater than zero to enable sink buffer flushing.")
-                                    .build());
-
-    public static final ConfigOption<DeliveryGuarantee> DELIVERY_GUARANTEE =
-            ConfigOptions.key("sink.delivery-guarantee")
-                    .enumType(DeliveryGuarantee.class)
-                    .defaultValue(DeliveryGuarantee.AT_LEAST_ONCE)
-                    .withDescription("Optional delivery guarantee when committing.");
-
-    public static final ConfigOption<String> TRANSACTIONAL_ID_PREFIX =
-            ConfigOptions.key("sink.transactional-id-prefix")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "If the delivery guarantee is configured as "
-                                    + DeliveryGuarantee.EXACTLY_ONCE
-                                    + " this value is used a prefix for the identifier of all opened Kafka transactions.");
-
-    // --------------------------------------------------------------------------------------------
-    // Enums
-    // --------------------------------------------------------------------------------------------
-
-    /** Strategies to derive the data type of a value format by considering a key format. */
-    public enum ValueFieldsStrategy {
-        ALL,
-        EXCEPT_KEY
-    }
-
-    /** Startup mode for the Kafka consumer, see {@link #SCAN_STARTUP_MODE}. */
-    public enum ScanStartupMode implements DescribedEnum {
-        EARLIEST_OFFSET("earliest-offset", text("Start from the earliest offset possible.")),
-        LATEST_OFFSET("latest-offset", text("Start from the latest offset.")),
-        GROUP_OFFSETS(
-                "group-offsets",
-                text(
-                        "Start from committed offsets in ZooKeeper / Kafka brokers of a specific consumer group.")),
-        TIMESTAMP("timestamp", text("Start from user-supplied timestamp for each partition.")),
-        SPECIFIC_OFFSETS(
-                "specific-offsets",
-                text("Start from user-supplied specific offsets for each partition."));
-
-        private final String value;
-        private final InlineElement description;
-
-        ScanStartupMode(String value, InlineElement description) {
-            this.value = value;
-            this.description = description;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
-
-        @Override
-        public InlineElement getDescription() {
-            return description;
-        }
-    }
-
-    /** Bounded mode for the Kafka consumer, see {@link #SCAN_BOUNDED_MODE}. */
-    public enum ScanBoundedMode implements DescribedEnum {
-        UNBOUNDED("unbounded", text("Do not stop consuming")),
-        LATEST_OFFSET(
-                "latest-offset",
-                text(
-                        "Bounded by latest offsets. This is evaluated at the start of consumption"
-                                + " from a given partition.")),
-        GROUP_OFFSETS(
-                "group-offsets",
-                text(
-                        "Bounded by committed offsets in ZooKeeper / Kafka brokers of a specific"
-                                + " consumer group. This is evaluated at the start of consumption"
-                                + " from a given partition.")),
-        TIMESTAMP("timestamp", text("Bounded by a user-supplied timestamp.")),
-        SPECIFIC_OFFSETS(
-                "specific-offsets",
-                text(
-                        "Bounded by user-supplied specific offsets for each partition. If an offset"
-                                + " for a partition is not provided it will not consume from that"
-                                + " partition."));
-        private final String value;
-        private final InlineElement description;
-
-        ScanBoundedMode(String value, InlineElement description) {
-            this.value = value;
-            this.description = description;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
-
-        @Override
-        public InlineElement getDescription() {
-            return description;
-        }
-    }
-
-    private TDengineConnectorOptions() {}
 }

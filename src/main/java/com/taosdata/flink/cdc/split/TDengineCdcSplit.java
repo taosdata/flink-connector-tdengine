@@ -15,6 +15,12 @@ public class TDengineCdcSplit implements SourceSplit {
 
     private List<CdcTopicPartition> startPartitions;
 
+    public TDengineCdcSplit(String splitId, String topic, String groupId, String clientId) {
+        this.splitId = splitId;
+        this.groupId = groupId;
+        this.clientId = clientId;
+        this.topic = topic;
+    }
     public TDengineCdcSplit(String topic, String groupId, String clientId) {
         this.splitId = topic + "_" + groupId + "_"+ clientId;
         this.groupId = groupId;
@@ -28,6 +34,7 @@ public class TDengineCdcSplit implements SourceSplit {
         this.topic = topic;
         this.startPartitions = startPartitions;
     }
+
 
     @Override
     public String splitId() {

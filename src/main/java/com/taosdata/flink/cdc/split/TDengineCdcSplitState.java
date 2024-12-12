@@ -8,11 +8,11 @@ import java.util.List;
 public class TDengineCdcSplitState extends TDengineCdcSplit {
     private List<CdcTopicPartition> partitions;
     public TDengineCdcSplitState(String topic, String groupId, String clientId, List<CdcTopicPartition> partitions) {
-        super(topic, groupId, clientId);
+        super(topic + "_" + groupId + "_"+ clientId, topic, groupId, clientId);
         this.partitions = partitions;
     }
     public TDengineCdcSplitState(TDengineCdcSplit cdcSplit) {
-        super(cdcSplit.getTopic(), cdcSplit.getGroupId(), cdcSplit.getClientId());
+        super(cdcSplit.splitId, cdcSplit.getTopic(), cdcSplit.getGroupId(), cdcSplit.getClientId());
         this.partitions = new ArrayList<>();
     }
     public List<CdcTopicPartition> getTopicPartitions() {

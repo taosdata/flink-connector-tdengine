@@ -34,7 +34,6 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
         this.topic = topic;
         this.properties = properties;
         this.typeClass = typeClass;
-
     }
 
     @Override
@@ -44,11 +43,11 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
 
     @Override
     public SplitEnumerator<TDengineCdcSplit, TdengineCdcEnumState> createEnumerator(SplitEnumeratorContext<TDengineCdcSplit> enumContext) throws Exception {
-        return new TdengineCdcEnumerator(enumContext, getBoundedness(), topic);
+        return new TdengineCdcEnumerator(enumContext, getBoundedness(), topic, properties);
     }
     @Override
     public SplitEnumerator<TDengineCdcSplit, TdengineCdcEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineCdcSplit> enumContext, TdengineCdcEnumState checkpoint) throws Exception {
-        return new TdengineCdcEnumerator(enumContext, getBoundedness(), topic, checkpoint);
+        return new TdengineCdcEnumerator(enumContext, getBoundedness(), topic, properties, checkpoint);
     }
     @Override
     public SourceReader<OUT, TDengineCdcSplit> createReader(SourceReaderContext readerContext) throws Exception {

@@ -16,8 +16,6 @@ public class TdengineSourceEnumState {
         this.assignmentSqls = assignmentSqls;
     }
 
-
-
     public Deque<String> getUnassignedSqls() {
         return unassignedSqls;
     }

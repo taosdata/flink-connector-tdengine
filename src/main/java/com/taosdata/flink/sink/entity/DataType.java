@@ -42,5 +42,12 @@ public enum DataType {
         return typeNo;
     }
 
-
+    public static DataType getDataType(String inputTypeName) {
+        for (DataType splitType : DataType.values()) {
+            if (splitType.typeName.equalsIgnoreCase(inputTypeName)) {
+                return splitType;
+            }
+        }
+        return null;
+    }
 }
