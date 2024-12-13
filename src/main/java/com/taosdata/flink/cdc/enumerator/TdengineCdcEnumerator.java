@@ -2,6 +2,7 @@ package com.taosdata.flink.cdc.enumerator;
 
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
+import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
@@ -39,8 +40,8 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
         this.readerCount = context.currentParallelism();
         this.topic = topic;
         this.properties = properties;
+        assignmentCdcSplits = new ArrayList<>();
         if (checkpoint != null && checkpoint.isInitFinished()) {
-            assignmentCdcSplits = checkpoint.getAssignmentCdcSplits();
             unassignedCdcSplits = checkpoint.getUnassignedCdcSplits();
             this.isInitFinished = true;
         }
@@ -67,7 +68,12 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
 
     @Override
     public void addSplitsBack(List<TDengineCdcSplit> splits, int subtaskId) {
-
+        TreeSet<TDengineCdcSplit> splitSet = new TreeSet<>(unassignedCdcSplits);
+        splitSet.addAll(splits);
+        unassignedCdcSplits.addAll(splitSet);
+        if (context.registeredReaders().containsKey(subtaskId)) {
+            addReader(subtaskId);
+        }
     }
 
     private void checkReaderRegistered(int readerId) {

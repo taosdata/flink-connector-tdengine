@@ -23,14 +23,22 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     private final SortedMap<Long, Map<TopicPartition, OffsetAndMetadata>> offsetsToCommit;
 
+    private final boolean autoCommit;
 
     public TDengineCdcReader(SingleThreadFetcherManager splitFetcherManager,
                              RecordEmitter recordEmitter,
                              Configuration config,
-                             SourceReaderContext readerContext) {
+                             SourceReaderContext readerContext,
+                             String autoCommit) {
 
         super(splitFetcherManager, recordEmitter, config, readerContext);
         this.offsetsToCommit = Collections.synchronizedSortedMap(new TreeMap<>());
+        if (autoCommit.equals("true")) {
+            this.autoCommit = true;
+        } else {
+            this.autoCommit = false;
+        }
+
     }
 
     @Override
@@ -51,6 +59,9 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
     @Override
     public List<TDengineCdcSplit> snapshotState(long checkpointId) {
         List<TDengineCdcSplit> cdcSplits = super.snapshotState(checkpointId);
+        if (autoCommit) {
+            return cdcSplits;
+        }
 
         if (cdcSplits.isEmpty()) {
             offsetsToCommit.put(checkpointId, Collections.emptyMap());
@@ -75,6 +86,9 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
+        if (autoCommit) {
+            return;
+        }
         Map<TopicPartition, OffsetAndMetadata> committedPartitions =
                 offsetsToCommit.get(checkpointId);
         if (committedPartitions == null) {
@@ -89,9 +103,8 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
         }
         ((TDengineCdcFetcherManager) splitFetcherManager).commitOffsets(committedPartitions);
         removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
-
-
     }
+
     private void removeAllOffsetsToCommitUpToCheckpoint(long checkpointId) {
         while (!offsetsToCommit.isEmpty() && offsetsToCommit.firstKey() <= checkpointId) {
             offsetsToCommit.remove(offsetsToCommit.firstKey());

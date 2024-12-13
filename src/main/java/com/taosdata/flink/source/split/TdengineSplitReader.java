@@ -56,6 +56,11 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
     private SourceRecord getRowData() throws SQLException {
         try {
             if (resultSet == null || !resultSet.next()) {
+                if (resultSet != null) {
+                    resultSet.close();
+                    resultSet = null;
+                }
+
                 while (initNextSplitTask()) {
                     this.resultSet = stmt.executeQuery(currTask);
                     if (this.resultSet.next()) {
@@ -89,10 +94,19 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
             resultSet = null;
         }
 
+        currTask = "";
         if (currSplit != null) {
             currTask = currSplit.getNextTaskSplit();
         }
 
+        if (Strings.isNullOrEmpty(currTask)) {
+            return false;
+        }
+        return true;
+
+    }
+
+    private void initNextSplit() {
         if (Strings.isNullOrEmpty(currTask)) {
             if (currSplit != null) {
                 finishedSplits.add(currSplit);
@@ -101,14 +115,7 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
             if (this.currSplitIter != null && this.currSplitIter.hasNext()) {
                 currSplit = this.currSplitIter.next();
             }
-            if (currSplit == null) {
-                stmt.close();
-                conn.close();
-                return false;
-            }
-            currTask = currSplit.getNextTaskSplit();
         }
-        return true;
 
     }
 
@@ -123,6 +130,7 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
     @Override
     public RecordsWithSplitIds<SourceRecord> fetch() throws IOException {
         try {
+            initNextSplit();
             SourceRecords sourceRecords = new SourceRecords();
             for (int i = 0; i < batchSize; i++) {
                 SourceRecord sourceRecord = getRowData();
@@ -134,11 +142,11 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
             }
 
             if (sourceRecords.getSourceRecordList().isEmpty()) {
-                return TdengineSourceRecords.forFinishedSplit("" + this.subtaskId, finishedSplits);
+                return TdengineSourceRecords.forFinishedSplit(finishedSplits);
             }
 
             sourceRecords.setMetaData(this.metaData);
-            return  TdengineSourceRecords.forRecords("" + this.subtaskId, sourceRecords, finishedSplits);
+            return  TdengineSourceRecords.forRecords(currSplit.splitId, sourceRecords, finishedSplits);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -3,7 +3,6 @@ package com.taosdata.flink.sink.serializer;
 import com.taosdata.flink.sink.entity.DataType;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
-import static com.taosdata.flink.sink.entity.DataType.valueOf;
 
 public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer<RowData>{
     private final List<SinkMetaInfo> sinkMetaInfos;
@@ -26,6 +24,9 @@ public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer
 
     @Override
     public TDengineSinkRecord serialize(RowData record) throws IOException {
+        if (record == null) {
+            throw new IOException("serialize RowData is null!");
+        }
         GenericRowData rowData = (GenericRowData) record;
         List<Object> tagParams = new ArrayList<>();
         List<Object> columnParams = new ArrayList<>();
@@ -50,6 +51,9 @@ public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer
         return new TDengineSinkRecord(tbname, tagParams, columnParams);
     }
     private Object convertRowDataType(Object value, DataType fieldType) {
+        if (value == null) {
+            return null;
+        }
         if (value instanceof TimestampData) {
             TimestampData timestampData = (TimestampData)value;
             return timestampData.toTimestamp();

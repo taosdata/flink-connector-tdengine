@@ -1,13 +1,14 @@
 package com.taosdata.flink.cdc.split;
 
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
+import com.taosdata.flink.source.split.TDengineSplit;
 import com.taosdata.jdbc.tmq.TopicPartition;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 import java.util.List;
 import java.util.Objects;
 
-public class TDengineCdcSplit implements SourceSplit {
+public class TDengineCdcSplit implements SourceSplit, Comparable<TDengineCdcSplit> {
     protected final String splitId;
     private final String groupId;
     private final String clientId;
@@ -21,14 +22,16 @@ public class TDengineCdcSplit implements SourceSplit {
         this.clientId = clientId;
         this.topic = topic;
     }
+
     public TDengineCdcSplit(String topic, String groupId, String clientId) {
-        this.splitId = topic + "_" + groupId + "_"+ clientId;
+        this.splitId = topic + "_" + groupId + "_" + clientId;
         this.groupId = groupId;
         this.clientId = clientId;
         this.topic = topic;
     }
+
     public TDengineCdcSplit(String topic, String groupId, String clientId, List<CdcTopicPartition> startPartitions) {
-        this.splitId = topic + "_" + groupId + "_"+ clientId;
+        this.splitId = topic + "_" + groupId + "_" + clientId;
         this.groupId = groupId;
         this.clientId = clientId;
         this.topic = topic;
@@ -78,5 +81,10 @@ public class TDengineCdcSplit implements SourceSplit {
 
     public List<CdcTopicPartition> getStartPartitions() {
         return startPartitions;
+    }
+
+    @Override
+    public int compareTo(TDengineCdcSplit o) {
+        return o.splitId.compareTo(this.splitId);
     }
 }

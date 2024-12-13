@@ -4,13 +4,16 @@ import org.apache.flink.api.connector.source.SourceSplit;
 
 import java.util.*;
 
-public class TDengineSplit implements SourceSplit {
+public class TDengineSplit implements SourceSplit, Comparable<TDengineSplit> {
     protected final String splitId;
     private final List<String> taskList;
 
     private Iterator<String> currTaskIterator;
 
+    private List<String> unexecutedTasks;
+
     private List<String> finishList;
+
     public TDengineSplit(String splitId) {
         this.splitId = splitId;
         this.finishList = new ArrayList<>();
@@ -19,8 +22,18 @@ public class TDengineSplit implements SourceSplit {
 
     public TDengineSplit(String splitId, List<String> taskList, List<String> finishList) {
         this.splitId = splitId;
-        this.finishList = taskList;
-        this.taskList = finishList;
+
+        if (taskList == null) {
+            this.taskList = new ArrayList<>();
+        } else {
+            this.taskList = taskList;
+        }
+
+        if (finishList == null) {
+            this.finishList = new ArrayList<>();
+        } else {
+            this.finishList = finishList;
+        }
     }
 
     @Override
@@ -30,8 +43,9 @@ public class TDengineSplit implements SourceSplit {
 
     public void setTaskSplits(List<String> taskList) {
         this.taskList.addAll(taskList);
-        currTaskIterator = this.taskList.iterator();
+//        currTaskIterator = this.taskList.iterator();
     }
+
     public List<String> gettasksplits() {
         return taskList;
     }
@@ -40,6 +54,17 @@ public class TDengineSplit implements SourceSplit {
         if (taskList.isEmpty()) {
             return "";
         }
+
+        if (currTaskIterator == null || unexecutedTasks == null || unexecutedTasks.isEmpty()) {
+            if (finishList == null || finishList.isEmpty()) {
+                unexecutedTasks = taskList;
+                currTaskIterator = unexecutedTasks.iterator();
+            } else {
+                unexecutedTasks = taskList.subList(finishList.size() - 1, taskList.size());
+                currTaskIterator = unexecutedTasks.iterator();
+            }
+        }
+
         if (currTaskIterator.hasNext()) {
             return currTaskIterator.next();
         }
@@ -70,7 +95,13 @@ public class TDengineSplit implements SourceSplit {
     public List<String> getFinishList() {
         return finishList;
     }
+
     public void setFinishList(List<String> finishList) {
         this.finishList = finishList;
+    }
+
+    @Override
+    public int compareTo(TDengineSplit o) {
+        return o.splitId.compareTo(this.splitId);
     }
 }

@@ -88,15 +88,11 @@ public class TDFlinkSourceTest {
             throw ex;
         }
 
-
-
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
 
-
         SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
-        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.98:6041/power?user=root&password=taosdata", connProps, sql, new TdengineRowDataDeserialization());
+        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.98:7041/power?user=root&password=taosdata", connProps, sql, new TdengineRowDataDeserialization());
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
@@ -131,22 +127,21 @@ public class TDFlinkSourceTest {
         config.setProperty("td.connect.pass", "taosdata");
         config.setProperty("value.deserializer", "RowData");
         config.setProperty("value.deserializer.encoding", "UTF-8");
-        TDengineCdcSource<RowData> tdengineSource = new TDengineCdcSource<>("tmq_meters", config, RowData.class);
+        TDengineCdcSource<RowData> tdengineSource = new TDengineCdcSource<>("topic_meters", config, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
-//        DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
-//            StringBuilder sb = new StringBuilder();
-//            GenericRowData row = (GenericRowData) rowData;
-//            sb.append("tsxx: " + row.getField(0) +
-//                    ", current: " + row.getFloat(1) +
-//                    ", voltage: " + row.getInt(2) +
-//                    ", phase: " + row.getFloat(3) +
-//                    ", location: " + new String(row.getBinary(4)));
-//            sb.append("\n");
-//            System.out.println(sb);
-//            return sb.toString();
-//        });
-//        resultStream.addSink(new DiscardingSink<String>());
-        input.addSink(new DiscardingSink<RowData>());
+        DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
+            StringBuilder sb = new StringBuilder();
+            GenericRowData row = (GenericRowData) rowData;
+            sb.append("tsxx: " + row.getField(0) +
+                    ", current: " + row.getFloat(1) +
+                    ", voltage: " + row.getInt(2) +
+                    ", phase: " + row.getFloat(3) +
+                    ", location: " + new String(row.getBinary(4)));
+            sb.append("\n");
+            System.out.println(sb);
+            return sb.toString();
+        });
+
         env.execute("Flink test cdc Example");
     }
 
@@ -176,7 +171,7 @@ public class TDFlinkSourceTest {
                 " phase FLOAT," +
                 " tbname VARBINARY" +
                 ") WITH (" +
-                "  'connector' = 'tdengine-source'," +
+                "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table-name' = 'meters'," +
@@ -237,7 +232,7 @@ public class TDFlinkSourceTest {
                 " location VARBINARY," +
                 " groupid INT" +
                 ") WITH (" +
-                "  'connector' = 'tdengine-source'," +
+                "  'connector' = 'tdengine-connector'," +
                 "  'bootstrap.servers' = '192.168.1.98:7041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_10'," +
@@ -287,7 +282,7 @@ public class TDFlinkSourceTest {
                 " groupid INT," +
                 " tbname VARBINARY" +
                 ") WITH (" +
-                "  'connector' = 'tdengine-source'," +
+                "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table-name' = 'meters'," +
@@ -304,7 +299,7 @@ public class TDFlinkSourceTest {
                 " groupid INT," +
                 " tbname VARBINARY" +
                 ") WITH (" +
-                "  'connector' = 'tdengine-source'," +
+                "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +

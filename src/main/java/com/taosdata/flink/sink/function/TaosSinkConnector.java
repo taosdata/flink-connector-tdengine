@@ -1,7 +1,5 @@
-package com.taosdata.flink.sink;
+package com.taosdata.flink.sink.function;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.taosdata.flink.sink.entity.*;
 import com.taosdata.jdbc.TSDBDriver;

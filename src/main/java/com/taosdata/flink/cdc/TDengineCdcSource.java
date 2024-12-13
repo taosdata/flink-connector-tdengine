@@ -66,8 +66,8 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
         FutureCompletingBlockingQueue<RecordsWithSplitIds<OUT>>
                 elementsQueue = new FutureCompletingBlockingQueue<>();
         SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(elementsQueue, splitReaderSupplier);
-
-        return new TDengineCdcReader<>(fetcherManager, new TDengineCdcEmitter<OUT>(), toConfiguration(this.properties), readerContext);
+        String autoCommit = this.properties.getProperty("enable.auto.commit", "true");
+        return new TDengineCdcReader<>(fetcherManager, new TDengineCdcEmitter<OUT>(), toConfiguration(this.properties), readerContext, autoCommit);
 
     }
 

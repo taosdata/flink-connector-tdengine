@@ -1,6 +1,6 @@
 //package com.taosdata.flink.source;
 //
-//import com.taosdata.flink.sink.TaosSinkConnector;
+//import com.taosdata.flink.sink.function.TaosSinkConnector;
 //import com.taosdata.flink.source.entity.TaosRowConverter;
 //import com.taosdata.jdbc.TSDBDriver;
 //import org.apache.flink.configuration.Configuration;

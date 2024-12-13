@@ -39,7 +39,6 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecord<OUT>, 
         this.tdengineSplits = new ArrayList<>();
         this.properties = properties;
         this.properties.setProperty("td.connect.type", "ws");
-        this.properties.setProperty("enable.auto.commit", "false");
         String pollInterval = this.properties.getProperty("poll.interval.ms");
         if (!Strings.isNullOrEmpty(pollInterval)) {
             pollIntervalMs = Integer.parseInt(pollInterval);

@@ -23,7 +23,7 @@ import static com.taosdata.flink.table.TDengineConnectorOptions.SINK_PARALLELISM
 
 public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
 
-    public static final String IDENTIFIER = "tdengine-source";
+    public static final String IDENTIFIER = "tdengine-connector";
 
     private static final Logger LOG = LoggerFactory.getLogger(TDengineDynamicTableFactory.class);
 
@@ -41,15 +41,16 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         Integer parallelism = helper.getOptions().get(SINK_PARALLELISM);
         TableSchema physicalSchema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
         Properties connProps = new Properties();
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, "en_US.UTF-8");
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, config.get(TDengineConnectorOptions.LOCALE));
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, config.get(TDengineConnectorOptions.SERVER_TIME_ZONE));
         String dbname = config.get(TDengineConnectorOptions.SINK_DBNAME_NAME);
         String tbname = config.get(TDengineConnectorOptions.SINK_TABLE_NAME);
         String superTableName = config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME);
         String url = config.get(TDengineConnectorOptions.TD_JDBC_URL);
+        int batchSize = config.get(TDengineConnectorOptions.SINK_BATCH_SIZE);
         try {
-            return new TDengineTableSink(dbname, superTableName, tbname, url, connProps, physicalSchema, parallelism);
+            return new TDengineTableSink(dbname, superTableName, tbname, url, connProps, physicalSchema, parallelism, batchSize);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -114,7 +115,11 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         String url = config.get(TDengineConnectorOptions.TD_JDBC_URL);
         String scanQurey = config.get(TDengineConnectorOptions.SCAN_QUERY);
         final DataType physicalDataType = context.getPhysicalRowDataType();
-        return new TDengineTableSource(url, scanQurey, physicalDataType);
+
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, config.get(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT));
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
+        return new TDengineTableSource(url, scanQurey, physicalDataType, connProps);
     }
 
     private static void validateCdc(ReadableConfig tableOptions) {
@@ -148,7 +153,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionVal = config.get(TDengineConnectorOptions.PASSWORD);
         properties.setProperty("td.connect.pass", optionVal);
         properties.setProperty("value.deserializer", "RowData");
-        properties.setProperty("value.deserializer.encoding", "UTF-8");
+        properties.setProperty("value.deserializer.encoding", config.get(TDengineConnectorOptions.CHARSET));
         String topic = config.get(TDengineConnectorOptions.TOPIC);
         return new TDengineTableCdc(topic, properties);
     }
@@ -180,6 +185,15 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.SINK_DBNAME_NAME);
         optionalOptions.add(TDengineConnectorOptions.SINK_TABLE_NAME);
         optionalOptions.add(TDengineConnectorOptions.SINK_SUPERTABLE_NAME);
+        optionalOptions.add(TDengineConnectorOptions.SINK_BATCH_SIZE);
+        optionalOptions.add(TDengineConnectorOptions.LOCALE);
+        optionalOptions.add(TDengineConnectorOptions.CHARSET);
+        optionalOptions.add(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT);
+        optionalOptions.add(TDengineConnectorOptions.SERVER_TIME_ZONE);
+
+
+
+
         return optionalOptions;
     }
 

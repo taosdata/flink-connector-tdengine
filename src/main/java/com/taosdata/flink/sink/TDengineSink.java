@@ -24,7 +24,10 @@ public class TDengineSink <IN> implements Sink<IN> {
 
     private final List<SinkMetaInfo> metaInfos;
 
-    public TDengineSink(String dbName, String superTableName, String normalTableName, String url, Properties properties, TDengineSinkRecordSerializer<IN> serializer, List<SinkMetaInfo> metaInfos) {
+    private final int batchSize;
+
+    public TDengineSink(String dbName, String superTableName, String normalTableName, String url, Properties properties,
+                        TDengineSinkRecordSerializer<IN> serializer, List<SinkMetaInfo> metaInfos, int batchSize) {
         this.dbName = dbName;
         this.superTableName = superTableName;
         this.normalTableName = normalTableName;
@@ -32,6 +35,7 @@ public class TDengineSink <IN> implements Sink<IN> {
         this.properties = properties;
         this.serializer = serializer;
         this.metaInfos = metaInfos;
+        this.batchSize = batchSize;
     }
 
     @Override
@@ -47,7 +51,7 @@ public class TDengineSink <IN> implements Sink<IN> {
                         columnMetaInfos.add(metaInfo);
                     }
                 }
-                return new TDengineWriter<IN>(this.url, this.dbName, this.superTableName, this.normalTableName, this.properties, serializer, tagMetaInfos, columnMetaInfos);
+                return new TDengineWriter<IN>(this.url, this.dbName, this.superTableName, this.normalTableName, this.properties, serializer, tagMetaInfos, columnMetaInfos, batchSize);
             }
             throw new SQLException("meta info is null!");
         } catch (SQLException e) {

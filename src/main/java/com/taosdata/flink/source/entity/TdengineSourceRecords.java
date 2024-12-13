@@ -63,7 +63,7 @@ public class TdengineSourceRecords  implements RecordsWithSplitIds<SourceRecord>
             final String splitId, SourceRecords records, List<TDengineSplit> finishedSplits) {
         return new TdengineSourceRecords(splitId, records, null);
     }
-    public static TdengineSourceRecords forFinishedSplit(final String splitId, List<TDengineSplit> finishedSplits) {
+    public static TdengineSourceRecords forFinishedSplit(List<TDengineSplit> finishedSplits) {
         return new TdengineSourceRecords(null, new SourceRecords(), finishedSplits);
     }
 }

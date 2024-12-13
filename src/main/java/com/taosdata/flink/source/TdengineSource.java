@@ -67,9 +67,9 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
     }
 
     @Override
-    public SplitEnumerator<TDengineSplit, TdengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext, TdengineSourceEnumState TdengineSplitsState) throws Exception {
+    public SplitEnumerator<TDengineSplit, TdengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext, TdengineSourceEnumState splitsState) throws Exception {
         //todo restore
-        return new TdengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql);
+        return new TdengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql, splitsState);
     }
 
     @Override

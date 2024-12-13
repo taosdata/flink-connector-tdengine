@@ -16,6 +16,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class TDengineWriter <IN> implements SinkWriter<IN> {
@@ -37,10 +40,13 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
 
     private Connection conn;
     private TSWSPreparedStatement pstmt;
+    private final Lock lock = new ReentrantLock();
+    private int batchSize;
+    private final AtomicInteger recodeCount = new AtomicInteger(0);
 
     public TDengineWriter(String url, String dbName, String superTableName, String normalTableName,
                           Properties properties, TDengineSinkRecordSerializer<IN> serializer,
-                          List<SinkMetaInfo> tagMetaInfos, List<SinkMetaInfo> columnMetaInfos) throws SQLException {
+                          List<SinkMetaInfo> tagMetaInfos, List<SinkMetaInfo> columnMetaInfos, int batchSize) throws SQLException {
 
         this.superTableName = superTableName;
         this.normalTableName = normalTableName;
@@ -50,6 +56,9 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
         this.serializer = serializer;
         this.tagMetaInfos = tagMetaInfos;
         this.columnMetaInfos = columnMetaInfos;
+        if (batchSize > 0) {
+            this.batchSize = batchSize;
+        }
         initStmt();
     }
 
@@ -84,18 +93,16 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
         LOG.info("connect websocket url ok");
     }
 
-
-
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
         TDengineSinkRecord record = serializer.serialize(element);
         if(record == null || record.getColumnParams() == null){
-            //ddl or value is null
+            LOG.warn("element serializer result is null!");
             return;
         }
 
         try {
-
+            lock.lock();
             if (!Strings.isNullOrEmpty(record.getTableName())) {
                 pstmt.setTableName(this.dbName + "." + record.getTableName());
             }
@@ -105,17 +112,34 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
             }
             setStmtParam(pstmt, record.getColumnParams());
             pstmt.addBatch();
-            pstmt.executeBatch();
+            recodeCount.incrementAndGet();
+            if (recodeCount.get() >= batchSize) {
+                pstmt.executeBatch();
+                recodeCount.set(0);
+            }
 
         } catch (SQLException e) {
             LOG.error("invoke exception info:{}", e.getSQLState());
             throw new IOException(e.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void flush(boolean endOfInput) throws IOException, InterruptedException {
-
+        try {
+            lock.lock();
+            if (recodeCount.get() >= 0) {
+                pstmt.executeBatch();
+                recodeCount.set(0);
+            }
+        } catch (SQLException e) {
+            LOG.error("flush exception info:{}", e.getSQLState());
+            throw new IOException(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -127,8 +151,6 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
             this.conn.close();
         }
     }
-
-
 
     private String getSuperTableSql() {
         if (Strings.isNullOrEmpty(this.dbName) || this.columnMetaInfos == null || this.columnMetaInfos.isEmpty()

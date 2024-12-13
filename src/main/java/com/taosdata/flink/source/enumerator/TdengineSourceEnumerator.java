@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, TdengineSourceEnumState> {
-    private final Deque<String> unassignedSqls;
-    private final List<String> assignmentSqls;
+    private Deque<TDengineSplit> unassignedSplits;
+    private TreeSet<TDengineSplit> assignmentSplits;
     private final SplitEnumeratorContext<TDengineSplit> context;
     private final Boundedness boundedness;
     private final SourceSplitSql sourceSql;
@@ -26,25 +26,42 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     public TdengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
                                     Boundedness boundedness, SourceSplitSql sourceSql) {
-        this.assignmentSqls = new ArrayList<>();
-        this.unassignedSqls = new ArrayDeque<>();
+        this.assignmentSplits = new TreeSet<>();
+        this.unassignedSplits = new ArrayDeque<>();
         this.context = context;
         this.boundedness = boundedness;
         this.sourceSql = sourceSql;
         this.readerCount = context.currentParallelism();
     }
 
+    public TdengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
+                                    Boundedness boundedness, SourceSplitSql sourceSql, TdengineSourceEnumState splitsState) {
+        this.assignmentSplits = new TreeSet<>();
+        this.unassignedSplits = new ArrayDeque<>();
+        this.context = context;
+        this.boundedness = boundedness;
+        this.sourceSql = sourceSql;
+        this.readerCount = context.currentParallelism();
+
+        if (splitsState != null && splitsState.isInitFinished()) {
+            assignmentSplits = splitsState.getAssignmentSqls();
+            unassignedSplits = splitsState.getUnassignedSqls();
+            this.isInitFinished = true;
+        }
+    }
+
     @Override
     public void start() {
         if (!this.isInitFinished) {
-            this.unassignedSqls.clear();
-            this.assignmentSqls.clear();
+            this.unassignedSplits.clear();
+            this.assignmentSplits.clear();
+            Deque<String> unassignedSql = new ArrayDeque<>();
             if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TIMESTAMP) {
-                splitByTimestamp();
+                unassignedSql = splitByTimestamp();
             } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TAG) {
-                splitByTags();
+                unassignedSql = splitByTags();
             } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TABLE) {
-                splitByTables();
+                unassignedSql = splitByTables();
             } else {
                 if (Strings.isNullOrEmpty(this.sourceSql.getSql())) {
                     String sql = "select " + this.sourceSql.getSelect()
@@ -52,23 +69,42 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     if (!this.sourceSql.getWhere().isEmpty()) {
                         sql += "where " + this.sourceSql.getWhere();
                     }
-                    this.unassignedSqls.push(sql);
+                    unassignedSql.push(sql);
                 } else {
-                    this.unassignedSqls.push(this.sourceSql.getSql());
+                    unassignedSql.push(this.sourceSql.getSql());
                 }
             }
 
-            if (this.unassignedSqls.size() > this.readerCount) {
-                taskCount = this.unassignedSqls.size() / this.readerCount;
-                if ((this.unassignedSqls.size() % this.readerCount) > 0) {
+            if (unassignedSql.size() > this.readerCount) {
+                taskCount = unassignedSql.size() / this.readerCount;
+                if ((unassignedSql.size() % this.readerCount) > 0) {
                     taskCount++;
                 }
             }
+
+            for (int i = 0; i < this.readerCount && !unassignedSql.isEmpty(); i++) {
+                TDengineSplit tdengineSplit = new TDengineSplit("reader_no_" + i);
+                List<String> taskSplits = new ArrayList<>(taskCount);
+                for (int j = 0; j < this.taskCount; j++) {
+                    String taskSplit = unassignedSql.pop();
+                    if (Strings.isNullOrEmpty(taskSplit)) {
+                        break;
+                    }
+                    taskSplits.add(taskSplit);
+                }
+                if (taskSplits.isEmpty()) {
+                    break;
+                }
+                tdengineSplit.setTaskSplits(taskSplits);
+                this.unassignedSplits.push(tdengineSplit);
+            }
         }
+
         isInitFinished = true;
     }
 
-    private void splitByTimestamp() {
+    private Deque<String> splitByTimestamp() {
+        Deque<String> unassignedSql = new ArrayDeque<>();
         TimestampSplitInfo timestampSplitInfo = sourceSql.getTimestampSplitInfo();
         if (timestampSplitInfo != null && !Strings.isNullOrEmpty(timestampSplitInfo.getFieldName()) && timestampSplitInfo.getEndTime().after(timestampSplitInfo.getStartTime())) {
             long timeDifference = timestampSplitInfo.getEndTime().getTime() - timestampSplitInfo.getStartTime().getTime();
@@ -81,7 +117,7 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
                         + timestampSplitInfo.getFieldName() + " >= " + timestampSplitInfo.getStartTime().getTime()
                         + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime().getTime();
-                this.unassignedSqls.push(sql);
+                unassignedSql.push(sql);
             } else {
                 long startTime = timestampSplitInfo.getStartTime().getTime();
                 boolean bRemainder = timeDifference % timestampSplitInfo.getInterval() > 0;
@@ -89,7 +125,7 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
                             + " and " + timestampSplitInfo.getFieldName() + " < " + startTime + timestampSplitInfo.getInterval();
-                    this.unassignedSqls.push(sql);
+                    unassignedSql.push(sql);
                     startTime += timestampSplitInfo.getInterval();
                 }
 
@@ -97,24 +133,28 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
                             + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime().getTime();
-                    this.unassignedSqls.push(sql);
+                    unassignedSql.push(sql);
                 }
             }
         }
+        return unassignedSql;
     }
 
-    private void splitByTags() {
+    private Deque<String> splitByTags() {
+        Deque<String> unassignedSqls = new ArrayDeque<>();
         List<String> tags = sourceSql.getTagList();
         if (tags != null && !tags.isEmpty()) {
             for (int i = 0; i < tags.size(); i++) {
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
                         + tags.get(i);
-                this.unassignedSqls.push(sql);
+                unassignedSqls.push(sql);
             }
         }
+        return unassignedSqls;
     }
 
-    private void splitByTables() {
+    private Deque<String> splitByTables() {
+        Deque<String> unassignedSqls = new ArrayDeque<>();
         List<String> tableList = sourceSql.getTableList();
         if (tableList != null && !tableList.isEmpty()) {
             for (int i = 0; i < tableList.size(); i++) {
@@ -123,9 +163,10 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 if (!this.sourceSql.getWhere().isEmpty()) {
                     sql += "where " + this.sourceSql.getWhere();
                 }
-                this.unassignedSqls.push(sql);
+                unassignedSqls.push(sql);
             }
         }
+        return unassignedSqls;
     }
 
     @Override
@@ -142,25 +183,24 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public void addSplitsBack(List<TDengineSplit> splits, int subtaskId) {
-
+        TreeSet<TDengineSplit> splitSet = new TreeSet<>(unassignedSplits);
+        splitSet.addAll(splits);
+        unassignedSplits.addAll(splitSet);
+        if (context.registeredReaders().containsKey(subtaskId)) {
+            addReader(subtaskId);
+        }
     }
 
     @Override
     public void addReader(int subtaskId) {
         checkReaderRegistered(subtaskId);
-        if (!unassignedSqls.isEmpty()) {
-            TDengineSplit tdengineSplit = new TDengineSplit("" + subtaskId);
-            List<String> taskSplits = new ArrayList<>(taskCount);
-            for (int i = 0; i < this.taskCount; i++) {
-                String taskSplit = unassignedSqls.pop();
-                taskSplits.add(taskSplit);
-                assignmentSqls.add(taskSplit);
-            }
-            tdengineSplit.setTaskSplits(taskSplits);
+        if (!unassignedSplits.isEmpty()) {
+            TDengineSplit tdengineSplit = unassignedSplits.pop();
+            assignmentSplits.add(tdengineSplit);
             context.assignSplit(tdengineSplit, subtaskId);
         }
 
-        if (unassignedSqls.isEmpty()) {
+        if (unassignedSplits.isEmpty()) {
             Set<Integer> taskIds = context.registeredReaders().keySet();
             if (taskIds != null && taskIds.size() > 0) {
                 for (Integer taskId : taskIds) {
@@ -174,7 +214,7 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public TdengineSourceEnumState snapshotState(long checkpointId) throws Exception {
-        return new TdengineSourceEnumState(this.unassignedSqls, this.assignmentSqls, this.isInitFinished);
+        return new TdengineSourceEnumState(this.unassignedSplits, this.assignmentSplits, this.isInitFinished);
     }
 
     @Override

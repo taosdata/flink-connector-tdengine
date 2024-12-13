@@ -35,14 +35,11 @@ public class TDengineTableSource implements ScanTableSource {
     private String scanQuery;
     private String mode;
 
-    public TDengineTableSource(String url, String scanQuery, DataType physicalDataType) {
+    public TDengineTableSource(String url, String scanQuery, DataType physicalDataType, Properties connProps) {
         this.url = url;
         this.scanQuery = scanQuery;
         this.physicalDataType = physicalDataType;
-        this.connProps = new Properties();
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
-
+        this.connProps = connProps;
     }
 
     @Override
@@ -71,7 +68,7 @@ public class TDengineTableSource implements ScanTableSource {
 
     @Override
     public DynamicTableSource copy() {
-        return new TDengineTableSource(this.url, this.scanQuery, this.physicalDataType);
+        return new TDengineTableSource(this.url, this.scanQuery, this.physicalDataType, this.connProps);
     }
 
     @Override

@@ -95,10 +95,29 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> SERVER_TIME_ZONE =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_TIME_ZONE)
                     .stringType()
-                    .noDefaultValue()
+                    .defaultValue("UTC-8")
                     .withDescription(
                             "The session time zone in database server. If not set, then "
                                     + "ZoneId.systemDefault() is used to determine the server time zone.");
+
+    public static final ConfigOption<String> CHARSET = ConfigOptions
+            .key(TSDBDriver.PROPERTY_KEY_CHARSET)
+            .stringType()
+            .defaultValue("UTF-8")
+            .withDescription("tdengine database charset");
+
+    public static final ConfigOption<String> LOCALE = ConfigOptions
+            .key(TSDBDriver.PROPERTY_KEY_LOCALE)
+            .stringType()
+            .defaultValue("en_US.UTF-8")
+            .withDescription("tdengine database local");
+
+
+    public static final ConfigOption<String> ENABLE_AUTO_RECONNECT = ConfigOptions
+            .key(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT)
+            .stringType()
+            .defaultValue("true")
+            .withDescription("tdengine database enable auto reconnect");
 
     public static final ConfigOption<String> SCAN_QUERY =
             ConfigOptions.key("scan.query")
@@ -190,6 +209,13 @@ public class TDengineConnectorOptions {
             .stringType()
             .defaultValue("")
             .withDescription("tdengine database name");
+    public static final ConfigOption<Integer> SINK_BATCH_SIZE = ConfigOptions
+            .key("sink.batch.size")
+            .intType()
+            .defaultValue(500)
+            .withDescription("tdengine database name");
+
+
 
     public static final ConfigOption<Integer> SINK_PARALLELISM = FactoryUtil.SINK_PARALLELISM;
 

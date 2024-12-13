@@ -1,7 +1,7 @@
 package com.taosdata.flink;
 
-import com.taosdata.flink.sink.*;
 import com.taosdata.flink.sink.entity.*;
+import com.taosdata.flink.sink.function.TaosSinkConnector;
 import com.taosdata.flink.source.*;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;

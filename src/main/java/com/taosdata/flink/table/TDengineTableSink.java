@@ -30,15 +30,16 @@ public class TDengineTableSink implements DynamicTableSink {
     private List<SinkMetaInfo> sinkSqlMetaInfos;
     private TDengineSinkRecordSerializer<RowData> serializer;
     private final Integer sinkParallelism;
+    private final int batchSize;
 
-
-    public TDengineTableSink(String dbName, String superTableName, String normalTableName, String url, Properties properties, TableSchema physicalSchema, Integer sinkParallelism) throws SQLException {
+    public TDengineTableSink(String dbName, String superTableName, String normalTableName, String url, Properties properties, TableSchema physicalSchema, Integer sinkParallelism, int batchSize) throws SQLException {
         this.dbName = dbName;
         this.superTableName = superTableName;
         this.normalTableName = normalTableName;
         this.url = url;
         this.properties = properties;
         this.sinkParallelism = sinkParallelism;
+        this.batchSize = batchSize;
         sinkMetaInfos = new ArrayList<>();
         sinkSqlMetaInfos = new ArrayList<>();
         Map<String, SinkMetaInfo> metaInfoMap = null;
@@ -72,6 +73,7 @@ public class TDengineTableSink implements DynamicTableSink {
         this.sinkParallelism = tableSink.sinkParallelism;
         this.sinkMetaInfos = tableSink.sinkMetaInfos;
         this.serializer = tableSink.getSerializer();
+        this.batchSize = tableSink.batchSize;
     }
 
     @Override
@@ -81,7 +83,7 @@ public class TDengineTableSink implements DynamicTableSink {
 
     @Override
     public SinkRuntimeProvider getSinkRuntimeProvider(Context context) {
-        return SinkV2Provider.of(new TDengineSink<>(dbName, superTableName, normalTableName, url, properties, serializer, sinkSqlMetaInfos), sinkParallelism);
+        return SinkV2Provider.of(new TDengineSink<>(dbName, superTableName, normalTableName, url, properties, serializer, sinkSqlMetaInfos, 500), sinkParallelism);
     }
 
     @Override

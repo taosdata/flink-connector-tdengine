@@ -1,6 +1,7 @@
 package com.taosdata.flink.sink;
 
 import com.taosdata.flink.sink.entity.*;
+import com.taosdata.flink.sink.function.TaosSinkConnector;
 import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

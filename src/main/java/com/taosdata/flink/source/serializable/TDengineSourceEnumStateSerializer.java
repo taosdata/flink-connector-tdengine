@@ -17,14 +17,14 @@
  */
 
 package com.taosdata.flink.source.serializable;
+
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
+import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+
 import java.io.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -40,7 +40,9 @@ public class TDengineSourceEnumStateSerializer
      * assigned splits.
      */
     private static final int VERSION_0 = 0;
-    /** state of VERSION_1 only contains assignedPartitions, which is a list of assigned splits. */
+    /**
+     * state of VERSION_1 only contains assignedPartitions, which is a list of assigned splits.
+     */
     private static final int VERSION_1 = 1;
     /**
      * state of VERSION_2 contains initialDiscoveryFinished and partitions with different assignment
@@ -60,16 +62,32 @@ public class TDengineSourceEnumStateSerializer
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(baos)) {
             out.writeBoolean(enumState.isInitFinished());
-            List<String> taskList = enumState.getAssignmentSqls();
+            TreeSet<TDengineSplit> taskList = enumState.getAssignmentSqls();
             out.writeInt(taskList.size());
-            for (String task : taskList) {
-                out.writeUTF(task);
+            for (TDengineSplit task : taskList) {
+                out.writeUTF(task.splitId());
+                out.writeInt(task.gettasksplits().size());
+                for (String split : task.gettasksplits()) {
+                    out.writeUTF(split);
+                }
+                out.writeInt(task.getFinishList().size());
+                for (String split : task.getFinishList()) {
+                    out.writeUTF(split);
+                }
             }
 
-            Deque<String> finishList = enumState.getUnassignedSqls();
-            out.writeInt(finishList.size());
-            for (String task : finishList) {
-                out.writeUTF(task);
+            Deque<TDengineSplit> unassignedSplits = enumState.getUnassignedSqls();
+            out.writeInt(unassignedSplits.size());
+            for (TDengineSplit task : unassignedSplits) {
+                out.writeUTF(task.splitId());
+                out.writeInt(task.gettasksplits().size());
+                for (String split : task.gettasksplits()) {
+                    out.writeUTF(split);
+                }
+                out.writeInt(task.getFinishList().size());
+                for (String split : task.getFinishList()) {
+                    out.writeUTF(split);
+                }
             }
             out.flush();
 
@@ -83,18 +101,46 @@ public class TDengineSourceEnumStateSerializer
              DataInputStream in = new DataInputStream(bais)) {
             boolean isInitFinished = in.readBoolean();
             int count = in.readInt();
-            List<String> assignmentSqls = new ArrayList<>(count);
+            TreeSet<TDengineSplit> assignmentSplits = new TreeSet<>();
             for (int i = 0; i < count; i++) {
-                assignmentSqls.add(in.readUTF());
+                TDengineSplit split = new TDengineSplit(in.readUTF());
+                int taskCount = in.readInt();
+                List<String> taskList = new ArrayList<>(taskCount);
+                for (int j = 0; j < taskCount; j++) {
+                    taskList.add(in.readUTF());
+                }
+                split.setTaskSplits(taskList);
+
+                taskCount = in.readInt();
+                List<String> finishList = new ArrayList<>(taskCount);
+                for (int j = 0; j < taskCount; j++) {
+                    finishList.add(in.readUTF());
+                }
+                split.setFinishList(finishList);
+                assignmentSplits.add(split);
             }
 
             count = in.readInt();
-            Deque<String> unassignedSqls = new ArrayDeque<>(count);
+            Deque<TDengineSplit> unassignedSplits = new ArrayDeque<>(count);
             for (int i = 0; i < count; i++) {
-                unassignedSqls.push(in.readUTF());
+                TDengineSplit split = new TDengineSplit(in.readUTF());
+                int taskCount = in.readInt();
+                List<String> taskList = new ArrayList<>(taskCount);
+                for (int j = 0; j < taskCount; j++) {
+                    taskList.add(in.readUTF());
+                }
+                split.setTaskSplits(taskList);
+
+                taskCount = in.readInt();
+                List<String> finishList = new ArrayList<>(taskCount);
+                for (int j = 0; j < taskCount; j++) {
+                    finishList.add(in.readUTF());
+                }
+                split.setFinishList(finishList);
+                unassignedSplits.add(split);
             }
 
-            return new TdengineSourceEnumState(unassignedSqls, assignmentSqls, isInitFinished);
+            return new TdengineSourceEnumState(unassignedSplits, assignmentSplits, isInitFinished);
         }
     }
 
