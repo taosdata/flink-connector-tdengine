@@ -113,11 +113,8 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
             setStmtParam(pstmt, record.getColumnParams());
             pstmt.addBatch();
             recodeCount.incrementAndGet();
-            if (recodeCount.get() >= batchSize) {
-                pstmt.executeBatch();
-                recodeCount.set(0);
-            }
-
+            pstmt.executeBatch();
+            recodeCount.set(0);
         } catch (SQLException e) {
             LOG.error("invoke exception info:{}", e.getSQLState());
             throw new IOException(e.getMessage());
@@ -128,18 +125,19 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
 
     @Override
     public void flush(boolean endOfInput) throws IOException, InterruptedException {
-        try {
-            lock.lock();
-            if (recodeCount.get() >= 0) {
-                pstmt.executeBatch();
-                recodeCount.set(0);
-            }
-        } catch (SQLException e) {
-            LOG.error("flush exception info:{}", e.getSQLState());
-            throw new IOException(e.getMessage());
-        } finally {
-            lock.unlock();
-        }
+        int i = 0;
+//        try {
+//            lock.lock();
+//            if (recodeCount.get() > 0) {
+//                pstmt.executeBatch();
+//                recodeCount.set(0);
+//            }
+//        } catch (SQLException e) {
+//            LOG.error("flush exception info:{}", e.getSQLState());
+//            throw new IOException(e.getMessage());
+//        } finally {
+//            lock.unlock();
+//        }
     }
 
     @Override

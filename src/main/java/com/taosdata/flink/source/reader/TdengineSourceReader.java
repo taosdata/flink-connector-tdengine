@@ -2,6 +2,7 @@ package com.taosdata.flink.source.reader;
 
 import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.split.TDengineSplit;
+import org.apache.flink.api.connector.source.SourceEvent;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;

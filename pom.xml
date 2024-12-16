@@ -434,6 +434,7 @@
                     </includes>
                     <excludes>
                         <exclude>**/FlinkSinkTest.java</exclude>
+                        <exclude>**/TDFlinkSourceTest</exclude>
                     </excludes>
                     <testFailureIgnore>false</testFailureIgnore>
                 </configuration>

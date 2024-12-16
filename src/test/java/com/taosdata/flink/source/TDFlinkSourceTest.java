@@ -48,7 +48,7 @@ public class TDFlinkSourceTest {
                 new MiniClusterWithClientResource(
                         new MiniClusterResourceConfiguration.Builder()
                                 .setNumberTaskManagers(1)
-                                .setNumberSlotsPerTaskManager(1)
+                                .setNumberSlotsPerTaskManager(5)
                                 .setConfiguration(
                                         reporter.addToConfiguration(new Configuration()))
                                 .build());
@@ -67,7 +67,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        try (Connection connection = DriverManager.getConnection("jdbc:TAOS-RS://192.168.1.98:7041/power?user=root&password=taosdata", connProps);
+        try (Connection connection = DriverManager.getConnection("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps);
              Statement stmt = connection.createStatement()) {
             stmt.execute("describe power.meters");
             ResultSet rs = stmt.getResultSet();
@@ -92,7 +92,7 @@ public class TDFlinkSourceTest {
         env.setParallelism(3);
 
         SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
-        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.98:7041/power?user=root&password=taosdata", connProps, sql, new TdengineRowDataDeserialization());
+        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, new TdengineRowDataDeserialization());
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
@@ -118,7 +118,7 @@ public class TDFlinkSourceTest {
         env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
         Properties config = new Properties();
         config.setProperty("td.connect.type", "ws");
-        config.setProperty("bootstrap.servers", "192.168.1.98:7041");
+        config.setProperty("bootstrap.servers", "192.168.1.95:6041");
         config.setProperty("auto.offset.reset", "earliest");
         config.setProperty("msg.with.table.name", "true");
         config.setProperty("auto.commit.interval.ms", "1000");
@@ -172,7 +172,7 @@ public class TDFlinkSourceTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table-name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, tbname FROM `meters`'" +
@@ -213,7 +213,8 @@ public class TDFlinkSourceTest {
                 ", table_cdc_voltage: " + row.getInt(2) +
                 ", table_cdc_phase: " + row.getFloat(3) +
                 ", table_cdc_location: " + new String(row.getBinary(4)) +
-                ", table_cdc_groupid: " + row.getInt(5));
+                ", table_cdc_groupid: " + row.getInt(5) +
+                ", table_cdc_tbname: " + new String(row.getBinary(4)));
         sb.append("\n");
         System.out.println(sb);
         return sb.toString();
@@ -222,28 +223,30 @@ public class TDFlinkSourceTest {
     void testTableCdc() throws Exception {
         EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(5);
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
-
         String tdengineTableDDL = "CREATE TABLE `meters` (" +
                 " ts TIMESTAMP," +
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
                 " location VARBINARY," +
-                " groupid INT" +
+                " groupid INT," +
+                " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = '192.168.1.98:7041'," +
+                "  'bootstrap.servers' = '192.168.1.95:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
-                "  'group.id' = 'group_10'," +
+                "  'group.id' = 'group_20'," +
                 "  'auto.offset.reset' = 'earliest'," +
+                "  'enable.auto.commit' = 'false'," +
                 "  'topic' = 'topic_meters'" +
                 ")";
 
         tableEnv.executeSql(tdengineTableDDL);
         // 使用 SQL 查询 TDengine 表
         Table resultTable = tableEnv.sqlQuery(
-                "SELECT ts, `current`, voltage, phase, location, groupid FROM `meters` where `current` > 40"
+                "SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters` where `current` > 40"
         );
 
         // 将查询结果转换为 DataStream 并打印
@@ -271,7 +274,9 @@ public class TDFlinkSourceTest {
     void testTableToSink() throws Exception {
         EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(3);
         env.enableCheckpointing(100, AT_LEAST_ONCE);
+        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
         String tdengineSourceTableDDL = "CREATE TABLE `meters` (" +
                 " ts TIMESTAMP," +
@@ -283,7 +288,7 @@ public class TDFlinkSourceTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table-name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`'" +
@@ -301,7 +306,7 @@ public class TDFlinkSourceTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:7041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.95:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -314,4 +319,6 @@ public class TDFlinkSourceTest {
 //        // 启动 Flink 作业
 //        env.execute("Flink Table API & SQL TDengine Example");
     }
+
+
 }

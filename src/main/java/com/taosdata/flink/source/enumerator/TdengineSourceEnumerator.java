@@ -24,6 +24,7 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     private boolean isInitFinished = false;
 
+
     public TdengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
                                     Boundedness boundedness, SourceSplitSql sourceSql) {
         this.assignmentSplits = new TreeSet<>();
@@ -42,7 +43,6 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         this.boundedness = boundedness;
         this.sourceSql = sourceSql;
         this.readerCount = context.currentParallelism();
-
         if (splitsState != null && splitsState.isInitFinished()) {
             assignmentSplits = splitsState.getAssignmentSqls();
             unassignedSplits = splitsState.getUnassignedSqls();
@@ -198,18 +198,13 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
             TDengineSplit tdengineSplit = unassignedSplits.pop();
             assignmentSplits.add(tdengineSplit);
             context.assignSplit(tdengineSplit, subtaskId);
+        } else {
+            context.assignSplit(new TDengineSplit("empty_" + subtaskId), subtaskId);
         }
 
         if (unassignedSplits.isEmpty()) {
-            Set<Integer> taskIds = context.registeredReaders().keySet();
-            if (taskIds != null && taskIds.size() > 0) {
-                for (Integer taskId : taskIds) {
-                    context.signalNoMoreSplits(taskId);
-                }
-            }
-
+            context.signalNoMoreSplits(subtaskId);
         }
-
     }
 
     @Override
