@@ -152,6 +152,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         properties.setProperty("td.connect.user", optionVal);
         optionVal = config.get(TDengineConnectorOptions.PASSWORD);
         properties.setProperty("td.connect.pass", optionVal);
+        optionVal = config.get(TDengineConnectorOptions.ENABLE_AUTO_COMMIT);
+        properties.setProperty("enable.auto.commit", optionVal);
         properties.setProperty("value.deserializer", "RowData");
         properties.setProperty("value.deserializer.encoding", config.get(TDengineConnectorOptions.CHARSET));
         String topic = config.get(TDengineConnectorOptions.TOPIC);

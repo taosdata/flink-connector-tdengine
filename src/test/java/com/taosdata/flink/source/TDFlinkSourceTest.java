@@ -320,5 +320,56 @@ public class TDFlinkSourceTest {
 //        env.execute("Flink Table API & SQL TDengine Example");
     }
 
+    @Test
+    void testCdcTableToSink() throws Exception {
+        EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(5);
+        env.enableCheckpointing(100, AT_LEAST_ONCE);
+        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
+        String tdengineSourceTableDDL = "CREATE TABLE `meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARBINARY," +
+                " groupid INT," +
+                " tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'bootstrap.servers' = '192.168.1.95:6041'," +
+                "  'td.jdbc.mode' = 'cdc'," +
+                "  'group.id' = 'group_22'," +
+                "  'auto.offset.reset' = 'earliest'," +
+                "  'enable.auto.commit' = 'false'," +
+                "  'topic' = 'topic_meters'" +
+                ")";
+
+
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARBINARY," +
+                " groupid INT," +
+                " tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.95:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.supertable.name' = 'sink_meters'" +
+                ")";
+
+        tableEnv.executeSql(tdengineSourceTableDDL);
+        tableEnv.executeSql(tdengineSinkTableDDL);
+
+        TableResult tableResult = tableEnv.executeSql("INSERT INTO sink_meters SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`");
+        tableResult.await();
+//        // 启动 Flink 作业
+//        env.execute("Flink Table API & SQL TDengine Example");
+    }
 
 }

@@ -55,6 +55,9 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecord<OUT>, 
         try {
             this.consumer = new TaosConsumer<>(this.properties);
             consumer.subscribe(Collections.singletonList(topic));
+
+            //todo test
+            consumer.seekToBeginning(consumer.assignment());
         } catch (SQLException ex) {
             // please refer to the JDBC specifications for detailed exceptions info
             System.out.printf("Failed to create websocket consumer, host: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
