@@ -3,9 +3,6 @@ package com.taosdata.flink.cdc.reader;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.cdc.split.TDengineCdcSplitState;
-import com.taosdata.flink.source.entity.SourceRecords;
-import com.taosdata.flink.source.split.TDengineSplit;
-import com.taosdata.jdbc.tmq.ConsumerRecords;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TopicPartition;
 import org.apache.flink.api.connector.source.SourceReaderContext;
@@ -97,18 +94,12 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
         List<CdcTopicPartition> cdcTopicPartitions = offsetsToCommit.get(checkpointId);
 
-//        Map<TopicPartition, OffsetAndMetadata> committedPartitions =
-//                offsetsToCommit.get(checkpointId);
-        if (cdcTopicPartitions == null) {
-            LOG.debug("Offsets for checkpoint {} have already been committed.", checkpointId);
+        if (cdcTopicPartitions == null || cdcTopicPartitions.isEmpty()) {
+            removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
+            LOG.debug("There are no offsets to commit for checkpoint {}.", checkpointId);
             return;
         }
 
-        if (cdcTopicPartitions.isEmpty()) {
-            LOG.debug("There are no offsets to commit for checkpoint {}.", checkpointId);
-            removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
-            return;
-        }
         Map<TopicPartition, OffsetAndMetadata> committedPartitions = new HashMap<>(cdcTopicPartitions.size());
         for (CdcTopicPartition cdcTopicPartition : cdcTopicPartitions) {
             committedPartitions.put(new TopicPartition(cdcTopicPartition.getTopic(), cdcTopicPartition.getvGroupId()),

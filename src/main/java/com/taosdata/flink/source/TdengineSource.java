@@ -1,7 +1,8 @@
 package com.taosdata.flink.source;
 
+import com.taosdata.flink.cdc.reader.TDengineCdcEmitter;
 import com.taosdata.flink.source.entity.SourceSplitSql;
-import com.taosdata.flink.source.entity.TdengineSourceRecords;
+import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumerator;
 import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
 import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
@@ -15,6 +16,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
@@ -28,12 +30,17 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
     private String url;
     private Properties properties;
     private SourceSplitSql sourceSql;
+    private boolean isBatchMode = false;
     private TdengineRecordDeserialization<OUT> tdengineRecordDeserialization;
     public TdengineSource(String url, Properties properties, SourceSplitSql sql, TdengineRecordDeserialization<OUT> tdengineRecordDeserialization) {
         this.url = url;
         this.properties = properties;
         this.sourceSql = sql;
         this.tdengineRecordDeserialization = tdengineRecordDeserialization;
+        String batchMode = this.properties.getProperty("td.batch.mode", "false");
+        if (batchMode.equals("true")) {
+            isBatchMode = true;
+        }
     }
 
     @Override
@@ -45,7 +52,7 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
         Supplier<TdengineSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
-                        return new TdengineSplitReader(this.url, this.properties, sourceReaderContext);
+                        return new TdengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext, this.tdengineRecordDeserialization);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
@@ -54,11 +61,18 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
 
                 };
 
-        FutureCompletingBlockingQueue<RecordsWithSplitIds<TdengineSourceRecords>>
+        FutureCompletingBlockingQueue<RecordsWithSplitIds<TDengineSourceRecordsWithSplitsIds>>
                 elementsQueue = new FutureCompletingBlockingQueue<>();
         SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(elementsQueue, splitReaderSupplier);
 
-        return new TdengineSourceReader<>(fetcherManager, new TdengineRecordEmitter<OUT>(this.tdengineRecordDeserialization), toConfiguration(this.properties), sourceReaderContext);
+        RecordEmitter recordEmitter;
+        if (isBatchMode) {
+            recordEmitter = new TdengineRecordEmitter<OUT>(true);
+        }else{
+            recordEmitter = new TdengineRecordEmitter<OUT>(false);
+        }
+
+        return new TdengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
     }
 
     @Override

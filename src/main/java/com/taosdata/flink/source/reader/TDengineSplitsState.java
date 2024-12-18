@@ -1,20 +1,22 @@
 package com.taosdata.flink.source.reader;
 
-import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.source.split.TDengineSplit;
 
-import java.util.List;
-
 public class TDengineSplitsState extends TDengineSplit {
-    public TDengineSplitsState(String splitId, List<String> finishTaskList) {
+    public TDengineSplitsState(String splitId) {
         super(splitId);
     }
 
     public TDengineSplitsState(TDengineSplit split) {
-        super(split.splitId(), split.gettasksplits(), split.getFinishList());
+        super(split);
+    }
+
+    public void updateSplitsState(TDengineSplit split) {
+        updateSplit(split);
     }
 
     public TDengineSplit toTDengineCdcSplit() {
         return this;
     }
+
 }

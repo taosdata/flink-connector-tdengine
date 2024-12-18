@@ -1,8 +1,7 @@
 package com.taosdata.flink.source.reader;
 
-import com.taosdata.flink.source.entity.SourceRecord;
+import com.taosdata.flink.source.entity.SplitResultRecord;
 import com.taosdata.flink.source.split.TDengineSplit;
-import org.apache.flink.api.connector.source.SourceEvent;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
@@ -11,7 +10,7 @@ import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcher
 
 import java.util.Map;
 
-public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SourceRecord, T, TDengineSplit, TDengineSplitsState> {
+public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SplitResultRecord, T, TDengineSplit, TDengineSplitsState> {
 
     public TdengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
                                 RecordEmitter recordEmitter,

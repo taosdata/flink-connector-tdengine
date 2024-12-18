@@ -1,14 +1,8 @@
 package com.taosdata.flink.cdc.reader;
 
-import com.taosdata.flink.cdc.entity.CdcRecord;
 import com.taosdata.flink.cdc.entity.CdcRecords;
-import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.cdc.split.TDengineCdcSplitState;
-import com.taosdata.flink.source.entity.SourceRecord;
-import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
-import com.taosdata.flink.source.split.TDengineSplit;
 import com.taosdata.jdbc.tmq.ConsumerRecord;
-import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 

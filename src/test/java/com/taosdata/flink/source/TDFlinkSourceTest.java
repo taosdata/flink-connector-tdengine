@@ -69,27 +69,6 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        try (Connection connection = DriverManager.getConnection("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps);
-             Statement stmt = connection.createStatement()) {
-            stmt.execute("describe power.meters");
-            ResultSet rs = stmt.getResultSet();
-            ResultSetMetaData meta = rs.getMetaData();
-            while (rs.next()) {
-                rs.getString(1);
-                rs.getString(2);
-                rs.getInt(3);
-                rs.getString(4);
-            }
-        } catch (Exception ex) {
-            // please refer to the JDBC specifications for detailed exceptions info
-            System.out.printf("Failed to create database power or stable meters, %sErrMessage: %s%n",
-                    ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
-                    ex.getMessage());
-            // Print stack trace for context in examples. Use logging in production.
-            ex.printStackTrace();
-            throw ex;
-        }
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
 

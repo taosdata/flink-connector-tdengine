@@ -17,41 +17,49 @@
 
 package com.taosdata.flink.source.entity;
 
+import com.taosdata.flink.source.split.TDengineSplit;
+
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /** Data structure to describe a set of T. */
-public final class SourceRecord {
-
-    private final List<Object> sourceRecord;
-    private final List<String> finishTaskList;
+public final class SplitResultRecords<V> {
 
     private ResultSetMetaData metaData;
-    public SourceRecord(List<Object> sourceRecord, ResultSetMetaData metaData, List<String> finishTaskList) {
-        this.sourceRecord = sourceRecord;
-        this.finishTaskList = finishTaskList;
+    private SourceRecords sourceRecords;
+    private TDengineSplit tdengineSplit;
+    public SplitResultRecords(ResultSetMetaData metaData, SourceRecords sourceRecords, TDengineSplit tdengineSplit) {
         this.metaData = metaData;
+        this.sourceRecords = sourceRecords;
+        this.tdengineSplit = new TDengineSplit(tdengineSplit);
     }
-    public SourceRecord(ResultSetMetaData metaData, List<String> finishTaskList) {
-        this.finishTaskList = finishTaskList;
-        this.metaData = metaData;
-        this.sourceRecord = new ArrayList<>();
-    }
-    public void addObject(Object o) {
-        sourceRecord.add(o);
-    }
-    public List<Object> getSourceRecordList() {
-        return sourceRecord;
+    public SplitResultRecords() {
     }
 
-    public Iterator<Object> iterator() {
-        return sourceRecord.iterator();
+    public void setSourceRecords(SourceRecords sourceRecords) {
+         this.sourceRecords = sourceRecords;
+    }
+    public SourceRecords getSourceRecords() {
+        return sourceRecords;
     }
 
-    public List<String> getFinishTaskList() {
-        return finishTaskList;
+    public Iterator<V> iterator() {
+        return sourceRecords.iterator();
+    }
+
+    public ResultSetMetaData getMetaData() {
+        return metaData;
+    }
+    public void setMetaData(ResultSetMetaData metaData) {this.metaData = metaData;}
+
+
+    public TDengineSplit getTdengineSplit() {
+        return tdengineSplit;
+    }
+
+    public void setTdengineSplit(TDengineSplit tdengineSplit) {
+        this.tdengineSplit = new TDengineSplit(tdengineSplit);
     }
 }

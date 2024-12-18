@@ -1,9 +1,11 @@
 package com.taosdata.flink.source.split;
 
 import com.google.common.base.Strings;
-import com.taosdata.flink.source.entity.SourceRecord;
 import com.taosdata.flink.source.entity.SourceRecords;
-import com.taosdata.flink.source.entity.TdengineSourceRecords;
+import com.taosdata.flink.source.entity.SplitResultRecord;
+import com.taosdata.flink.source.entity.SplitResultRecords;
+import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
+import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
@@ -16,7 +18,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSplit> {
+public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<OUT>, TDengineSplit> {
     private static final Logger LOG = LoggerFactory.getLogger(TdengineSplitReader.class);
     private Properties properties;
     private volatile boolean running = true;
@@ -30,15 +32,18 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
     private int subtaskId;
     private List<TDengineSplit> tdengineSplits;
 
-    private List<TDengineSplit> finishedSplits;
+    private List<String> finishedSplits;
 
     private Iterator<TDengineSplit> currSplitIter;
     private TDengineSplit currSplit;
 
     private String currTask;
 
+    private TdengineRecordDeserialization<OUT> tdengineRecordDeserialization;
+
     private boolean isEnd = false;
-    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context,
+                               TdengineRecordDeserialization<OUT> tdengineRecordDeserialization) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
@@ -51,9 +56,10 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
         Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
         this.conn = DriverManager.getConnection(this.url, this.properties);
         this.stmt = this.conn.createStatement();
+        this.tdengineRecordDeserialization = tdengineRecordDeserialization;
 
     }
-    private SourceRecord getRowData() throws SQLException {
+    private SplitResultRecord getRowData() throws SQLException {
         try {
             if (resultSet == null || !resultSet.next()) {
                 if (resultSet != null) {
@@ -72,7 +78,7 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
                 }
             }
             if (resultSet != null) {
-                SourceRecord rowData = new SourceRecord(resultSet.getMetaData(), this.currSplit.getFinishList());
+                SplitResultRecord rowData = new SplitResultRecord(resultSet.getMetaData());
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     Object value = resultSet.getObject(i);
                     rowData.addObject(value);
@@ -108,9 +114,6 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
 
     private void initNextSplit() {
         if (Strings.isNullOrEmpty(currTask)) {
-            if (currSplit != null) {
-                finishedSplits.add(currSplit);
-            }
             currSplit = null;
             if (this.currSplitIter != null && this.currSplitIter.hasNext()) {
                 currSplit = this.currSplitIter.next();
@@ -128,25 +131,31 @@ public class TdengineSplitReader implements SplitReader<SourceRecord, TDengineSp
     }
 
     @Override
-    public RecordsWithSplitIds<SourceRecord> fetch() throws IOException {
+    public RecordsWithSplitIds<SplitResultRecords<OUT>> fetch() throws IOException {
         try {
             initNextSplit();
-            SourceRecords sourceRecords = new SourceRecords();
+            SourceRecords<OUT> sourceRecords = new SourceRecords<>();
             for (int i = 0; i < batchSize; i++) {
-                SourceRecord sourceRecord = getRowData();
-                if (sourceRecord != null) {
-                    sourceRecords.addSourceRecord(sourceRecord);
+                SplitResultRecord splitResultRecord = getRowData();
+                if (splitResultRecord != null) {
+                    sourceRecords.addSourceRecord(tdengineRecordDeserialization.convert(splitResultRecord));
                 } else {
+                    if (currSplit != null && !Strings.isNullOrEmpty(currSplit.splitId)) {
+                        finishedSplits.add(currSplit.splitId);
+                    }
                     break;
                 }
             }
 
-            if (sourceRecords.getSourceRecordList().isEmpty()) {
-                return TdengineSourceRecords.forFinishedSplit(finishedSplits);
+            if (sourceRecords.isEmpty()) {
+                return TDengineSourceRecordsWithSplitsIds.forFinishedSplit(finishedSplits);
             }
 
-            sourceRecords.setMetaData(this.metaData);
-            return  TdengineSourceRecords.forRecords(currSplit.splitId, sourceRecords, finishedSplits);
+            SplitResultRecords splitResultRecords = new SplitResultRecords();
+            splitResultRecords.setMetaData(this.metaData);
+            splitResultRecords.setTdengineSplit(currSplit);
+            splitResultRecords.setSourceRecords(sourceRecords);
+            return  TDengineSourceRecordsWithSplitsIds.forRecords(currSplit.splitId, splitResultRecords);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -14,7 +14,6 @@ public class TDengineRecordsWithSplitIds<OUT> implements RecordsWithSplitIds<Cdc
     private List<CdcRecords<OUT>> cdcRecordsList;
 
     private Iterator<CdcRecords<OUT>> recordIterator;
-    private List<CdcTopicPartition> topicPartitions;
 
     private String splitId;
 
@@ -24,7 +23,6 @@ public class TDengineRecordsWithSplitIds<OUT> implements RecordsWithSplitIds<Cdc
             this.cdcRecordsList = new ArrayList<>(1);
             this.cdcRecordsList.add(cdcRecords);
             this.recordIterator = cdcRecordsList.iterator();
-            this.topicPartitions = topicPartitions;
         }
 
         this.splitId = splitId;

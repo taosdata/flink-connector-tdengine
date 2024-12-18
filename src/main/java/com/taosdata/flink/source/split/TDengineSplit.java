@@ -5,8 +5,8 @@ import org.apache.flink.api.connector.source.SourceSplit;
 import java.util.*;
 
 public class TDengineSplit implements SourceSplit, Comparable<TDengineSplit> {
-    protected final String splitId;
-    private final List<String> taskList;
+    protected String splitId;
+    private List<String> taskList;
 
     private Iterator<String> currTaskIterator;
 
@@ -34,6 +34,18 @@ public class TDengineSplit implements SourceSplit, Comparable<TDengineSplit> {
         } else {
             this.finishList = finishList;
         }
+    }
+
+    public TDengineSplit(TDengineSplit split) {
+        this.splitId = split.splitId();
+        this.finishList = new ArrayList<>(split.finishList);
+        this.taskList = new ArrayList<>(split.taskList);
+    }
+
+    public void updateSplit(TDengineSplit split) {
+        this.splitId = split.splitId();
+        this.finishList = new ArrayList<>(split.finishList);
+        this.taskList = new ArrayList<>(split.taskList);
     }
 
     @Override
