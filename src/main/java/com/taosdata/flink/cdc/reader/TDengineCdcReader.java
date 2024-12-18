@@ -21,7 +21,9 @@ import java.util.*;
 public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<T, T, TDengineCdcSplit, TDengineCdcSplitState> {
     private static final Logger LOG = LoggerFactory.getLogger(TDengineCdcReader.class);
 
-    private final SortedMap<Long, Map<TopicPartition, OffsetAndMetadata>> offsetsToCommit;
+    private final SortedMap<Long, List<CdcTopicPartition>> offsetsToCommit;
+
+    private Map<Integer, Long> commitedOffsets;
 
     private final boolean autoCommit;
 
@@ -38,6 +40,7 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
         } else {
             this.autoCommit = false;
         }
+        commitedOffsets = new HashMap<>();
 
     }
 
@@ -64,19 +67,21 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
         }
 
         if (cdcSplits.isEmpty()) {
-            offsetsToCommit.put(checkpointId, Collections.emptyMap());
+            offsetsToCommit.put(checkpointId, Collections.emptyList());
         } else {
 
-            Map<TopicPartition, OffsetAndMetadata> offsetsMap =
-                    offsetsToCommit.computeIfAbsent(checkpointId, id -> new HashMap<>());
+            List<CdcTopicPartition> offsetsList =
+                    offsetsToCommit.computeIfAbsent(checkpointId, id -> new ArrayList<>());
             // Put the offsets of the active splits.
             for (TDengineCdcSplit split : cdcSplits) {
                 // If the checkpoint is triggered before the partition starting offsets
                 // is retrieved, do not commit the offsets for those partitions.
                 if (split.getStartPartitions().size() > 0) {
                     for (CdcTopicPartition cdcTopicPartition : split.getStartPartitions()) {
-                        offsetsMap.put(new TopicPartition(cdcTopicPartition.getTopic(), cdcTopicPartition.getvGroupId()),
-                                new OffsetAndMetadata(cdcTopicPartition.getPartition()));
+                        Long offset = commitedOffsets.get(cdcTopicPartition.hashCode());
+                        if (offset == null || offset != cdcTopicPartition.getPartition()) {
+                            offsetsList.add(cdcTopicPartition);
+                        }
                     }
                 }
             }
@@ -89,20 +94,30 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
         if (autoCommit) {
             return;
         }
-        Map<TopicPartition, OffsetAndMetadata> committedPartitions =
-                offsetsToCommit.get(checkpointId);
-        if (committedPartitions == null) {
+
+        List<CdcTopicPartition> cdcTopicPartitions = offsetsToCommit.get(checkpointId);
+
+//        Map<TopicPartition, OffsetAndMetadata> committedPartitions =
+//                offsetsToCommit.get(checkpointId);
+        if (cdcTopicPartitions == null) {
             LOG.debug("Offsets for checkpoint {} have already been committed.", checkpointId);
             return;
         }
 
-        if (committedPartitions.isEmpty()) {
+        if (cdcTopicPartitions.isEmpty()) {
             LOG.debug("There are no offsets to commit for checkpoint {}.", checkpointId);
             removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
             return;
         }
+        Map<TopicPartition, OffsetAndMetadata> committedPartitions = new HashMap<>(cdcTopicPartitions.size());
+        for (CdcTopicPartition cdcTopicPartition : cdcTopicPartitions) {
+            committedPartitions.put(new TopicPartition(cdcTopicPartition.getTopic(), cdcTopicPartition.getvGroupId()),
+                    new OffsetAndMetadata(cdcTopicPartition.getPartition()));
+        }
+
         ((TDengineCdcFetcherManager) splitFetcherManager).commitOffsets(committedPartitions);
         removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
+        cdcTopicPartitions.forEach(value -> commitedOffsets.put(value.hashCode(), value.getPartition()));
     }
 
     private void removeAllOffsetsToCommitUpToCheckpoint(long checkpointId) {

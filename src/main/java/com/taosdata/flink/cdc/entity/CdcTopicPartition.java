@@ -5,17 +5,18 @@ import java.util.Objects;
 public class CdcTopicPartition {
     private static final long serialVersionUID = -613627415771699627L;
     private int hash = 0;
-    private final long position;
+    private final Long position;
     private final String topic;
-    private final int vGroupId;
+    private final Integer vGroupId;
 
     public CdcTopicPartition(String topic, long position, int vGroupId) {
         this.position = position;
         this.topic = topic;
         this.vGroupId = vGroupId;
+        this.hash = hashCode();
     }
 
-    public long getPartition() {
+    public Long getPartition() {
         return this.position;
     }
 
@@ -23,15 +24,12 @@ public class CdcTopicPartition {
         return this.topic;
     }
 
-    public int getvGroupId() {return vGroupId;}
+    public Integer getvGroupId() {return vGroupId;}
     public int hashCode() {
         if (this.hash != 0) {
             return this.hash;
         } else {
-            int result = 31 + this.vGroupId;
-            result = 31 * result + Objects.hashCode(this.topic);
-            this.hash = result;
-            return result;
+            return Objects.hash(topic, vGroupId);
         }
     }
 
@@ -44,11 +42,11 @@ public class CdcTopicPartition {
             return false;
         } else {
             CdcTopicPartition other = (CdcTopicPartition)obj;
-            return this.vGroupId == other.vGroupId && Objects.equals(this.topic, other.topic);
+            return this.vGroupId == other.vGroupId && Objects.equals(this.topic, other.topic) && this.position == other.position;
         }
     }
 
     public String toString() {
-        return this.topic + "-" + this.vGroupId;
+        return this.topic + "-" + this.vGroupId + "-" + this.position;
     }
 }

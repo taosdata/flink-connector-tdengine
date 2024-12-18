@@ -89,6 +89,11 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
                     topicPartitions.add(cdcTopicPartition);
                 }
             }
+
+            if (!records.isEmpty()) {
+                LOG.debug("Succeed to poll data, topic: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
+                        topic, groupId, clientId);
+            }
             return new TDengineRecordsWithSplitIds(splitId, records, topicPartitions);
 
         } catch (SQLException ex) {

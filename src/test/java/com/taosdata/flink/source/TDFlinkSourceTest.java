@@ -40,7 +40,6 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 
 
 public class TDFlinkSourceTest {
-    private static final int PARALLELISM = 2;
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
 
@@ -373,7 +372,7 @@ public class TDFlinkSourceTest {
         EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(5);
-        env.enableCheckpointing(100, AT_LEAST_ONCE);
+        env.enableCheckpointing(1000, AT_LEAST_ONCE);
         env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
         String tdengineSourceTableDDL = "CREATE TABLE `meters` (" +
