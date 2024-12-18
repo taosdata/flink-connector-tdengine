@@ -3,6 +3,8 @@ package com.taosdata.flink.sink.serializer;
 import com.taosdata.flink.sink.entity.DataType;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
+import com.taosdata.jdbc.tmq.ConsumerRecord;
+import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
@@ -11,24 +13,37 @@ import org.apache.flink.table.data.TimestampData;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
-public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer<RowData>{
+public class CdcRowDataBatchSerializer implements TDengineSinkRecordSerializer<ConsumerRecords<RowData>>{
     private final List<SinkMetaInfo> sinkMetaInfos;
 
-    public RowDataSinkRecordSerializer(List<SinkMetaInfo> sinkMetaInfos) {
+    public CdcRowDataBatchSerializer(List<SinkMetaInfo> sinkMetaInfos) {
         this.sinkMetaInfos = sinkMetaInfos;
     }
 
     @Override
-    public List<TDengineSinkRecord> serialize(RowData record) throws IOException {
+    public List<TDengineSinkRecord> serialize(ConsumerRecords<RowData> records) throws IOException {
+        if (records != null || records.isEmpty()) {
+            throw new IOException("serialize ConsumerRecords is null!");
+        }
+        List<TDengineSinkRecord> sinkRecords = new ArrayList<>();
+        Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
+        while (iterator.hasNext()) {
+            TDengineSinkRecord sinkRecord = getSinkRecord(iterator.next().value());
+            sinkRecords.add(sinkRecord);
+        }
+        return sinkRecords;
+    }
+
+    private TDengineSinkRecord getSinkRecord(RowData record) throws IOException {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
-        List<TDengineSinkRecord> sinkRecords = new ArrayList<>(1);
+
         GenericRowData rowData = (GenericRowData) record;
         List<Object> tagParams = new ArrayList<>();
         List<Object> columnParams = new ArrayList<>();
@@ -50,8 +65,8 @@ public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer
                 }
             }
         }
-        sinkRecords.add(new TDengineSinkRecord(tbname, tagParams, columnParams));
-        return sinkRecords;
+
+        return new TDengineSinkRecord(tbname, tagParams, columnParams);
     }
     private Object convertRowDataType(Object value, DataType fieldType) {
         if (value == null) {

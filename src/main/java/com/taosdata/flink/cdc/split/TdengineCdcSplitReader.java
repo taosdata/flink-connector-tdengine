@@ -2,6 +2,7 @@ package com.taosdata.flink.cdc.split;
 
 import com.google.common.base.Strings;
 import com.taosdata.flink.cdc.entity.CdcRecord;
+import com.taosdata.flink.cdc.entity.CdcRecords;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
@@ -19,7 +20,7 @@ import java.sql.*;
 import java.time.Duration;
 import java.util.*;
 
-public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecord<OUT>, TDengineCdcSplit> {
+public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>, TDengineCdcSplit> {
     private final Logger LOG = LoggerFactory.getLogger(TdengineCdcSplitReader.class);
     private Properties properties;
     private String topic;
@@ -73,7 +74,7 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecord<OUT>, 
     }
 
     @Override
-    public RecordsWithSplitIds<CdcRecord<OUT>> fetch() throws IOException {
+    public RecordsWithSplitIds<CdcRecords<OUT>> fetch() throws IOException {
         try {
             if (this.consumer == null) {
                 creatConsumer();
@@ -88,7 +89,7 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecord<OUT>, 
                     topicPartitions.add(cdcTopicPartition);
                 }
             }
-            return new TDenginePartitionSplitRecords(splitId, records, topicPartitions);
+            return new TDengineRecordsWithSplitIds(splitId, records, topicPartitions);
 
         } catch (SQLException ex) {
             // please refer to the JDBC specifications for detailed exceptions info

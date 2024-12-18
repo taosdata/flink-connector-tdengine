@@ -54,6 +54,12 @@ public class TDengineConnectorOptions {
                     .noDefaultValue()
                     .withDescription("Url address or hostname of the database server.");
 
+    public static final ConfigOption<String> TD_BATCH_MODE =
+            ConfigOptions.key("td.batch.mode")
+                    .stringType()
+                    .defaultValue("false")
+                    .withDescription("Url address or hostname of the database server.");
+
     public static final ConfigOption<String> HOSTNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_HOST)
                     .stringType()

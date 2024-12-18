@@ -192,10 +192,6 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.CHARSET);
         optionalOptions.add(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT);
         optionalOptions.add(TDengineConnectorOptions.SERVER_TIME_ZONE);
-
-
-
-
         return optionalOptions;
     }
 

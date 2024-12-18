@@ -56,6 +56,7 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
         this.serializer = serializer;
         this.tagMetaInfos = tagMetaInfos;
         this.columnMetaInfos = columnMetaInfos;
+
         if (batchSize > 0) {
             this.batchSize = batchSize;
         }
@@ -95,31 +96,32 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
 
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
-        TDengineSinkRecord record = serializer.serialize(element);
-        if(record == null || record.getColumnParams() == null){
+        List<TDengineSinkRecord> records = serializer.serialize(element);
+        if(records == null || records.isEmpty()){
             LOG.warn("element serializer result is null!");
             return;
         }
+        for (TDengineSinkRecord record : records) {
+            try {
+                lock.lock();
+                if (!Strings.isNullOrEmpty(record.getTableName())) {
+                    pstmt.setTableName(this.dbName + "." + record.getTableName());
+                }
 
-        try {
-            lock.lock();
-            if (!Strings.isNullOrEmpty(record.getTableName())) {
-                pstmt.setTableName(this.dbName + "." + record.getTableName());
+                if (record.getTagParams() != null && record.getTagParams().size() > 0) {
+                    setStmtTag(pstmt, record.getTagParams());
+                }
+                setStmtParam(pstmt, record.getColumnParams());
+                pstmt.addBatch();
+                recodeCount.incrementAndGet();
+                pstmt.executeBatch();
+                recodeCount.set(0);
+            } catch (SQLException e) {
+                LOG.error("invoke exception info:{}", e.getSQLState());
+                throw new IOException(e.getMessage());
+            } finally {
+                lock.unlock();
             }
-
-            if (record.getTagParams() != null && record.getTagParams().size() > 0) {
-                setStmtTag(pstmt, record.getTagParams());
-            }
-            setStmtParam(pstmt, record.getColumnParams());
-            pstmt.addBatch();
-            recodeCount.incrementAndGet();
-            pstmt.executeBatch();
-            recodeCount.set(0);
-        } catch (SQLException e) {
-            LOG.error("invoke exception info:{}", e.getSQLState());
-            throw new IOException(e.getMessage());
-        } finally {
-            lock.unlock();
         }
     }
 

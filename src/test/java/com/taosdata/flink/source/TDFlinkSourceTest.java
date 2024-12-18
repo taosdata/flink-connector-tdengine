@@ -5,6 +5,8 @@ import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
+import com.taosdata.jdbc.tmq.ConsumerRecord;
+import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.*;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -144,6 +147,51 @@ public class TDFlinkSourceTest {
 
         env.execute("Flink test cdc Example");
     }
+
+    @Test
+    void testTDengineCdcBatch() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(3);
+        env.enableCheckpointing(100, AT_LEAST_ONCE);
+        env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
+        Properties config = new Properties();
+        config.setProperty("td.connect.type", "ws");
+        config.setProperty("bootstrap.servers", "192.168.1.95:6041");
+        config.setProperty("auto.offset.reset", "earliest");
+        config.setProperty("msg.with.table.name", "true");
+        config.setProperty("auto.commit.interval.ms", "1000");
+        config.setProperty("group.id", "group_100");
+        config.setProperty("td.connect.user", "root");
+        config.setProperty("td.connect.pass", "taosdata");
+        config.setProperty("value.deserializer", "RowData");
+        config.setProperty("value.deserializer.encoding", "UTF-8");
+        config.setProperty("td.batch.mode", "true");
+
+        Class<ConsumerRecords<RowData>> typeClass = (Class<ConsumerRecords<RowData>>) (Class<?>) ConsumerRecords.class;
+        TDengineCdcSource<ConsumerRecords<RowData>> tdengineSource = new TDengineCdcSource<>("topic_meters", config, typeClass);
+        DataStreamSource<ConsumerRecords<RowData>> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStream<String> resultStream = input.map((MapFunction<ConsumerRecords<RowData>, String>) records -> {
+            Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
+            StringBuilder sb = new StringBuilder();
+            while (iterator.hasNext()) {
+                GenericRowData row = (GenericRowData) iterator.next().value();
+                sb.append("tsxx: " + row.getField(0) +
+                        ", current: " + row.getFloat(1) +
+                        ", voltage: " + row.getInt(2) +
+                        ", phase: " + row.getFloat(3) +
+                        ", location: " + new String(row.getBinary(4)));
+                sb.append("\n");
+                System.out.println(sb);
+            }
+            return sb.toString();
+
+        });
+
+
+        env.execute("Flink test cdc Example");
+    }
+
+
 
     public static String printRow(RowData rowData) {
         StringBuilder sb = new StringBuilder();
@@ -357,7 +405,7 @@ public class TDFlinkSourceTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.mode' = 'cdc'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.95:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +

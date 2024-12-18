@@ -4,7 +4,8 @@ import com.taosdata.flink.sink.entity.TDengineSinkRecord;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 
 public interface TDengineSinkRecordSerializer<T> extends Serializable {
-    TDengineSinkRecord serialize(T record) throws IOException;
+    List<TDengineSinkRecord> serialize(T records) throws IOException;
 }

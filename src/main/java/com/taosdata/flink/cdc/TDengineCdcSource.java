@@ -9,10 +9,12 @@ import com.taosdata.flink.cdc.serializable.TDengineCdcEnumStateSerializer;
 import com.taosdata.flink.cdc.serializable.TDengineCdcSplitSerializer;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.cdc.split.TdengineCdcSplitReader;
+import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
@@ -29,11 +31,17 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
     private String topic;
     private Properties properties;
 
+    private boolean isBatchMode = false;
+
     Class<OUT> typeClass;
     public TDengineCdcSource(String topic, Properties properties, Class<OUT> typeClass) {
         this.topic = topic;
         this.properties = properties;
         this.typeClass = typeClass;
+        String batchMode = this.properties.getProperty("td.batch.mode", "false");
+        if (batchMode.equals("true")) {
+            isBatchMode = true;
+        }
     }
 
     @Override
@@ -67,7 +75,15 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
                 elementsQueue = new FutureCompletingBlockingQueue<>();
         SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(elementsQueue, splitReaderSupplier);
         String autoCommit = this.properties.getProperty("enable.auto.commit", "true");
-        return new TDengineCdcReader<>(fetcherManager, new TDengineCdcEmitter<OUT>(), toConfiguration(this.properties), readerContext, autoCommit);
+
+        RecordEmitter recordEmitter;
+        if (isBatchMode) {
+            recordEmitter = new TDengineCdcEmitter<OUT>(true);
+        }else{
+            recordEmitter = new TDengineCdcEmitter<OUT>(false);
+        }
+
+        return new TDengineCdcReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), readerContext, autoCommit);
 
     }
 
@@ -84,11 +100,13 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
     @Override
     public TypeInformation<OUT> getProducedType() {
         String outType = this.properties.getProperty("value.deserializer");
-        if (outType == "RowData") {
-            return (TypeInformation<OUT>) TypeInformation.of(RowData.class);
-        }else if(outType == "Map") {
-            Map<String, Object> map = new HashMap<>();
-            return (TypeInformation<OUT>) TypeInformation.of(map.getClass());
+        if (!isBatchMode) {
+            if (outType == "RowData") {
+                return (TypeInformation<OUT>) TypeInformation.of(RowData.class);
+            } else if (outType == "Map") {
+                Map<String, Object> map = new HashMap<>();
+                return (TypeInformation<OUT>) TypeInformation.of(map.getClass());
+            }
         }
         return TypeInformation.of(this.typeClass);
     }
