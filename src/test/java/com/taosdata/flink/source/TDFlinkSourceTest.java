@@ -1,6 +1,7 @@
 package com.taosdata.flink.source;
 
 import com.taosdata.flink.cdc.TDengineCdcSource;
+import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
@@ -69,11 +70,12 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty("value.deserializer", "RowData");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
 
         SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
-        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, new TdengineRowDataDeserialization());
+        TdengineSource<RowData> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
@@ -84,6 +86,39 @@ public class TDFlinkSourceTest {
                     ", phase: " + row.getFloat(3) +
                     ", location: " + new String(row.getBinary(4)));
             sb.append("\n");
+            System.out.println(sb);
+            return sb.toString();
+        });
+
+        env.execute("flink tdengine source");
+    }
+
+    @Test
+    void testBatchTDengineSource() throws Exception {
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty("value.deserializer", "RowData");
+        connProps.setProperty("td.batch.mode", "true");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(3);
+        Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
+        SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
+        TdengineSource<SourceRecords<RowData>> source = new TdengineSource<>("jdbc:TAOS-RS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, typeClass);
+        DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
+        input.map((MapFunction<SourceRecords<RowData>, String>) records -> {
+            StringBuilder sb = new StringBuilder();
+            Iterator<RowData> iterator = records.iterator();
+            while (iterator.hasNext()) {
+                GenericRowData row = (GenericRowData) iterator.next();
+                sb.append("ts: " + row.getField(0) +
+                        ", current: " + row.getFloat(1) +
+                        ", voltage: " + row.getInt(2) +
+                        ", phase: " + row.getFloat(3) +
+                        ", location: " + new String(row.getBinary(4)));
+                sb.append("\n");
+            }
             System.out.println(sb);
             return sb.toString();
         });
@@ -159,8 +194,8 @@ public class TDFlinkSourceTest {
                         ", phase: " + row.getFloat(3) +
                         ", location: " + new String(row.getBinary(4)));
                 sb.append("\n");
-                System.out.println(sb);
             }
+            System.out.println(sb);
             return sb.toString();
 
         });

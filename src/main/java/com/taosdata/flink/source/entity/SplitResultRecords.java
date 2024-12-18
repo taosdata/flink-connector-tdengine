@@ -28,7 +28,7 @@ import java.util.List;
 public final class SplitResultRecords<V> {
 
     private ResultSetMetaData metaData;
-    private SourceRecords sourceRecords;
+    private SourceRecords<V> sourceRecords;
     private TDengineSplit tdengineSplit;
     public SplitResultRecords(ResultSetMetaData metaData, SourceRecords sourceRecords, TDengineSplit tdengineSplit) {
         this.metaData = metaData;

@@ -45,9 +45,9 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
             pollIntervalMs = Integer.parseInt(pollInterval);
         }
         String outType = this.properties.getProperty("value.deserializer");
-        if (outType.compareTo("RowData") == 0) {
+        if (outType.equals("RowData")) {
             this.properties.setProperty("value.deserializer", "com.taosdata.flink.cdc.serializable.RowDataCdcDeserializer");
-        }else if(outType == "Map") {
+        }else if(outType.equals("Map")) {
             this.properties.setProperty("value.deserializer", "");
         }
     }

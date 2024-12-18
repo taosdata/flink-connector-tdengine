@@ -6,7 +6,10 @@ import com.taosdata.flink.source.entity.SplitResultRecord;
 import com.taosdata.flink.source.entity.SplitResultRecords;
 import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
 import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
+import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
+import com.taosdata.jdbc.tmq.Deserializer;
+import com.taosdata.jdbc.utils.Utils;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -42,8 +45,7 @@ public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
     private TdengineRecordDeserialization<OUT> tdengineRecordDeserialization;
 
     private boolean isEnd = false;
-    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context,
-                               TdengineRecordDeserialization<OUT> tdengineRecordDeserialization) throws ClassNotFoundException, SQLException {
+    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
@@ -56,7 +58,12 @@ public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
         this.conn = DriverManager.getConnection(this.url, this.properties);
         this.stmt = this.conn.createStatement();
-        this.tdengineRecordDeserialization = tdengineRecordDeserialization;
+        String outType = this.properties.getProperty("value.deserializer");
+        if (outType.compareTo("RowData") == 0) {
+            tdengineRecordDeserialization = (TdengineRecordDeserialization<OUT>) new TdengineRowDataDeserialization();
+        } else {
+            tdengineRecordDeserialization = (TdengineRecordDeserialization<OUT>) Utils.newInstance(Utils.parseClassType(outType));
+        }
 
     }
     private SplitResultRecord getRowData() throws SQLException {

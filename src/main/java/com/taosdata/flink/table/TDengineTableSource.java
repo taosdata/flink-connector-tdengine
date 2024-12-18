@@ -49,7 +49,8 @@ public class TDengineTableSource implements ScanTableSource {
 
     @Override
     public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-        TdengineSource<RowData> tdengineSource = new TdengineSource<>(this.url, connProps, new SourceSplitSql(scanQuery), new TdengineRowDataDeserialization());
+        this.connProps.setProperty("value.deserializer", "RowData");
+        TdengineSource<RowData> tdengineSource = new TdengineSource<>(this.url, connProps, new SourceSplitSql(scanQuery), RowData.class);
         return new DataStreamScanProvider() {
             @Override
             public DataStream<RowData> produceDataStream(ProviderContext providerContext, StreamExecutionEnvironment execEnv) {

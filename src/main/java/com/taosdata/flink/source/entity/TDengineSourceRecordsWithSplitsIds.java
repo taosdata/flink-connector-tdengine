@@ -52,13 +52,13 @@ public class TDengineSourceRecordsWithSplitsIds<OUT> implements RecordsWithSplit
 
     @Override
     public Set<String> finishedSplits() {
-        Set<String> set = new HashSet<>();
+        Set<String> finishedSet = new HashSet<>();
         if (this.finishedSplits != null) {
             for (String splitId : finishedSplits) {
-                set.add(splitId);
+                finishedSet.add(splitId);
             }
         }
-        return set;
+        return finishedSet;
     }
 
     public static TDengineSourceRecordsWithSplitsIds forRecords(

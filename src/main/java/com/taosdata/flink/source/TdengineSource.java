@@ -21,8 +21,11 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+import org.apache.flink.table.data.RowData;
 
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -31,12 +34,13 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
     private Properties properties;
     private SourceSplitSql sourceSql;
     private boolean isBatchMode = false;
-    private TdengineRecordDeserialization<OUT> tdengineRecordDeserialization;
-    public TdengineSource(String url, Properties properties, SourceSplitSql sql, TdengineRecordDeserialization<OUT> tdengineRecordDeserialization) {
+    private final Class<OUT> typeClass;
+
+    public TdengineSource(String url, Properties properties, SourceSplitSql sql, Class<OUT> typeClass) {
         this.url = url;
         this.properties = properties;
         this.sourceSql = sql;
-        this.tdengineRecordDeserialization = tdengineRecordDeserialization;
+        this.typeClass = typeClass;
         String batchMode = this.properties.getProperty("td.batch.mode", "false");
         if (batchMode.equals("true")) {
             isBatchMode = true;
@@ -52,7 +56,7 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
         Supplier<TdengineSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
-                        return new TdengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext, this.tdengineRecordDeserialization);
+                        return new TdengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
@@ -98,7 +102,16 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
 
     @Override
     public TypeInformation<OUT> getProducedType() {
-        return this.tdengineRecordDeserialization.getProducedType();
+        String outType = this.properties.getProperty("value.deserializer");
+        if (!isBatchMode) {
+            if (outType == "RowData") {
+                return (TypeInformation<OUT>) TypeInformation.of(RowData.class);
+            } else if (outType == "Map") {
+                Map<String, Object> map = new HashMap<>();
+                return (TypeInformation<OUT>) TypeInformation.of(map.getClass());
+            }
+        }
+        return TypeInformation.of(this.typeClass);
     }
 
     private Configuration toConfiguration(Properties props) {

@@ -33,7 +33,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, Tde
 
     private boolean isBatchMode = false;
 
-    Class<OUT> typeClass;
+    private final Class<OUT> typeClass;
     public TDengineCdcSource(String topic, Properties properties, Class<OUT> typeClass) {
         this.topic = topic;
         this.properties = properties;
