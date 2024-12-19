@@ -6,10 +6,10 @@ import org.apache.flink.connector.base.source.reader.RecordEmitter;
 
 import java.util.Iterator;
 
-public class TdengineRecordEmitter<T> implements RecordEmitter<SplitResultRecords<T>, T, TDengineSplitsState> {
+public class TDengineRecordEmitter<T> implements RecordEmitter<SplitResultRecords<T>, T, TDengineSplitsState> {
     private final boolean isBatchMode;
 
-    public TdengineRecordEmitter(boolean isBatchMode) {
+    public TDengineRecordEmitter(boolean isBatchMode) {
         this.isBatchMode = isBatchMode;
     }
 

@@ -1,10 +1,6 @@
 package com.taosdata.flink.table;
 
 import com.taosdata.flink.cdc.TDengineCdcSource;
-import com.taosdata.flink.source.TdengineSource;
-import com.taosdata.flink.source.entity.SourceSplitSql;
-import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
-import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.streaming.api.datastream.DataStream;

@@ -1,30 +1,20 @@
 package com.taosdata.flink.table;
 
-import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
-import com.taosdata.flink.source.TdengineSource;
+import com.taosdata.flink.source.TDengineSource;
 import com.taosdata.flink.source.entity.SourceSplitSql;
-import com.taosdata.flink.table.options.JdbcLookupOptions;
-import com.taosdata.flink.table.options.JdbcOptions;
-import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.connector.source.Boundedness;
-import org.apache.flink.connector.jdbc.internal.options.JdbcReadOptions;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.ProviderContext;
 import org.apache.flink.table.connector.source.DataStreamScanProvider;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
-import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
-import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 public class TDengineTableSource implements ScanTableSource {
@@ -50,7 +40,7 @@ public class TDengineTableSource implements ScanTableSource {
     @Override
     public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
         this.connProps.setProperty("value.deserializer", "RowData");
-        TdengineSource<RowData> tdengineSource = new TdengineSource<>(this.url, connProps, new SourceSplitSql(scanQuery), RowData.class);
+        TDengineSource<RowData> tdengineSource = new TDengineSource<>(this.url, connProps, new SourceSplitSql(scanQuery), RowData.class);
         return new DataStreamScanProvider() {
             @Override
             public DataStream<RowData> produceDataStream(ProviderContext providerContext, StreamExecutionEnvironment execEnv) {

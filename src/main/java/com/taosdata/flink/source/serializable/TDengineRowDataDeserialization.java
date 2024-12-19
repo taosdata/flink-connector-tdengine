@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class TdengineRowDataDeserialization implements TdengineRecordDeserialization<RowData> {
+public class TDengineRowDataDeserialization implements TDengineRecordDeserialization<RowData> {
     /**
      * @param splitResultRecord A record of information containing an object list
      * @return Data format after data conversion

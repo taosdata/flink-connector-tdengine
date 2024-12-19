@@ -18,7 +18,7 @@
 
 package com.taosdata.flink.source.serializable;
 
-import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
+import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
 import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 @Internal
 public class TDengineSourceEnumStateSerializer
-        implements SimpleVersionedSerializer<TdengineSourceEnumState> {
+        implements SimpleVersionedSerializer<TDengineSourceEnumState> {
 
     /**
      * state of VERSION_0 contains splitAssignments, which is a mapping from subtask ids to lists of
@@ -58,7 +58,7 @@ public class TDengineSourceEnumStateSerializer
     }
 
     @Override
-    public byte[] serialize(TdengineSourceEnumState enumState) throws IOException {
+    public byte[] serialize(TDengineSourceEnumState enumState) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(baos)) {
             out.writeBoolean(enumState.isInitFinished());
@@ -96,7 +96,7 @@ public class TDengineSourceEnumStateSerializer
     }
 
     @Override
-    public TdengineSourceEnumState deserialize(int version, byte[] serialized) throws IOException {
+    public TDengineSourceEnumState deserialize(int version, byte[] serialized) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
              DataInputStream in = new DataInputStream(bais)) {
             boolean isInitFinished = in.readBoolean();
@@ -140,7 +140,7 @@ public class TDengineSourceEnumStateSerializer
                 unassignedSplits.add(split);
             }
 
-            return new TdengineSourceEnumState(unassignedSplits, assignmentSplits, isInitFinished);
+            return new TDengineSourceEnumState(unassignedSplits, assignmentSplits, isInitFinished);
         }
     }
 

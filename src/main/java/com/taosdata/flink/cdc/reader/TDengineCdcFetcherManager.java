@@ -2,10 +2,9 @@ package com.taosdata.flink.cdc.reader;
 
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 
-import com.taosdata.flink.cdc.split.TdengineCdcSplitReader;
+import com.taosdata.flink.cdc.split.TDengineCdcSplitReader;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TopicPartition;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.SourceReaderBase;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
@@ -16,9 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class TDengineCdcFetcherManager<T>  extends SingleThreadFetcherManager<T, TDengineCdcSplit> {
@@ -45,7 +42,7 @@ public class TDengineCdcFetcherManager<T>  extends SingleThreadFetcherManager<T,
         SplitFetcher<T, TDengineCdcSplit> splitFetcher = fetchers.get(0);
         if (splitFetcher != null) {
             // The fetcher thread is still running. This should be the majority of the cases.
-            TdengineCdcSplitReader splitReader = (TdengineCdcSplitReader) splitFetcher.getSplitReader();
+            TDengineCdcSplitReader splitReader = (TDengineCdcSplitReader) splitFetcher.getSplitReader();
             splitReader.commitOffsets(offsetsToCommit);
         }
     }

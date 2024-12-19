@@ -2,7 +2,6 @@ package com.taosdata.flink.cdc.enumerator;
 
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
-import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
@@ -11,7 +10,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, TdengineCdcEnumState> {
+public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, TDengineCdcEnumState> {
     private final SplitEnumeratorContext<TDengineCdcSplit> context;
     private final Boundedness boundedness;
 
@@ -23,7 +22,7 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     private Properties properties;
     private boolean isInitFinished = false;
 
-    public TdengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
+    public TDengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
                                  Boundedness boundedness, String topic, Properties properties) {
         this.context = context;
         this.boundedness = boundedness;
@@ -33,8 +32,8 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
         assignmentCdcSplits = new ArrayList<>();
     }
 
-    public TdengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
-                                 Boundedness boundedness, String topic, Properties properties, TdengineCdcEnumState checkpoint) {
+    public TDengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
+                                 Boundedness boundedness, String topic, Properties properties, TDengineCdcEnumState checkpoint) {
         this.context = context;
         this.boundedness = boundedness;
         this.readerCount = context.currentParallelism();
@@ -104,8 +103,8 @@ public class TdengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     }
 
     @Override
-    public TdengineCdcEnumState snapshotState(long checkpointId) throws Exception {
-        return new TdengineCdcEnumState(this.unassignedCdcSplits, this.assignmentCdcSplits, this.isInitFinished);
+    public TDengineCdcEnumState snapshotState(long checkpointId) throws Exception {
+        return new TDengineCdcEnumState(this.unassignedCdcSplits, this.assignmentCdcSplits, this.isInitFinished);
     }
 
     @Override

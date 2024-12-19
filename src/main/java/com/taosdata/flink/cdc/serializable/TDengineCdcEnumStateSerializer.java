@@ -18,11 +18,8 @@
 
 package com.taosdata.flink.cdc.serializable;
 
-import com.taosdata.flink.cdc.entity.CdcTopicPartition;
-import com.taosdata.flink.cdc.enumerator.TdengineCdcEnumState;
+import com.taosdata.flink.cdc.enumerator.TDengineCdcEnumState;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
-import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
-import com.taosdata.jdbc.tmq.TopicPartition;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
@@ -39,7 +36,7 @@ import java.util.List;
  */
 @Internal
 public class TDengineCdcEnumStateSerializer
-        implements SimpleVersionedSerializer<TdengineCdcEnumState> {
+        implements SimpleVersionedSerializer<TDengineCdcEnumState> {
 
     /**
      * state of VERSION_0 contains splitAssignments, which is a mapping from subtask ids to lists of
@@ -62,7 +59,7 @@ public class TDengineCdcEnumStateSerializer
     }
 
     @Override
-    public byte[] serialize(TdengineCdcEnumState enumState) throws IOException {
+    public byte[] serialize(TDengineCdcEnumState enumState) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(baos)) {
             out.writeBoolean(enumState.isInitFinished());
@@ -89,7 +86,7 @@ public class TDengineCdcEnumStateSerializer
     }
 
     @Override
-    public TdengineCdcEnumState deserialize(int version, byte[] serialized) throws IOException {
+    public TDengineCdcEnumState deserialize(int version, byte[] serialized) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
              DataInputStream in = new DataInputStream(bais)) {
             boolean isInitFinished = in.readBoolean();
@@ -105,7 +102,7 @@ public class TDengineCdcEnumStateSerializer
                 assignmentCdcSplits.add(new TDengineCdcSplit(in.readUTF(),in.readUTF(), in.readUTF()));
             }
 
-            return new TdengineCdcEnumState(unassignedSplits, assignmentCdcSplits, isInitFinished);
+            return new TDengineCdcEnumState(unassignedSplits, assignmentCdcSplits, isInitFinished);
         }
     }
 

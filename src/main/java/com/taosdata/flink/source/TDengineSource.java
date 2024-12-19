@@ -1,17 +1,15 @@
 package com.taosdata.flink.source;
 
-import com.taosdata.flink.cdc.reader.TDengineCdcEmitter;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
-import com.taosdata.flink.source.enumerator.TdengineSourceEnumerator;
+import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
 import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
-import com.taosdata.flink.source.enumerator.TdengineSourceEnumState;
+import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
 import com.taosdata.flink.source.serializable.TDengineSplitSerializer;
-import com.taosdata.flink.source.reader.TdengineRecordEmitter;
-import com.taosdata.flink.source.reader.TdengineSourceReader;
-import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
+import com.taosdata.flink.source.reader.TDengineRecordEmitter;
+import com.taosdata.flink.source.reader.TDengineSourceReader;
 import com.taosdata.flink.source.split.TDengineSplit;
-import com.taosdata.flink.source.split.TdengineSplitReader;
+import com.taosdata.flink.source.split.TDengineSplitReader;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
@@ -29,14 +27,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
-public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineSourceEnumState>, ResultTypeQueryable<OUT>{
+public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineSourceEnumState>, ResultTypeQueryable<OUT>{
     private String url;
     private Properties properties;
     private SourceSplitSql sourceSql;
     private boolean isBatchMode = false;
     private final Class<OUT> typeClass;
 
-    public TdengineSource(String url, Properties properties, SourceSplitSql sql, Class<OUT> typeClass) {
+    public TDengineSource(String url, Properties properties, SourceSplitSql sql, Class<OUT> typeClass) {
         this.url = url;
         this.properties = properties;
         this.sourceSql = sql;
@@ -53,10 +51,10 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
     }
     @Override
     public SourceReader<OUT, TDengineSplit> createReader(SourceReaderContext sourceReaderContext) throws Exception {
-        Supplier<TdengineSplitReader> splitReaderSupplier =
+        Supplier<TDengineSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
-                        return new TdengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext);
+                        return new TDengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
@@ -71,23 +69,23 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {
-            recordEmitter = new TdengineRecordEmitter<OUT>(true);
+            recordEmitter = new TDengineRecordEmitter<OUT>(true);
         }else{
-            recordEmitter = new TdengineRecordEmitter<OUT>(false);
+            recordEmitter = new TDengineRecordEmitter<OUT>(false);
         }
 
-        return new TdengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
+        return new TDengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
     }
 
     @Override
-    public SplitEnumerator<TDengineSplit, TdengineSourceEnumState> createEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext) throws Exception {
-        return new TdengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql);
+    public SplitEnumerator<TDengineSplit, TDengineSourceEnumState> createEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext) throws Exception {
+        return new TDengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql);
     }
 
     @Override
-    public SplitEnumerator<TDengineSplit, TdengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext, TdengineSourceEnumState splitsState) throws Exception {
+    public SplitEnumerator<TDengineSplit, TDengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext, TDengineSourceEnumState splitsState) throws Exception {
         //todo restore
-        return new TdengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql, splitsState);
+        return new TDengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql, splitsState);
     }
 
     @Override
@@ -96,7 +94,7 @@ public class TdengineSource<OUT> implements Source<OUT, TDengineSplit, TdengineS
     }
 
     @Override
-    public SimpleVersionedSerializer<TdengineSourceEnumState> getEnumeratorCheckpointSerializer() {
+    public SimpleVersionedSerializer<TDengineSourceEnumState> getEnumeratorCheckpointSerializer() {
         return new TDengineSourceEnumStateSerializer();
     }
 

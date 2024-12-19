@@ -1,6 +1,5 @@
 package com.taosdata.flink.cdc.split;
 
-import com.taosdata.flink.cdc.entity.CdcRecord;
 import com.taosdata.flink.cdc.entity.CdcRecords;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.jdbc.tmq.ConsumerRecords;

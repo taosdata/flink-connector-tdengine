@@ -1,7 +1,6 @@
 package com.taosdata.flink.cdc.split;
 
 import com.google.common.base.Strings;
-import com.taosdata.flink.cdc.entity.CdcRecord;
 import com.taosdata.flink.cdc.entity.CdcRecords;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
@@ -20,8 +19,8 @@ import java.sql.*;
 import java.time.Duration;
 import java.util.*;
 
-public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>, TDengineCdcSplit> {
-    private final Logger LOG = LoggerFactory.getLogger(TdengineCdcSplitReader.class);
+public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>, TDengineCdcSplit> {
+    private final Logger LOG = LoggerFactory.getLogger(TDengineCdcSplitReader.class);
     private Properties properties;
     private String topic;
     private int subtaskId;
@@ -33,7 +32,7 @@ public class TdengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
     private String splitId;
     private TaosConsumer<OUT> consumer;
 
-    public TdengineCdcSplitReader(String topic, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+    public TDengineCdcSplitReader(String topic, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.topic = topic;
         this.finishedSplits = new ArrayList<>();

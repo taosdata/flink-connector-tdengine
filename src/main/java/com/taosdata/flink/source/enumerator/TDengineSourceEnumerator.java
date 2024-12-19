@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, TdengineSourceEnumState> {
+public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, TDengineSourceEnumState> {
     private Deque<TDengineSplit> unassignedSplits;
     private TreeSet<TDengineSplit> assignmentSplits;
     private final SplitEnumeratorContext<TDengineSplit> context;
@@ -25,7 +25,7 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
     private boolean isInitFinished = false;
 
 
-    public TdengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
+    public TDengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
                                     Boundedness boundedness, SourceSplitSql sourceSql) {
         this.assignmentSplits = new TreeSet<>();
         this.unassignedSplits = new ArrayDeque<>();
@@ -35,8 +35,8 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         this.readerCount = context.currentParallelism();
     }
 
-    public TdengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
-                                    Boundedness boundedness, SourceSplitSql sourceSql, TdengineSourceEnumState splitsState) {
+    public TDengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
+                                    Boundedness boundedness, SourceSplitSql sourceSql, TDengineSourceEnumState splitsState) {
         this.assignmentSplits = new TreeSet<>();
         this.unassignedSplits = new ArrayDeque<>();
         this.context = context;
@@ -208,8 +208,8 @@ public class TdengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
     }
 
     @Override
-    public TdengineSourceEnumState snapshotState(long checkpointId) throws Exception {
-        return new TdengineSourceEnumState(this.unassignedSplits, this.assignmentSplits, this.isInitFinished);
+    public TDengineSourceEnumState snapshotState(long checkpointId) throws Exception {
+        return new TDengineSourceEnumState(this.unassignedSplits, this.assignmentSplits, this.isInitFinished);
     }
 
     @Override

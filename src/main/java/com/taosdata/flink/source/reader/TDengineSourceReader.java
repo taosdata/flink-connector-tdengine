@@ -10,9 +10,9 @@ import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcher
 
 import java.util.Map;
 
-public class TdengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SplitResultRecord, T, TDengineSplit, TDengineSplitsState> {
+public class TDengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SplitResultRecord, T, TDengineSplit, TDengineSplitsState> {
 
-    public TdengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
+    public TDengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
                                 RecordEmitter recordEmitter,
                                 Configuration config,
                                 SourceReaderContext readerContext) {

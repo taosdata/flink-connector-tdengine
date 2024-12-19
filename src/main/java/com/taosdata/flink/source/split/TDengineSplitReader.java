@@ -5,10 +5,9 @@ import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SplitResultRecord;
 import com.taosdata.flink.source.entity.SplitResultRecords;
 import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
-import com.taosdata.flink.source.serializable.TdengineRecordDeserialization;
-import com.taosdata.flink.source.serializable.TdengineRowDataDeserialization;
+import com.taosdata.flink.source.serializable.TDengineRecordDeserialization;
+import com.taosdata.flink.source.serializable.TDengineRowDataDeserialization;
 import com.taosdata.jdbc.TSDBDriver;
-import com.taosdata.jdbc.tmq.Deserializer;
 import com.taosdata.jdbc.utils.Utils;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
@@ -21,8 +20,8 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<OUT>, TDengineSplit> {
-    private static final Logger LOG = LoggerFactory.getLogger(TdengineSplitReader.class);
+public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<OUT>, TDengineSplit> {
+    private static final Logger LOG = LoggerFactory.getLogger(TDengineSplitReader.class);
     private Properties properties;
     private volatile boolean running = true;
     private String url;
@@ -42,10 +41,10 @@ public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
 
     private String currTask;
 
-    private TdengineRecordDeserialization<OUT> tdengineRecordDeserialization;
+    private TDengineRecordDeserialization<OUT> tdengineRecordDeserialization;
 
     private boolean isEnd = false;
-    public TdengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+    public TDengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
@@ -60,9 +59,9 @@ public class TdengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         this.stmt = this.conn.createStatement();
         String outType = this.properties.getProperty("value.deserializer");
         if (outType.compareTo("RowData") == 0) {
-            tdengineRecordDeserialization = (TdengineRecordDeserialization<OUT>) new TdengineRowDataDeserialization();
+            tdengineRecordDeserialization = (TDengineRecordDeserialization<OUT>) new TDengineRowDataDeserialization();
         } else {
-            tdengineRecordDeserialization = (TdengineRecordDeserialization<OUT>) Utils.newInstance(Utils.parseClassType(outType));
+            tdengineRecordDeserialization = (TDengineRecordDeserialization<OUT>) Utils.newInstance(Utils.parseClassType(outType));
         }
 
     }

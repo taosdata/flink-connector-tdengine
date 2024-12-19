@@ -5,11 +5,11 @@ import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import java.util.Deque;
 import java.util.List;
 
-public class TdengineCdcEnumState {
+public class TDengineCdcEnumState {
     private boolean isInitFinished;
     private Deque<TDengineCdcSplit> unassignedCdcSplits;
     private List<TDengineCdcSplit> assignmentCdcSplits;
-    public TdengineCdcEnumState(Deque<TDengineCdcSplit> unassignedCdcSplits, List<TDengineCdcSplit> assignmentCdcSplits, boolean isInitFinished) {
+    public TDengineCdcEnumState(Deque<TDengineCdcSplit> unassignedCdcSplits, List<TDengineCdcSplit> assignmentCdcSplits, boolean isInitFinished) {
         this.isInitFinished = isInitFinished;
         this.unassignedCdcSplits = unassignedCdcSplits;
         this.assignmentCdcSplits = assignmentCdcSplits;
