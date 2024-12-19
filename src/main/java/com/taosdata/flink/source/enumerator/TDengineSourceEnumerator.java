@@ -124,7 +124,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 for (int i = 0; i < nCount; i++) {
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
-                            + " and " + timestampSplitInfo.getFieldName() + " < " + startTime + timestampSplitInfo.getInterval();
+                            + " and " + timestampSplitInfo.getFieldName() + " < " + (startTime + timestampSplitInfo.getInterval());
                     unassignedSql.push(sql);
                     startTime += timestampSplitInfo.getInterval();
                 }
@@ -162,6 +162,9 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                         + " from `" + tableList.get(i) + "` ";
                 if (!this.sourceSql.getWhere().isEmpty()) {
                     sql += "where " + this.sourceSql.getWhere();
+                }
+                if (!this.sourceSql.getOther().isEmpty()) {
+                    sql += " " + sourceSql.getOther();
                 }
                 unassignedSqls.push(sql);
             }
@@ -203,7 +206,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         }
 
         if (unassignedSplits.isEmpty()) {
-            context.signalNoMoreSplits(subtaskId);
+            context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
         }
     }
 

@@ -11,6 +11,8 @@ public class SourceSplitSql implements Serializable {
 
     private String where;
 
+    private String other;
+
     private SplitType splitType;
     private String sql;
 
@@ -20,10 +22,11 @@ public class SourceSplitSql implements Serializable {
 
     private TimestampSplitInfo timestampSplitInfo;
 
-    public SourceSplitSql(String select, String tableName, String where, SplitType splitType) {
+    public SourceSplitSql(String select, String tableName, String where, String other, SplitType splitType) {
         this.select = select;
         this.tableName = tableName;
         this.where = where;
+        this.other = other;
         this.splitType = splitType;
         this.sql = "";
     }
@@ -38,7 +41,7 @@ public class SourceSplitSql implements Serializable {
         this.select = "";
         this.tableName = "";
         this.where = "";
-        this.splitType = null;
+        this.splitType = SplitType.SPLIT_TYPE_SQL;
         this.sql = sql;
     }
     public String getSelect() {
@@ -103,6 +106,15 @@ public class SourceSplitSql implements Serializable {
     }
     public SourceSplitSql setSql(String sql) {
         this.sql = sql;
+        return this;
+    }
+
+    public String getOther() {
+        return other;
+    }
+
+    public SourceSplitSql setOther(String other) {
+        this.other = other;
         return this;
     }
 }

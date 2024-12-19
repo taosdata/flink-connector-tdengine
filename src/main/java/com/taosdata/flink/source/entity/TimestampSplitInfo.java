@@ -1,10 +1,11 @@
 package com.taosdata.flink.source.entity;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-public class TimestampSplitInfo {
+public class TimestampSplitInfo implements Serializable {
     private Timestamp startTime;
     private Timestamp endTime;
     private String fieldName;

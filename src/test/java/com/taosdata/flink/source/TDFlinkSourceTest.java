@@ -6,6 +6,7 @@ import com.taosdata.flink.common.TDengineTmqParams;
 import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
+import com.taosdata.flink.source.entity.TimestampSplitInfo;
 import com.taosdata.jdbc.TSDBDriver;
 import com.taosdata.jdbc.tmq.ConsumerRecord;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
@@ -34,6 +35,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,22 +51,37 @@ public class TDFlinkSourceTest {
     static InMemoryReporter reporter;
     String jdbcUrl = "jdbc:TAOS-WS://192.168.1.95:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
+    LocalDateTime insertTime;
+
     public void prepare() throws Exception {
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         String insertQuery = "INSERT INTO " +
-                "power.d1001 USING power.meters TAGS('California.SanFrancisco', 2) " +
+                "power.d1001 USING power.meters TAGS('California.SanFrancisco', 1) " +
                 "VALUES " +
-                "(NOW + 1a, 50.30000, 201, 0.31000) " +
-                "(NOW + 2a, 82.60000, 202, 0.33000) " +
-                "(NOW + 3a, 92.30000, 203, 0.31000) " +
-                "power.d1002 USING power.meters TAGS('California.SanFrancisco', 3) " +
+                "('2024-12-19 19:12:45.642', 50.30000, 201, 0.31000) " +
+                "('2024-12-19 19:12:46.642', 82.60000, 202, 0.33000) " +
+                "('2024-12-19 19:12:47.642', 92.30000, 203, 0.31000) " +
+                "('2024-12-19 18:12:45.642', 50.30000, 201, 0.31000) " +
+                "('2024-12-19 18:12:46.642', 82.60000, 202, 0.33000) " +
+                "('2024-12-19 18:12:47.642', 92.30000, 203, 0.31000) " +
+                "('2024-12-19 17:12:45.642', 50.30000, 201, 0.31000) " +
+                "('2024-12-19 17:12:46.642', 82.60000, 202, 0.33000) " +
+                "('2024-12-19 17:12:47.642', 92.30000, 203, 0.31000) " +
+                "power.d1002 USING power.meters TAGS('Alabama.Montgomery', 2) " +
                 "VALUES " +
-                "(NOW + 1a, 50.30000, 204, 0.25000) " +
-                "(NOW + 2a, 62.60000, 205, 0.33000) " +
-                "(NOW + 3a, 72.30000, 206, 0.31000) ";
+                "('2024-12-19 19:12:45.642', 50.30000, 204, 0.25000) " +
+                "('2024-12-19 19:12:46.642', 62.60000, 205, 0.33000) " +
+                "('2024-12-19 19:12:47.642', 72.30000, 206, 0.31000) " +
+                "('2024-12-19 18:12:45.642', 50.30000, 204, 0.25000) " +
+                "('2024-12-19 18:12:46.642', 62.60000, 205, 0.33000) " +
+                "('2024-12-19 18:12:47.642', 72.30000, 206, 0.31000) " +
+                "('2024-12-19 17:12:45.642', 50.30000, 204, 0.25000) " +
+                "('2024-12-19 17:12:46.642', 62.60000, 205, 0.33000) " +
+                "('2024-12-19 17:12:47.642', 72.30000, 206, 0.31000) ";
+
         try (Connection connection = DriverManager.getConnection(jdbcUrl, properties);
              Statement stmt = connection.createStatement()) {
 
@@ -82,6 +102,7 @@ public class TDFlinkSourceTest {
             stmt.executeUpdate("CREATE TOPIC topic_meters as SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM meters");
 
             int affectedRows = stmt.executeUpdate(insertQuery);
+            insertTime = LocalDateTime.now();
             // you can check affectedRows here
             System.out.println("Successfully inserted " + affectedRows + " rows to power.meters.");
 
@@ -164,9 +185,65 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, groupid, location from meters");
+        sourceQuery(sql, 3, connProps);
+    }
+
+    @Test
+    void testTDengineSourceByTimeSplit() throws Exception {
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        SourceSplitSql splitSql = new SourceSplitSql();
+        splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location from meters")
+                .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
+                //按照时间分片
+                .setTimestampSplitInfo(new TimestampSplitInfo(
+                        "2024-12-19 16:12:48.000",
+                        "2024-12-19 19:12:48.000",
+                        "ts",
+                        Duration.ofHours(1).toMillis(),
+                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")));
+
+        sourceQuery(splitSql, 3, connProps);
+    }
+
+    @Test
+    void testTDengineSourceByTagSplit() throws Exception {
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        SourceSplitSql splitSql = new SourceSplitSql();
+        splitSql.setSql("select  ts, current, voltage, phase, groupid, location from meters")
+                .setTagList(Arrays.asList(
+                        "groupid = 1 and location = 'California.SanFrancisco'",
+                        "groupid = 2 and location = 'Alabama.Montgomery'"))
+                .setSplitType(SplitType.SPLIT_TYPE_TAG);
+        sourceQuery(splitSql, 3, connProps);
+    }
+
+    @Test
+    void testTDengineSourceByTableSplit() throws Exception {
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        SourceSplitSql splitSql = new SourceSplitSql();
+        splitSql.setSelect("ts, current, voltage, phase, groupid, location")
+                .setTableList(Arrays.asList("d1001", "d1002"))
+                .setOther("order by ts limit 100")
+                .setSplitType(SplitType.SPLIT_TYPE_TABLE);
+        sourceQuery(splitSql, 3, connProps);
+    }
+
+    public void sourceQuery(SourceSplitSql sql, int parallelism, Properties connProps) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(3);
-        SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
+        env.setParallelism(parallelism);
         TDengineSource<RowData> source = new TDengineSource<>("jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
@@ -176,7 +253,8 @@ public class TDFlinkSourceTest {
                     ", current: " + row.getFloat(1) +
                     ", voltage: " + row.getInt(2) +
                     ", phase: " + row.getFloat(3) +
-                    ", location: " + new String(row.getBinary(4)));
+                    ", groupid: " + row.getInt(4) +
+                    ", location: " + new String(row.getBinary(5)));
             sb.append("\n");
             totalVoltage.addAndGet(row.getInt(2));
             return sb.toString();
@@ -184,7 +262,7 @@ public class TDFlinkSourceTest {
         resultStream.print();
         env.execute("flink tdengine source");
 
-        Assert.assertEquals(1221, totalVoltage.get());
+        Assert.assertEquals(1221 * 3, totalVoltage.get());
     }
 
     @Test
@@ -198,7 +276,7 @@ public class TDFlinkSourceTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
-        SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname ", "meters", "", SplitType.SPLIT_TYPE_SQL);
+        SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname from meters");
         TDengineSource<SourceRecords<RowData>> source = new TDengineSource<>("jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, typeClass);
         DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         DataStream<String> resultStream = input.map((MapFunction<SourceRecords<RowData>, String>) records -> {
@@ -218,7 +296,7 @@ public class TDFlinkSourceTest {
         });
         resultStream.print();
         env.execute("flink tdengine source");
-        Assert.assertEquals(1221, totalVoltage.get());
+        Assert.assertEquals(1221 * 3, totalVoltage.get());
     }
 
     @Test
@@ -256,7 +334,7 @@ public class TDFlinkSourceTest {
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
         Thread.sleep(5000L);
         jobClient.cancel().get();
-        Assert.assertEquals(1221, totalVoltage.get());
+        Assert.assertEquals(1221 * 3, totalVoltage.get());
     }
 
     @Test
@@ -300,7 +378,7 @@ public class TDFlinkSourceTest {
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
         Thread.sleep(5000L);
         jobClient.cancel().get();
-        Assert.assertEquals(1221, totalVoltage.get());
+        Assert.assertEquals(1221 * 3, totalVoltage.get());
     }
 
     @Test
@@ -354,7 +432,7 @@ public class TDFlinkSourceTest {
         formattedResult.print();
         // 启动 Flink 作业
         env.execute("Flink Table API & SQL TDengine Example");
-        Assert.assertEquals(203, totalVoltage.get());
+        Assert.assertEquals(203 * 3, totalVoltage.get());
 
     }
 
@@ -416,7 +494,7 @@ public class TDFlinkSourceTest {
         JobClient jobClient = env.executeAsync("Flink Table API & SQL TDengine Example");
         Thread.sleep(5000L);
         jobClient.cancel().get();
-        Assert.assertEquals(1221, totalVoltage.get());
+        Assert.assertEquals(1221 * 3, totalVoltage.get());
     }
 
     @Test
@@ -466,7 +544,7 @@ public class TDFlinkSourceTest {
         TableResult tableResult = tableEnv.executeSql("INSERT INTO sink_meters SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`");
         tableResult.await();
         int queryResult = queryResult();
-        Assert.assertEquals(1221, queryResult);
+        Assert.assertEquals(1221 * 3, queryResult);
     }
 
     @Test
@@ -520,7 +598,7 @@ public class TDFlinkSourceTest {
         Thread.sleep(5000L);
         tableResult.getJobClient().get().cancel().get();
         int queryResult = queryResult();
-        Assert.assertEquals(1221, queryResult);
+        Assert.assertEquals(1221 * 3, queryResult);
     }
 
 }
