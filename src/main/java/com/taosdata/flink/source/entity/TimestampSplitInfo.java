@@ -4,40 +4,61 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.*;
 
 public class TimestampSplitInfo implements Serializable {
-    private Timestamp startTime;
-    private Timestamp endTime;
+    private Long startTime;
+    private Long endTime;
     private String fieldName;
     private long interval;
 
-    public TimestampSplitInfo(Timestamp startTime, Timestamp endTime, String fieldName, long interval) {
+    public TimestampSplitInfo(LocalDateTime startTime, LocalDateTime endTime, String fieldName, Duration interval, ZoneId zone) {
+        if (zone == null) {
+            zone = ZoneId.systemDefault();
+        }
+        this.startTime = startTime.atZone(zone).toInstant().toEpochMilli();;
+        this.endTime = endTime.atZone(zone).toInstant().toEpochMilli();
+        this.fieldName = fieldName;
+        this.interval = interval.toMillis();
+    }
+    public TimestampSplitInfo(long startTime, long endTime, String fieldName, Duration interval) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.fieldName = fieldName;
-        this.interval = interval;
-    }
-    public TimestampSplitInfo(long startTime, long endTime, String fieldName, long interval) {
-        this.startTime = new Timestamp(startTime);
-        this.endTime = new Timestamp(endTime);
-        this.fieldName = fieldName;
-        this.interval = interval;
+        this.interval = interval.toMillis();
     }
 
-    public TimestampSplitInfo(String startTime, String endTime, String fieldName, long interval, SimpleDateFormat dateFormat) throws ParseException {
+    public TimestampSplitInfo(String startTime, String endTime, String fieldName, Duration interval, SimpleDateFormat dateFormat, ZoneId zone) throws ParseException {
         java.util.Date date = dateFormat.parse(startTime);
-        this.startTime = new Timestamp(date.getTime());
+        Instant instant = date.toInstant();
+        if (zone == null) {
+            zone = ZoneId.systemDefault();
+        }
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, zone);
+        this.startTime = localDateTime.atZone(zone).toInstant().toEpochMilli();
+
         date = dateFormat.parse(endTime);
-        this.endTime = new Timestamp(date.getTime());
+        instant = date.toInstant();
+        localDateTime = LocalDateTime.ofInstant(instant, zone);
+        this.endTime = localDateTime.atZone(zone).toInstant().toEpochMilli();
         this.fieldName = fieldName;
-        this.interval = interval;
+        this.interval = interval.toMillis();
     }
 
-    public Timestamp getStartTime() {
+    public TimestampSplitInfo(String startTime, String endTime, String fieldName, Duration interval, SimpleDateFormat dateFormat) throws ParseException {
+        java.util.Date date = dateFormat.parse(startTime);
+        this.startTime = new Timestamp(date.getTime()).getTime();
+        date = dateFormat.parse(endTime);
+        this.endTime = new Timestamp(date.getTime()).getTime();
+        this.fieldName = fieldName;
+        this.interval = interval.toMillis();
+    }
+
+    public Long getStartTime() {
         return startTime;
     }
 
-    public Timestamp getEndTime() {
+    public Long getEndTime() {
         return endTime;
     }
 

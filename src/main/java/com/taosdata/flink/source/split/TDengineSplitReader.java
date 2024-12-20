@@ -1,6 +1,7 @@
 package com.taosdata.flink.source.split;
 
 import com.google.common.base.Strings;
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SplitResultRecord;
 import com.taosdata.flink.source.entity.SplitResultRecords;
@@ -44,20 +45,20 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
     private TDengineRecordDeserialization<OUT> tdengineRecordDeserialization;
 
     private boolean isEnd = false;
-    public TDengineSplitReader(String url, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
+    public TDengineSplitReader(Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
         this.properties = properties;
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
-        this.url = url;
+        this.url = this.properties.getProperty(TDengineConfigParams.TD_JDBC_URL, "");
         LOG.info("init connect websocket ok！");
 
         Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
         this.conn = DriverManager.getConnection(this.url, this.properties);
         this.stmt = this.conn.createStatement();
-        String outType = this.properties.getProperty("value.deserializer");
+        String outType = this.properties.getProperty(TDengineConfigParams.VALUE_DESERIALIZER, "");
         if (outType.compareTo("RowData") == 0) {
             tdengineRecordDeserialization = (TDengineRecordDeserialization<OUT>) new TDengineRowDataDeserialization();
         } else {

@@ -166,7 +166,10 @@ public class TDengineWriter <IN> implements SinkWriter<IN> {
             sql += ",?";
         }
 
-        sql += ") (" + String.join(",", this.columnMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES (?";
+        sql += ") (" + String.join(",", this.columnMetaInfos.stream()
+                .filter(field -> field.getFieldName().equals("tbname") == false)
+                .map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES (?";
+
         for (int i = 1; i < this.columnMetaInfos.size(); i++) {
             sql += ",?";
         }

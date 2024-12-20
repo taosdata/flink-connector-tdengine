@@ -1,5 +1,6 @@
 package com.taosdata.flink.table;
 
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.TDengineSource;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -39,8 +40,9 @@ public class TDengineTableSource implements ScanTableSource {
 
     @Override
     public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-        this.connProps.setProperty("value.deserializer", "RowData");
-        TDengineSource<RowData> tdengineSource = new TDengineSource<>(this.url, connProps, new SourceSplitSql(scanQuery), RowData.class);
+        this.connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        this.connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, this.url);
+        TDengineSource<RowData> tdengineSource = new TDengineSource<>(connProps, new SourceSplitSql(scanQuery), RowData.class);
         return new DataStreamScanProvider() {
             @Override
             public DataStream<RowData> produceDataStream(ProviderContext providerContext, StreamExecutionEnvironment execEnv) {

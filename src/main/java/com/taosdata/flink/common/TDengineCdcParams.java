@@ -4,7 +4,7 @@ import com.taosdata.jdbc.TSDBDriver;
 
 import static com.taosdata.jdbc.TSDBDriver.*;
 
-public class TDengineTmqParams {
+public class TDengineCdcParams {
 
     public static final String GROUP_ID = "group.id";
 

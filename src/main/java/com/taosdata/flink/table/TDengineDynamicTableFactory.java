@@ -1,6 +1,7 @@
 package com.taosdata.flink.table;
 
 import com.google.common.base.Strings;
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
@@ -44,13 +45,14 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, config.get(TDengineConnectorOptions.LOCALE));
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, config.get(TDengineConnectorOptions.SERVER_TIME_ZONE));
-        String dbname = config.get(TDengineConnectorOptions.SINK_DBNAME_NAME);
-        String tbname = config.get(TDengineConnectorOptions.SINK_TABLE_NAME);
-        String superTableName = config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME);
-        String url = config.get(TDengineConnectorOptions.TD_JDBC_URL);
-        int batchSize = config.get(TDengineConnectorOptions.SINK_BATCH_SIZE);
+        connProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, config.get(TDengineConnectorOptions.SINK_DBNAME_NAME));
+        connProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME));
+        connProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, config.get(TDengineConnectorOptions.SINK_TABLE_NAME));
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, config.get(TDengineConnectorOptions.TD_JDBC_URL));
+        connProps.setProperty(TDengineConfigParams.BATCH_SIZE, "" + config.get(TDengineConnectorOptions.SINK_BATCH_SIZE));
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         try {
-            return new TDengineTableSink(dbname, superTableName, tbname, url, connProps, physicalSchema, parallelism, batchSize);
+            return new TDengineTableSink(connProps, physicalSchema, parallelism);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

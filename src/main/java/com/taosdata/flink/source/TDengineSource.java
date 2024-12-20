@@ -1,5 +1,6 @@
 package com.taosdata.flink.source;
 
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
@@ -28,18 +29,16 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineSourceEnumState>, ResultTypeQueryable<OUT>{
-    private String url;
     private Properties properties;
     private SourceSplitSql sourceSql;
     private boolean isBatchMode = false;
     private final Class<OUT> typeClass;
 
-    public TDengineSource(String url, Properties properties, SourceSplitSql sql, Class<OUT> typeClass) {
-        this.url = url;
+    public TDengineSource(Properties properties, SourceSplitSql sql, Class<OUT> typeClass) {
         this.properties = properties;
         this.sourceSql = sql;
         this.typeClass = typeClass;
-        String batchMode = this.properties.getProperty("td.batch.mode", "false");
+        String batchMode = this.properties.getProperty(TDengineConfigParams.TD_BATCH_MODE, "false");
         if (batchMode.equals("true")) {
             isBatchMode = true;
         }
@@ -54,7 +53,7 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
         Supplier<TDengineSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
-                        return new TDengineSplitReader<OUT>(this.url, this.properties, sourceReaderContext);
+                        return new TDengineSplitReader<OUT>(this.properties, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (SQLException e) {

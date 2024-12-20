@@ -106,8 +106,8 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
     private Deque<String> splitByTimestamp() {
         Deque<String> unassignedSql = new ArrayDeque<>();
         TimestampSplitInfo timestampSplitInfo = sourceSql.getTimestampSplitInfo();
-        if (timestampSplitInfo != null && !Strings.isNullOrEmpty(timestampSplitInfo.getFieldName()) && timestampSplitInfo.getEndTime().after(timestampSplitInfo.getStartTime())) {
-            long timeDifference = timestampSplitInfo.getEndTime().getTime() - timestampSplitInfo.getStartTime().getTime();
+        if (timestampSplitInfo != null && !Strings.isNullOrEmpty(timestampSplitInfo.getFieldName()) && timestampSplitInfo.getEndTime() > timestampSplitInfo.getStartTime()) {
+            long timeDifference = timestampSplitInfo.getEndTime() - timestampSplitInfo.getStartTime();
             long nCount = 0;
             if (timestampSplitInfo.getInterval() > 0) {
                 nCount = timeDifference / timestampSplitInfo.getInterval();
@@ -115,11 +115,11 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
             if (nCount == 0) {
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
-                        + timestampSplitInfo.getFieldName() + " >= " + timestampSplitInfo.getStartTime().getTime()
-                        + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime().getTime();
+                        + timestampSplitInfo.getFieldName() + " >= " + timestampSplitInfo.getStartTime()
+                        + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime();
                 unassignedSql.push(sql);
             } else {
-                long startTime = timestampSplitInfo.getStartTime().getTime();
+                long startTime = timestampSplitInfo.getStartTime();
                 boolean bRemainder = timeDifference % timestampSplitInfo.getInterval() > 0;
                 for (int i = 0; i < nCount; i++) {
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
@@ -132,7 +132,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 if (bRemainder) {
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
-                            + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime().getTime();
+                            + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime();
                     unassignedSql.push(sql);
                 }
             }

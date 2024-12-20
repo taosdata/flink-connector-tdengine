@@ -28,8 +28,8 @@ public class SourceRowDataBatchSerializer implements TDengineSinkRecordSerialize
 
     @Override
     public List<TDengineSinkRecord> serialize(SourceRecords<RowData> records) throws IOException {
-        if (records != null || records.isEmpty()) {
-            throw new IOException("serialize ConsumerRecords is null!");
+        if (records == null || records.isEmpty()) {
+            throw new IOException("serialize SourceRecords is null!");
         }
         List<TDengineSinkRecord> sinkRecords = new ArrayList<>();
         Iterator<RowData> iterator = records.iterator();

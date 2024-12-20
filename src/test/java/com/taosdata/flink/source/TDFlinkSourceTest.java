@@ -1,12 +1,14 @@
 package com.taosdata.flink.source;
 
 import com.taosdata.flink.cdc.TDengineCdcSource;
-import com.taosdata.flink.common.TDengineConnectorParams;
-import com.taosdata.flink.common.TDengineTmqParams;
+import com.taosdata.flink.common.TDengineConfigParams;
+import com.taosdata.flink.common.TDengineCdcParams;
+import com.taosdata.flink.sink.TDengineSink;
 import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
+import java.util.List;
 import com.taosdata.jdbc.TSDBDriver;
 import com.taosdata.jdbc.tmq.ConsumerRecord;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
@@ -38,6 +40,7 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
@@ -184,7 +187,8 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, groupid, location from meters");
         sourceQuery(sql, 3, connProps);
     }
@@ -195,7 +199,8 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -204,8 +209,9 @@ public class TDFlinkSourceTest {
                         "2024-12-19 16:12:48.000",
                         "2024-12-19 19:12:48.000",
                         "ts",
-                        Duration.ofHours(1).toMillis(),
-                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")));
+                        Duration.ofHours(1),
+                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
+                        ZoneId.of("Asia/Shanghai")));
 
         sourceQuery(splitSql, 3, connProps);
     }
@@ -216,7 +222,8 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, current, voltage, phase, groupid, location from meters")
                 .setTagList(Arrays.asList(
@@ -232,7 +239,8 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSelect("ts, current, voltage, phase, groupid, location")
                 .setTableList(Arrays.asList("d1001", "d1002"))
@@ -244,7 +252,7 @@ public class TDFlinkSourceTest {
     public void sourceQuery(SourceSplitSql sql, int parallelism, Properties connProps) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
-        TDengineSource<RowData> source = new TDengineSource<>("jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, RowData.class);
+        TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
@@ -271,13 +279,14 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConnectorParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConnectorParams.TD_BATCH_MODE, "true");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
         SourceSplitSql sql = new SourceSplitSql("ts, `current`, voltage, phase, tbname from meters");
-        TDengineSource<SourceRecords<RowData>> source = new TDengineSource<>("jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata", connProps, sql, typeClass);
+        TDengineSource<SourceRecords<RowData>> source = new TDengineSource<>(connProps, sql, typeClass);
         DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
         DataStream<String> resultStream = input.map((MapFunction<SourceRecords<RowData>, String>) records -> {
             StringBuilder sb = new StringBuilder();
@@ -300,22 +309,73 @@ public class TDFlinkSourceTest {
     }
 
     @Test
+    void testTDengineSourceToSink() throws Exception {
+        Properties connProps = new Properties();
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        SourceSplitSql splitSql = new SourceSplitSql();
+        splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
+                .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
+                //按照时间分片
+                .setTimestampSplitInfo(new TimestampSplitInfo(
+                        "2024-12-19 16:12:48.000",
+                        "2024-12-19 19:12:48.000",
+                        "ts",
+                        Duration.ofHours(1),
+                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
+                        ZoneId.of("Asia/Shanghai")));
+
+        tdSourceToTdSink(splitSql, 3, connProps, Arrays.asList("ts", "current", "voltage", "phase", "groupid", "location", "tbname"));
+    }
+
+    void tdSourceToTdSink(SourceSplitSql sql, int parallelism, Properties connProps, List<String> fieldNames) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(parallelism);
+        TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
+        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
+
+
+        Properties sinkProps = new Properties();
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");;
+        sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
+        sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.BATCH_SIZE, "2000");
+
+        TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, fieldNames);
+        input.sinkTo(sink);
+        env.execute("flink tdengine source");
+        int queryResult = queryResult();
+        Assert.assertEquals(1221 * 3, queryResult);
+    }
+
+
+    @Test
     void testTDengineCdc() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         env.enableCheckpointing(100, AT_LEAST_ONCE);
         env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
         Properties config = new Properties();
-        config.setProperty(TDengineTmqParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineTmqParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
-        config.setProperty(TDengineTmqParams.AUTO_OFFSET_RESET, "earliest");
-        config.setProperty(TDengineTmqParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineTmqParams.AUTO_COMMIT_INTERVAL, "1000");
-        config.setProperty(TDengineTmqParams.GROUP_ID, "group_1");
-        config.setProperty(TDengineTmqParams.CONNECT_USER, "root");
-        config.setProperty(TDengineTmqParams.CONNECT_PASS, "taosdata");
-        config.setProperty(TDengineTmqParams.VALUE_DESERIALIZER, "RowData");
-        config.setProperty(TDengineTmqParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
+        config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
+        config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
+        config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
+        config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
+        config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
         TDengineCdcSource<RowData> tdengineSource = new TDengineCdcSource<>("topic_meters", config, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
@@ -342,17 +402,17 @@ public class TDFlinkSourceTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         Properties config = new Properties();
-        config.setProperty(TDengineTmqParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineTmqParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
-        config.setProperty(TDengineTmqParams.AUTO_OFFSET_RESET, "earliest");
-        config.setProperty(TDengineTmqParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineTmqParams.AUTO_COMMIT_INTERVAL, "1000");
-        config.setProperty(TDengineTmqParams.GROUP_ID, "group_1");
-        config.setProperty(TDengineTmqParams.CONNECT_USER, "root");
-        config.setProperty(TDengineTmqParams.CONNECT_PASS, "taosdata");
-        config.setProperty(TDengineTmqParams.VALUE_DESERIALIZER, "RowData");
-        config.setProperty(TDengineTmqParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
-        config.setProperty(TDengineTmqParams.TMQ_BATCH_MODE, "true");
+        config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
+        config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
+        config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
+        config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
+        config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
+        config.setProperty(TDengineCdcParams.TMQ_BATCH_MODE, "true");
 
         Class<ConsumerRecords<RowData>> typeClass = (Class<ConsumerRecords<RowData>>) (Class<?>) ConsumerRecords.class;
         TDengineCdcSource<ConsumerRecords<RowData>> tdengineSource = new TDengineCdcSource<>("topic_meters", config, typeClass);
