@@ -442,6 +442,49 @@ public class TDFlinkSourceTest {
     }
 
     @Test
+    void testTDengineCdcToTdSink() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(3);
+        Properties config = new Properties();
+        config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
+        config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
+        config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
+        config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
+        config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
+        config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
+        config.setProperty(TDengineCdcParams.TMQ_BATCH_MODE, "true");
+
+        Class<ConsumerRecords<RowData>> typeClass = (Class<ConsumerRecords<RowData>>) (Class<?>) ConsumerRecords.class;
+        TDengineCdcSource<ConsumerRecords<RowData>> tdengineSource = new TDengineCdcSource<>("topic_meters", config, typeClass);
+        DataStreamSource<ConsumerRecords<RowData>> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
+
+
+        Properties sinkProps = new Properties();
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
+        sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
+        sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.BATCH_SIZE, "2000");
+
+        TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
+        input.sinkTo(sink);
+        JobClient jobClient = env.executeAsync("Flink test cdc Example");
+        Thread.sleep(5000L);
+        jobClient.cancel().get();
+        int queryResult = queryResult();
+        Assert.assertEquals(1221 * 3, queryResult);
+    }
+
+    @Test
     void testTable() throws Exception {
         EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

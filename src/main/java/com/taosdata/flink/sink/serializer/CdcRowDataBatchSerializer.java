@@ -27,7 +27,7 @@ public class CdcRowDataBatchSerializer implements TDengineSinkRecordSerializer<C
 
     @Override
     public List<TDengineSinkRecord> serialize(ConsumerRecords<RowData> records) throws IOException {
-        if (records != null || records.isEmpty()) {
+        if (records == null || records.isEmpty()) {
             throw new IOException("serialize ConsumerRecords is null!");
         }
         List<TDengineSinkRecord> sinkRecords = new ArrayList<>();
