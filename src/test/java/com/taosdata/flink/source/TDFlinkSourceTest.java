@@ -536,7 +536,6 @@ public class TDFlinkSourceTest {
         // 启动 Flink 作业
         env.execute("Flink Table API & SQL TDengine Example");
         Assert.assertEquals(203 * 3, totalVoltage.get());
-
     }
 
     @Test

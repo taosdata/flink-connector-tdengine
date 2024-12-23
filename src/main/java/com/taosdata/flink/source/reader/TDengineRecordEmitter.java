@@ -15,7 +15,6 @@ public class TDengineRecordEmitter<T> implements RecordEmitter<SplitResultRecord
 
     @Override
     public void emitRecord(SplitResultRecords<T> splitResultRecords, SourceOutput<T> sourceOutput, TDengineSplitsState splitsState) throws Exception {
-        splitsState.updateSplitsState(splitResultRecords.getTdengineSplit());
         if (isBatchMode) {
             sourceOutput.collect((T) splitResultRecords.getSourceRecords());
         } else {
@@ -24,5 +23,6 @@ public class TDengineRecordEmitter<T> implements RecordEmitter<SplitResultRecord
                 sourceOutput.collect(iterator.next());
             }
         }
+        splitsState.updateSplitsState(splitResultRecords.getTdengineSplit());
     }
 }

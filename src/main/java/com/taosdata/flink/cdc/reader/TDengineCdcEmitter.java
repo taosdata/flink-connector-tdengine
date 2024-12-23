@@ -15,7 +15,6 @@ public class TDengineCdcEmitter<T> implements RecordEmitter<CdcRecords<T>, T, TD
     }
     @Override
     public void emitRecord(CdcRecords<T> sourceRecords, SourceOutput<T> sourceOutput, TDengineCdcSplitState splitsState) throws Exception {
-        splitsState.setTopicPartitions(sourceRecords.getPartitions());
         if (isBatchMode) {
             sourceOutput.collect((T) sourceRecords.getRecords());
         }else{
@@ -24,6 +23,6 @@ public class TDengineCdcEmitter<T> implements RecordEmitter<CdcRecords<T>, T, TD
                 sourceOutput.collect(iterator.next().value());
             }
         }
-
+        splitsState.setTopicPartitions(sourceRecords.getPartitions());
     }
 }
