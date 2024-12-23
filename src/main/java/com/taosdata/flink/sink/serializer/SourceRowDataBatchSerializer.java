@@ -20,54 +20,38 @@ import java.util.List;
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
 public class SourceRowDataBatchSerializer implements TDengineSinkRecordSerializer<SourceRecords<RowData>>{
-    private final List<SinkMetaInfo> sinkMetaInfos;
 
-    public SourceRowDataBatchSerializer(List<SinkMetaInfo> sinkMetaInfos) {
-        this.sinkMetaInfos = sinkMetaInfos;
+    public SourceRowDataBatchSerializer() {
+
     }
 
     @Override
-    public List<TDengineSinkRecord> serialize(SourceRecords<RowData> records) throws IOException {
+    public List<TDengineSinkRecord> serialize(SourceRecords<RowData> records, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
         if (records == null || records.isEmpty()) {
             throw new IOException("serialize SourceRecords is null!");
         }
         List<TDengineSinkRecord> sinkRecords = new ArrayList<>();
         Iterator<RowData> iterator = records.iterator();
         while (iterator.hasNext()) {
-            TDengineSinkRecord sinkRecord = getSinkRecord(iterator.next());
+            TDengineSinkRecord sinkRecord = getSinkRecord(iterator.next(), sinkMetaInfos);
             sinkRecords.add(sinkRecord);
         }
         return sinkRecords;
     }
 
-    private TDengineSinkRecord getSinkRecord(RowData record) throws IOException {
+    private TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
 
         GenericRowData rowData = (GenericRowData) record;
-        List<Object> tagParams = new ArrayList<>();
         List<Object> columnParams = new ArrayList<>();
-        String tbname = "";
         for (int i = 0; i < sinkMetaInfos.size(); i++) {
-            Object value = rowData.getField(i);
-            if (sinkMetaInfos.get(i).getFieldName().equals("tbname")) {
-                if (value instanceof StringData) {
-                    tbname = value.toString();
-                }else if (value instanceof byte[]) {
-                    tbname = new String((byte[]) value, StandardCharsets.UTF_8);
-                }
-            } else {
-                Object fieldVal = convertRowDataType(value, sinkMetaInfos.get(i).getFieldType());
-                if (sinkMetaInfos.get(i).isTag()) {
-                    tagParams.add(fieldVal);
-                }else{
-                    columnParams.add(fieldVal);
-                }
-            }
+            Object fieldVal = convertRowDataType(rowData.getField(i), sinkMetaInfos.get(i).getFieldType());
+            columnParams.add(fieldVal);
         }
 
-        return new TDengineSinkRecord(tbname, tagParams, columnParams);
+        return new TDengineSinkRecord(columnParams);
     }
     private Object convertRowDataType(Object value, DataType fieldType) {
         if (value == null) {

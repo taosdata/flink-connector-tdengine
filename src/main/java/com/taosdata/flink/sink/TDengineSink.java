@@ -2,6 +2,7 @@ package com.taosdata.flink.sink;
 
 import com.google.common.base.Strings;
 import com.taosdata.flink.common.TDengineConfigParams;
+import com.taosdata.flink.common.VersionComparator;
 import com.taosdata.flink.sink.entity.DataType;
 import com.taosdata.flink.sink.entity.SinkError;
 import com.taosdata.flink.sink.entity.SinkErrorNumbers;
@@ -27,7 +28,7 @@ public class TDengineSink<IN> implements Sink<IN> {
     private  String normalTableName;
 
     private  String url;
-
+    private String tdVersion;
     private  Properties properties;
 
     private  TDengineSinkRecordSerializer<IN> serializer;
@@ -85,12 +86,12 @@ public class TDengineSink<IN> implements Sink<IN> {
         if (outType.equals("RowData")) {
             if (batchMode.equals("true")) {
                 if (sourceType.equals("tdengine_source")) {
-                    this.serializer = (TDengineSinkRecordSerializer<IN>) new SourceRowDataBatchSerializer(metaInfos);
+                    this.serializer = (TDengineSinkRecordSerializer<IN>) new SourceRowDataBatchSerializer();
                 } else if (sourceType.equals("tdengine_cdc")) {
-                    this.serializer = (TDengineSinkRecordSerializer<IN>) new CdcRowDataBatchSerializer(metaInfos);
+                    this.serializer = (TDengineSinkRecordSerializer<IN>) new CdcRowDataBatchSerializer();
                 }
             } else {
-                this.serializer = (TDengineSinkRecordSerializer<IN>) new RowDataSinkRecordSerializer(metaInfos);
+                this.serializer = (TDengineSinkRecordSerializer<IN>) new RowDataSinkRecordSerializer();
             }
         }
 
@@ -103,19 +104,13 @@ public class TDengineSink<IN> implements Sink<IN> {
     @Override
     public SinkWriter<IN> createWriter(InitContext context) throws IOException {
         try {
-            List<SinkMetaInfo> tagMetaInfos = new ArrayList<>();
-            List<SinkMetaInfo> columnMetaInfos = new ArrayList<>();
             if (metaInfos != null) {
-                for (SinkMetaInfo metaInfo : metaInfos) {
-                    if (!metaInfo.getFieldName().equals("tbname")) {
-                        if (metaInfo.isTag()) {
-                            tagMetaInfos.add(metaInfo);
-                        } else {
-                            columnMetaInfos.add(metaInfo);
-                        }
-                    }
+                if (VersionComparator.compareVersion(tdVersion, "3.3.5.0") < 0) {
+                    return new TDengineSqlWriter<IN>(this.url, this.dbName, this.superTableName,
+                            this.normalTableName, this.properties, serializer, metaInfos);
                 }
-                return new TDengineWriter<IN>(this.url, this.dbName, this.superTableName, this.normalTableName, this.properties, serializer, tagMetaInfos, columnMetaInfos, batchSize);
+                return new TDengineStmtWriter<>(this.url, this.dbName, this.superTableName,
+                        this.normalTableName, this.properties, serializer, metaInfos, batchSize);
             }
             throw new SQLException("meta info is null!");
         } catch (SQLException e) {
@@ -131,9 +126,15 @@ public class TDengineSink<IN> implements Sink<IN> {
 
         Map<String, SinkMetaInfo> metaInfos = new HashMap<>();
         try (Connection connection = DriverManager.getConnection(this.url, properties);
-             Statement stmt = connection.createStatement()) {
-            stmt.execute("describe `" + this.dbName + "`.`" + tableName + "`");
-            ResultSet rs = stmt.getResultSet();
+             Statement statement = connection.createStatement()) {
+            statement.execute("SELECT SERVER_VERSION()");
+            ResultSet rs = statement.getResultSet();
+            if (rs.next()) {
+                tdVersion = rs.getString(1);
+            }
+
+            statement.execute("describe `" + this.dbName + "`.`" + tableName + "`");
+            rs = statement.getResultSet();
             ResultSetMetaData meta = rs.getMetaData();
             while (rs.next()) {
                 SinkMetaInfo metaInfo = new SinkMetaInfo();

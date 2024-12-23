@@ -10,27 +10,15 @@ import java.util.List;
 
 public class TDengineSinkRecord implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(SuperTableData.class);
-    private String tableName;
 
-    private final List<Object> tagParams;
     private final List<Object> columnParams;
 
-    public TDengineSinkRecord(String tableName, List<Object> tagParams, List<Object> columnParams) {
-        this.tableName = tableName;
-        this.tagParams = tagParams;
+    public TDengineSinkRecord(List<Object> columnParams) {
         this.columnParams = columnParams;
     }
-
-    public String getTableName() {
-        return tableName;
-    }
-
+    
     public List<Object> getColumnParams() {
         return columnParams;
-    }
-
-    public List<Object> getTagParams() {
-        return tagParams;
     }
 
     public String toString() {

@@ -17,40 +17,23 @@ import java.util.List;
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
 public class RowDataSinkRecordSerializer implements TDengineSinkRecordSerializer<RowData>{
-    private final List<SinkMetaInfo> sinkMetaInfos;
 
-    public RowDataSinkRecordSerializer(List<SinkMetaInfo> sinkMetaInfos) {
-        this.sinkMetaInfos = sinkMetaInfos;
+    public RowDataSinkRecordSerializer() {
     }
 
     @Override
-    public List<TDengineSinkRecord> serialize(RowData record) throws IOException {
+    public List<TDengineSinkRecord> serialize(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
         List<TDengineSinkRecord> sinkRecords = new ArrayList<>(1);
         GenericRowData rowData = (GenericRowData) record;
-        List<Object> tagParams = new ArrayList<>();
         List<Object> columnParams = new ArrayList<>();
-        String tbname = "";
         for (int i = 0; i < sinkMetaInfos.size(); i++) {
-            Object value = rowData.getField(i);
-            if (sinkMetaInfos.get(i).getFieldName().equals("tbname")) {
-                if (value instanceof StringData) {
-                    tbname = value.toString();
-                }else if (value instanceof byte[]) {
-                    tbname = new String((byte[]) value, StandardCharsets.UTF_8);
-                }
-            } else {
-                Object fieldVal = convertRowDataType(value, sinkMetaInfos.get(i).getFieldType());
-                if (sinkMetaInfos.get(i).isTag()) {
-                    tagParams.add(fieldVal);
-                }else{
-                    columnParams.add(fieldVal);
-                }
-            }
+            Object fieldVal = convertRowDataType(rowData.getField(i), sinkMetaInfos.get(i).getFieldType());
+            columnParams.add(fieldVal);
         }
-        sinkRecords.add(new TDengineSinkRecord(tbname, tagParams, columnParams));
+        sinkRecords.add(new TDengineSinkRecord(columnParams));
         return sinkRecords;
     }
     private Object convertRowDataType(Object value, DataType fieldType) {
