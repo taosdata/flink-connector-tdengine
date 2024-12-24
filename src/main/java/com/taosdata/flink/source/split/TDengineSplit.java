@@ -72,12 +72,14 @@ public class TDengineSplit implements SourceSplit, Comparable<TDengineSplit> {
                 unexecutedTasks = taskList;
                 currTaskIterator = unexecutedTasks.iterator();
             } else {
-                unexecutedTasks = taskList.subList(finishList.size() - 1, taskList.size());
-                currTaskIterator = unexecutedTasks.iterator();
+                if (finishList.size() < taskList.size()) {
+                    unexecutedTasks = taskList.subList(finishList.size(), taskList.size());
+                    currTaskIterator = unexecutedTasks.iterator();
+                }
             }
         }
 
-        if (currTaskIterator.hasNext()) {
+        if (currTaskIterator != null && currTaskIterator.hasNext()) {
             return currTaskIterator.next();
         }
         return "";

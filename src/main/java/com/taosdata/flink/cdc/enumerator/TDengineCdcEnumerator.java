@@ -22,6 +22,8 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     private Properties properties;
     private boolean isInitFinished = false;
 
+    private HashSet<Integer> taskIdSet;
+
     public TDengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
                                  Boundedness boundedness, String topic, Properties properties) {
         this.context = context;
@@ -30,6 +32,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
         this.topic = topic;
         this.properties = properties;
         assignmentCdcSplits = new ArrayList<>();
+        this.taskIdSet = new HashSet<>();
     }
 
     public TDengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
@@ -44,6 +47,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
             unassignedCdcSplits = checkpoint.getUnassignedCdcSplits();
             this.isInitFinished = true;
         }
+        this.taskIdSet = new HashSet<>();
 
     }
     @Override
@@ -67,12 +71,15 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
 
     @Override
     public void addSplitsBack(List<TDengineCdcSplit> splits, int subtaskId) {
-        TreeSet<TDengineCdcSplit> splitSet = new TreeSet<>(unassignedCdcSplits);
-        splitSet.addAll(splits);
-        unassignedCdcSplits.addAll(splitSet);
-        if (context.registeredReaders().containsKey(subtaskId)) {
-            addReader(subtaskId);
+        if (!splits.isEmpty()) {
+            TreeSet<TDengineCdcSplit> splitSet = new TreeSet<>(unassignedCdcSplits);
+            splitSet.addAll(splits);
+            unassignedCdcSplits.addAll(splitSet);
+            if (context.registeredReaders().containsKey(subtaskId)) {
+                addReader(subtaskId);
+            }
         }
+        taskIdSet.add(subtaskId);
     }
 
     private void checkReaderRegistered(int readerId) {
@@ -85,21 +92,18 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     @Override
     public void addReader(int subtaskId) {
         checkReaderRegistered(subtaskId);
-        if (!unassignedCdcSplits.isEmpty()) {
-            TDengineCdcSplit cdcSplit = unassignedCdcSplits.pop();
-            assignmentCdcSplits.add(cdcSplit);
-            context.assignSplit(cdcSplit, subtaskId);
+        if (!taskIdSet.contains(subtaskId)) {
+            if (!unassignedCdcSplits.isEmpty()) {
+                TDengineCdcSplit cdcSplit = unassignedCdcSplits.pop();
+                assignmentCdcSplits.add(cdcSplit);
+                context.assignSplit(cdcSplit, subtaskId);
+            }
+            taskIdSet.add(subtaskId);
         }
 
         if (unassignedCdcSplits.isEmpty()) {
-            Set<Integer> taskIds = context.registeredReaders().keySet();
-            if (taskIds != null && taskIds.size() > 0) {
-                for (Integer taskId : taskIds) {
-                    context.signalNoMoreSplits(taskId);
-                }
-            }
+            context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
         }
-
     }
 
     @Override

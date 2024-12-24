@@ -24,11 +24,13 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     private boolean isInitFinished = false;
 
+    private HashSet<Integer> taskIdSet;
 
     public TDengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
                                     Boundedness boundedness, SourceSplitSql sourceSql) {
         this.assignmentSplits = new TreeSet<>();
         this.unassignedSplits = new ArrayDeque<>();
+        this.taskIdSet = new HashSet<>();
         this.context = context;
         this.boundedness = boundedness;
         this.sourceSql = sourceSql;
@@ -186,9 +188,12 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public void addSplitsBack(List<TDengineSplit> splits, int subtaskId) {
-        TreeSet<TDengineSplit> splitSet = new TreeSet<>(unassignedSplits);
-        splitSet.addAll(splits);
-        unassignedSplits.addAll(splitSet);
+        if (!splits.isEmpty()) {
+            TreeSet<TDengineSplit> splitSet = new TreeSet<>(unassignedSplits);
+            splitSet.addAll(splits);
+            unassignedSplits.addAll(splitSet);
+        }
+        taskIdSet.add(subtaskId);
         if (context.registeredReaders().containsKey(subtaskId)) {
             addReader(subtaskId);
         }
@@ -197,12 +202,15 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
     @Override
     public void addReader(int subtaskId) {
         checkReaderRegistered(subtaskId);
-        if (!unassignedSplits.isEmpty()) {
-            TDengineSplit tdengineSplit = unassignedSplits.pop();
-            assignmentSplits.add(tdengineSplit);
-            context.assignSplit(tdengineSplit, subtaskId);
-        } else {
-            context.assignSplit(new TDengineSplit("empty_" + subtaskId), subtaskId);
+        if (!taskIdSet.contains(subtaskId)) {
+            if (!unassignedSplits.isEmpty()) {
+                TDengineSplit tdengineSplit = unassignedSplits.pop();
+                assignmentSplits.add(tdengineSplit);
+                context.assignSplit(tdengineSplit, subtaskId);
+            } else {
+                context.assignSplit(new TDengineSplit("empty_" + subtaskId), subtaskId);
+            }
+            taskIdSet.add(subtaskId);
         }
 
         if (unassignedSplits.isEmpty()) {

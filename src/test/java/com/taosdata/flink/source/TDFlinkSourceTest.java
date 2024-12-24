@@ -335,7 +335,7 @@ public class TDFlinkSourceTest {
                         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
                         ZoneId.of("Asia/Shanghai")));
 
-        tdSourceToTdSink(splitSql, 1, connProps, Arrays.asList("ts", "current", "voltage", "phase", "groupid", "location", "tbname"));
+        tdSourceToTdSink(splitSql, 3, connProps, Arrays.asList("ts", "current", "voltage", "phase", "groupid", "location", "tbname"));
     }
 
     void tdSourceToTdSink(SourceSplitSql sql, int parallelism, Properties connProps, List<String> fieldNames) throws Exception {
@@ -345,9 +345,9 @@ public class TDFlinkSourceTest {
         env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
         env.getCheckpointConfig().setCheckpointTimeout(6000);
         env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
-        env.getCheckpointConfig().enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+//        env.getCheckpointConfig().enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
         // 配置失败重启策略：失败后最多重启3次 每次重启间隔10s
-        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 10000));
+//        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 10000));
 
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
@@ -362,6 +362,7 @@ public class TDFlinkSourceTest {
                 }
                 out.collect(value);
                 Thread.sleep(100L);
+                System.out.println("to sink:" + totalVoltage.toString());
             }
         });
 
