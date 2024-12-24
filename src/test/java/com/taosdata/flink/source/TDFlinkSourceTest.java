@@ -8,11 +8,14 @@ import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
+
+import java.io.IOException;
 import java.util.List;
 import com.taosdata.jdbc.TSDBDriver;
 import com.taosdata.jdbc.tmq.ConsumerRecord;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -22,6 +25,7 @@ import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
@@ -31,6 +35,7 @@ import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 
 import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.apache.flink.util.Collector;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +57,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSourceTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.95:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -315,8 +320,9 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
+//        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        connProps.setProperty(TDengineConfigParams.BATCH_SIZE, "1");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -329,15 +335,36 @@ public class TDFlinkSourceTest {
                         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
                         ZoneId.of("Asia/Shanghai")));
 
-        tdSourceToTdSink(splitSql, 3, connProps, Arrays.asList("ts", "current", "voltage", "phase", "groupid", "location", "tbname"));
+        tdSourceToTdSink(splitSql, 1, connProps, Arrays.asList("ts", "current", "voltage", "phase", "groupid", "location", "tbname"));
     }
 
     void tdSourceToTdSink(SourceSplitSql sql, int parallelism, Properties connProps, List<String> fieldNames) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
-        env.enableCheckpointing(100, AT_LEAST_ONCE);
+        env.enableCheckpointing(500, AT_LEAST_ONCE);
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
+        env.getCheckpointConfig().setCheckpointTimeout(6000);
+        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+        env.getCheckpointConfig().enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+        // 配置失败重启策略：失败后最多重启3次 每次重启间隔10s
+        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 10000));
+
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
+
+        DataStream<RowData> processedStream = input.flatMap(new FlatMapFunction<RowData, RowData>() {
+            @Override
+            public void flatMap(RowData value, Collector<RowData> out) throws Exception {
+                totalVoltage.addAndGet(1);
+                if (totalVoltage.get() == 10) {
+                    Thread.sleep(2000L);
+                    throw new IOException("custom error flag, restart application");
+                }
+                out.collect(value);
+                Thread.sleep(100L);
+            }
+        });
+
 
 
         Properties sinkProps = new Properties();
@@ -345,15 +372,15 @@ public class TDFlinkSourceTest {
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+//        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");;
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.BATCH_SIZE, "2000");
 
         TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, fieldNames);
-        input.sinkTo(sink);
+        processedStream.sinkTo(sink);
         env.execute("flink tdengine source");
         int queryResult = queryResult();
         Assert.assertEquals(1221 * 3, queryResult);
@@ -446,6 +473,11 @@ public class TDFlinkSourceTest {
     void testTDengineCdcToTdSink() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
+        env.enableCheckpointing(500, AT_LEAST_ONCE);
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
+        env.getCheckpointConfig().setCheckpointTimeout(60000);
+        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
@@ -463,7 +495,6 @@ public class TDFlinkSourceTest {
         TDengineCdcSource<ConsumerRecords<RowData>> tdengineSource = new TDengineCdcSource<>("topic_meters", config, typeClass);
         DataStreamSource<ConsumerRecords<RowData>> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
 
-
         Properties sinkProps = new Properties();
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -479,7 +510,7 @@ public class TDFlinkSourceTest {
         TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
         input.sinkTo(sink);
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
-        Thread.sleep(5000L);
+        Thread.sleep(600000L);
         jobClient.cancel().get();
         int queryResult = queryResult();
         Assert.assertEquals(1221 * 3, queryResult);

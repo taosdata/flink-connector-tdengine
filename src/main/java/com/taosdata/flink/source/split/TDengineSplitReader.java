@@ -31,7 +31,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
     private ResultSetMetaData metaData;
     private ResultSet resultSet;
     private volatile int interval = 0;
-    private volatile int batchSize = 2000;
+    private volatile int batchSize;
     private int subtaskId;
     private List<TDengineSplit> tdengineSplits;
 
@@ -64,7 +64,8 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         } else {
             tdengineRecordDeserialization = (TDengineRecordDeserialization<OUT>) Utils.newInstance(Utils.parseClassType(outType));
         }
-
+        String strBatchSize = properties.getProperty(TDengineConfigParams.BATCH_SIZE, "2000");
+        batchSize = Integer.parseInt(strBatchSize);
     }
     private SplitResultRecord getRowData() throws SQLException {
         try {
@@ -164,6 +165,8 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
             splitResultRecords.setSourceRecords(sourceRecords);
             return  TDengineSourceRecordsWithSplitsIds.forRecords(currSplit.splitId, splitResultRecords);
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

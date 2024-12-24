@@ -9,6 +9,7 @@ import com.taosdata.flink.cdc.serializable.TDengineCdcEnumStateSerializer;
 import com.taosdata.flink.cdc.serializable.TDengineCdcSplitSerializer;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.cdc.split.TDengineCdcSplitReader;
+import com.taosdata.flink.common.TDengineCdcParams;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
@@ -40,6 +41,11 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
         String batchMode = this.properties.getProperty("td.batch.mode", "false");
         if (batchMode.equals("true")) {
             isBatchMode = true;
+        }
+
+        String bAutoCommit = this.properties.getProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
+        if (bAutoCommit.equals("false")) {
+            this.properties.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
         }
     }
 

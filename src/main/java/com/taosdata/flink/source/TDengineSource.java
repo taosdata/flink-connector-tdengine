@@ -58,6 +58,8 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
 
                 };

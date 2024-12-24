@@ -157,58 +157,6 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
         }
     }
 
-//    private void setStmtTag(TSWSPreparedStatement pstmt, List<Object> tagParams) throws SQLException {
-//        if (tagParams != null && tagParams.size() > 0) {
-//            for (int i = 1; i <= tagParams.size(); i++) {
-//                SinkMetaInfo metaInfo = tagMetaInfos.get(i - 1);
-//                switch (metaInfo.getFieldType().getTypeNo()) {
-//                    case TaosType.TSDB_DATA_TYPE_BOOL:
-//                        pstmt.setTagBoolean(i, (boolean) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_INT:
-//                        pstmt.setTagInt(i, (int) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_TINYINT:
-//                        pstmt.setTagByte(i, (byte) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
-//                        pstmt.setTagTimestamp(i, (long) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_BIGINT:
-//                        pstmt.setTagLong(i, (long) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_FLOAT:
-//                        pstmt.setTagFloat(i, (float) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_DOUBLE:
-//                        pstmt.setTagDouble(i, (double) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_SMALLINT:
-//                        pstmt.setTagShort(i, (short) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_BINARY:
-//                        pstmt.setTagString(i, (String) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_JSON:
-//                        pstmt.setTagJson(i, (String) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_NCHAR:
-//                        pstmt.setTagNString(i, (String) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_GEOMETRY:
-//                        pstmt.setTagGeometry(i, (byte[]) tagParams.get(i - 1));
-//                        break;
-//                    case TaosType.TSDB_DATA_TYPE_VARBINARY:
-//                        pstmt.setTagVarbinary(i, (byte[]) tagParams.get(i - 1));
-//                        break;
-//                    default:
-//                        LOG.error("setStmtTag tag type is error, type:{}", metaInfo.getFieldType().getTypeName());
-//                        throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_TAOS_TYPE);
-//                }
-//            }
-//        }
-//    }
-
     private String getStringParam(Object columnParam, int taosType) throws SQLException, UnsupportedEncodingException {
         if (columnParam == null) {
             return "NULL";
