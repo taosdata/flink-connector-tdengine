@@ -64,7 +64,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         } else {
             tdengineRecordDeserialization = (TDengineRecordDeserialization<OUT>) Utils.newInstance(Utils.parseClassType(outType));
         }
-        String strBatchSize = properties.getProperty(TDengineConfigParams.BATCH_SIZE, "2000");
+        String strBatchSize = properties.getProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
         batchSize = Integer.parseInt(strBatchSize);
     }
     private SplitResultRecord getRowData() throws SQLException {

@@ -3,7 +3,7 @@ package com.taosdata.flink.sink;
 import com.google.common.base.Strings;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
-import com.taosdata.flink.sink.entity.TaosType;
+import com.taosdata.flink.sink.entity.TDengineType;
 import com.taosdata.flink.sink.serializer.TDengineSinkRecordSerializer;
 import com.taosdata.jdbc.TSDBError;
 import com.taosdata.jdbc.TSDBErrorNumbers;
@@ -163,21 +163,21 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
         }
 
         switch (taosType) {
-            case TaosType.TSDB_DATA_TYPE_BOOL:
-            case TaosType.TSDB_DATA_TYPE_INT:
-            case TaosType.TSDB_DATA_TYPE_TINYINT:
-            case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
+            case TDengineType.TSDB_DATA_TYPE_BOOL:
+            case TDengineType.TSDB_DATA_TYPE_INT:
+            case TDengineType.TSDB_DATA_TYPE_TINYINT:
+            case TDengineType.TSDB_DATA_TYPE_TIMESTAMP:
                 if (columnParam instanceof Timestamp) {
                     return "" + ((Timestamp) columnParam).getTime();
                 }else if (columnParam instanceof String) {
                     return "'" + columnParam +"'";
                 }
-            case TaosType.TSDB_DATA_TYPE_BIGINT:
-            case TaosType.TSDB_DATA_TYPE_FLOAT:
-            case TaosType.TSDB_DATA_TYPE_DOUBLE:
-            case TaosType.TSDB_DATA_TYPE_SMALLINT:
+            case TDengineType.TSDB_DATA_TYPE_BIGINT:
+            case TDengineType.TSDB_DATA_TYPE_FLOAT:
+            case TDengineType.TSDB_DATA_TYPE_DOUBLE:
+            case TDengineType.TSDB_DATA_TYPE_SMALLINT:
                 return String.valueOf(columnParam);
-            case TaosType.TSDB_DATA_TYPE_VARCHAR:
+            case TDengineType.TSDB_DATA_TYPE_VARCHAR:
                 StringBuilder value = new StringBuilder("'");
                 if (columnParam instanceof byte[]) {
                     value.append(new String((byte[]) columnParam, "UTF-8"));
@@ -186,7 +186,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
                 }
                 value.append("'");
                 return value.toString();
-            case TaosType.TSDB_DATA_TYPE_NCHAR:
+            case TDengineType.TSDB_DATA_TYPE_NCHAR:
                 return "'" + columnParam + "'";
             default:
                 LOG.error("setStmtLineParams param type is error, type:{}", taosType);

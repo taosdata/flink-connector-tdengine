@@ -20,6 +20,8 @@ import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcher
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -28,25 +30,29 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDengineCdcEnumState>, ResultTypeQueryable<OUT>{
+    private final Logger LOG = LoggerFactory.getLogger(TDengineCdcSource.class);
     private String topic;
     private Properties properties;
 
     private boolean isBatchMode = false;
+
+    private boolean isAutoCommit = false;
 
     private final Class<OUT> typeClass;
     public TDengineCdcSource(String topic, Properties properties, Class<OUT> typeClass) {
         this.topic = topic;
         this.properties = properties;
         this.typeClass = typeClass;
-        String batchMode = this.properties.getProperty("td.batch.mode", "false");
+        String batchMode = this.properties.getProperty(TDengineCdcParams.TMQ_BATCH_MODE, "false");
         if (batchMode.equals("true")) {
             isBatchMode = true;
         }
 
-        String bAutoCommit = this.properties.getProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
-        if (bAutoCommit.equals("false")) {
-            this.properties.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
+        String autoCommit = this.properties.getProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
+        if (autoCommit.equals("true")) {
+            isAutoCommit = true;
         }
+        LOG.info("TDengineCdcSource properties:{}", this.properties.toString());
     }
 
     @Override
@@ -64,6 +70,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
     }
     @Override
     public SourceReader<OUT, TDengineCdcSplit> createReader(SourceReaderContext readerContext) throws Exception {
+        // create TDengineCdcSplitReader
         Supplier<TDengineCdcSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
@@ -79,7 +86,6 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
         FutureCompletingBlockingQueue<RecordsWithSplitIds<OUT>>
                 elementsQueue = new FutureCompletingBlockingQueue<>();
         SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(elementsQueue, splitReaderSupplier);
-        String autoCommit = this.properties.getProperty("enable.auto.commit", "true");
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {
@@ -88,7 +94,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
             recordEmitter = new TDengineCdcEmitter<OUT>(false);
         }
 
-        return new TDengineCdcReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), readerContext, autoCommit);
+        return new TDengineCdcReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), readerContext, isAutoCommit);
 
     }
 

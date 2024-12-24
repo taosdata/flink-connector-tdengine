@@ -3,7 +3,7 @@ package com.taosdata.flink.sink;
 import com.google.common.base.Strings;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
-import com.taosdata.flink.sink.entity.TaosType;
+import com.taosdata.flink.sink.entity.TDengineType;
 import com.taosdata.flink.sink.serializer.TDengineSinkRecordSerializer;
 import com.taosdata.jdbc.TSDBError;
 import com.taosdata.jdbc.TSDBErrorNumbers;
@@ -189,78 +189,78 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             for (int i = 1; i <= this.sinkMetaInfos.size(); i++) {
                 SinkMetaInfo metaInfo = this.sinkMetaInfos.get(i - 1);
                 switch (metaInfo.getFieldType().getTypeNo()) {
-                    case TaosType.TSDB_DATA_TYPE_BOOL:
+                    case TDengineType.TSDB_DATA_TYPE_BOOL:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.BOOLEAN);
                         } else {
                             pstmt.setBoolean(i, (boolean) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_INT:
+                    case TDengineType.TSDB_DATA_TYPE_INT:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.INTEGER);
                         } else {
                             pstmt.setInt(i, (int) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_TINYINT:
+                    case TDengineType.TSDB_DATA_TYPE_TINYINT:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.TINYINT);
                         } else {
                             pstmt.setByte(i, (byte) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_TIMESTAMP:
+                    case TDengineType.TSDB_DATA_TYPE_TIMESTAMP:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.TIMESTAMP);
                         } else {
                             pstmt.setTimestamp(i, (Timestamp) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_BIGINT:
+                    case TDengineType.TSDB_DATA_TYPE_BIGINT:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.BIT);
                         } else {
                             pstmt.setLong(i, (long) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_FLOAT:
+                    case TDengineType.TSDB_DATA_TYPE_FLOAT:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.FLOAT);
                         } else {
                             pstmt.setFloat(i, (float) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_DOUBLE:
+                    case TDengineType.TSDB_DATA_TYPE_DOUBLE:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.DOUBLE);
                         } else {
                             pstmt.setDouble(i, (double) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_SMALLINT:
+                    case TDengineType.TSDB_DATA_TYPE_SMALLINT:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.SMALLINT);
                         } else {
                             pstmt.setShort(i, (short) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_BINARY:
+                    case TDengineType.TSDB_DATA_TYPE_BINARY:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.BINARY);
                         } else {
                             pstmt.setString(i, (String) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_NCHAR:
+                    case TDengineType.TSDB_DATA_TYPE_NCHAR:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.NCHAR);
                         } else {
                             pstmt.setNString(i, (String) columnParams.get(i - 1));
                         }
                         break;
-                    case TaosType.TSDB_DATA_TYPE_GEOMETRY:
-                    case TaosType.TSDB_DATA_TYPE_VARBINARY:
+                    case TDengineType.TSDB_DATA_TYPE_GEOMETRY:
+                    case TDengineType.TSDB_DATA_TYPE_VARBINARY:
                         if (columnParams.get(i - 1) == null) {
                             pstmt.setNull(i, Types.VARBINARY);
                         } else {

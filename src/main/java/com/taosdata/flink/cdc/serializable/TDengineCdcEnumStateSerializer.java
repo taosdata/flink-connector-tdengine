@@ -58,6 +58,12 @@ public class TDengineCdcEnumStateSerializer
         return CURRENT_VERSION;
     }
 
+    /**
+     * TDengineCdcEnumState serialize Used for abnormal recovery
+     * @param enumState The object to serialize.
+     * @return
+     * @throws IOException
+     */
     @Override
     public byte[] serialize(TDengineCdcEnumState enumState) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -85,6 +91,13 @@ public class TDengineCdcEnumStateSerializer
         }
     }
 
+    /**
+     * TDengineCdcEnumState deserialize
+     * @param version The version in which the data was serialized
+     * @param serialized The serialized data
+     * @return
+     * @throws IOException
+     */
     @Override
     public TDengineCdcEnumState deserialize(int version, byte[] serialized) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);

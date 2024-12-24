@@ -20,34 +20,42 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     private final SortedMap<Long, List<CdcTopicPartition>> offsetsToCommit;
 
+    // At the beginning of the checkpoint, record the current offset to be submitted
     private Map<Integer, Long> commitedOffsets;
 
     private final boolean autoCommit;
 
+    /**
+     * Cdc Reader: Used for reading data sources
+     * @param splitFetcherManager  Used for managing slice readers
+     * @param recordEmitter Distribute data to downstream operators
+     * @param config configuration parameter
+     * @param readerContext Reader context information, mainly used to process reader status information
+     * @param autoCommit If the downstream is a stateless operator,
+     *                   automatic commit can be performed here,
+     *                   otherwise set to false and rely on checkpoint for manual commit
+     */
     public TDengineCdcReader(SingleThreadFetcherManager splitFetcherManager,
                              RecordEmitter recordEmitter,
                              Configuration config,
                              SourceReaderContext readerContext,
-                             String autoCommit) {
+                             boolean autoCommit) {
 
         super(splitFetcherManager, recordEmitter, config, readerContext);
         this.offsetsToCommit = Collections.synchronizedSortedMap(new TreeMap<>());
-        if (autoCommit.equals("true")) {
-            this.autoCommit = true;
-        } else {
-            this.autoCommit = false;
-        }
+        this.autoCommit = autoCommit;
+        LOG.debug("TDengineCdcReader autoCommit is {}", this.autoCommit);
         commitedOffsets = new HashMap<>();
 
     }
 
     @Override
     protected void onSplitFinished(Map map) {
-        int i = 0;
     }
 
     @Override
     protected TDengineCdcSplitState initializedState(TDengineCdcSplit cdcSplit) {
+        LOG.debug("TDengineCdcReader initializedState splitId:{}", cdcSplit.splitId());
         return new TDengineCdcSplitState(cdcSplit);
     }
 
@@ -58,15 +66,18 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     @Override
     public List<TDengineCdcSplit> snapshotState(long checkpointId) {
+        LOG.trace("TDengineCdcReader snapshotState checkpointId:{}", checkpointId);
+        // At the beginning of the checkpoint, get current offset to be committed
         List<TDengineCdcSplit> cdcSplits = super.snapshotState(checkpointId);
         if (autoCommit) {
             return cdcSplits;
         }
 
         if (cdcSplits.isEmpty()) {
+            LOG.debug("TDengineCdcReader snapshotState splits is empty, checkpointId:{}", checkpointId);
             offsetsToCommit.put(checkpointId, Collections.emptyList());
         } else {
-
+            // // save current offset to be committed
             List<CdcTopicPartition> offsetsList =
                     offsetsToCommit.computeIfAbsent(checkpointId, id -> new ArrayList<>());
             // Put the offsets of the active splits.
@@ -76,7 +87,9 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
                 if (split.getStartPartitions().size() > 0) {
                     for (CdcTopicPartition cdcTopicPartition : split.getStartPartitions()) {
                         Long offset = commitedOffsets.get(cdcTopicPartition.hashCode());
+                        // Filter the offset of submitted records，avoid duplicate submissions
                         if (offset == null || offset != cdcTopicPartition.getPartition()) {
+                            LOG.debug("TDengineCdcReader fetches the snapshot state of a given topic and partition，info:{}", cdcTopicPartition.toString());
                             offsetsList.add(cdcTopicPartition);
                         }
                     }
@@ -88,6 +101,7 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
+        LOG.trace("TDengineCdcReader notifyCheckpointComplete checkpointId:{}", checkpointId);
         if (autoCommit) {
             return;
         }
@@ -106,9 +120,13 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
                     new OffsetAndMetadata(cdcTopicPartition.getPartition()));
         }
 
+        LOG.debug("TDengineCdcReader notifyCheckpointComplete commitOffsets count:{}", committedPartitions.size());
         ((TDengineCdcFetcherManager) splitFetcherManager).commitOffsets(committedPartitions);
+        // clear checkpoint commit info
         removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
+        // update vgroup offset, avoid duplicate submissions
         cdcTopicPartitions.forEach(value -> commitedOffsets.put(value.hashCode(), value.getPartition()));
+
     }
 
     private void removeAllOffsetsToCommitUpToCheckpoint(long checkpointId) {

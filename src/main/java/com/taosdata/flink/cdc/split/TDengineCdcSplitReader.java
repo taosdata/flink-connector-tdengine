@@ -3,6 +3,8 @@ package com.taosdata.flink.cdc.split;
 import com.google.common.base.Strings;
 import com.taosdata.flink.cdc.entity.CdcRecords;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
+import com.taosdata.flink.common.TDengineCdcParams;
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TaosConsumer;
@@ -23,51 +25,46 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
     private final Logger LOG = LoggerFactory.getLogger(TDengineCdcSplitReader.class);
     private Properties properties;
     private String topic;
-    private int subtaskId;
     private List<TDengineCdcSplit> tdengineSplits;
     private List<TDengineCdcSplit> finishedSplits;
-    private int pollIntervalMs = 100;
+    private int pollIntervalMs;
     private String groupId;
     private String clientId;
     private String splitId;
     private TaosConsumer<OUT> consumer;
 
     public TDengineCdcSplitReader(String topic, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
-        this.subtaskId = context.getIndexOfSubtask();
         this.topic = topic;
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
         this.properties = properties;
-        this.properties.setProperty("td.connect.type", "ws");
-        String pollInterval = this.properties.getProperty("poll.interval.ms");
-        if (!Strings.isNullOrEmpty(pollInterval)) {
-            pollIntervalMs = Integer.parseInt(pollInterval);
-        }
-        String outType = this.properties.getProperty("value.deserializer");
+        this.properties.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
+        String pollInterval = this.properties.getProperty(TDengineCdcParams.TMQ_PULL_INTERVAL, "100");
+        pollIntervalMs = Integer.parseInt(pollInterval);
+
+        String outType = this.properties.getProperty(TDengineCdcParams.VALUE_DESERIALIZER);
         if (outType.equals("RowData")) {
             this.properties.setProperty("value.deserializer", "com.taosdata.flink.cdc.serializable.RowDataCdcDeserializer");
-        }else if(outType.equals("Map")) {
-            this.properties.setProperty("value.deserializer", "");
         }
+        LOG.debug(TDengineCdcParams.VALUE_DESERIALIZER + ":" + outType);
     }
 
     private void creatConsumer() throws SQLException {
         try {
             this.consumer = new TaosConsumer<>(this.properties);
             consumer.subscribe(Collections.singletonList(topic));
-
-            //todo test
-            consumer.seekToBeginning(consumer.assignment());
-        } catch (SQLException ex) {
+            LOG.info("Create consumer successfully, host: %s, groupId: %s, clientId: %s%n",
+                    properties.getProperty("bootstrap.servers"),
+                    properties.getProperty("group.id"),
+                    properties.getProperty("client.id"));
+        } catch (Exception ex) {
             // please refer to the JDBC specifications for detailed exceptions info
-            System.out.printf("Failed to create websocket consumer, host: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
+            LOG.error("Failed to create websocket consumer, host: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
                     properties.getProperty("bootstrap.servers"),
                     properties.getProperty("group.id"),
                     properties.getProperty("client.id"),
                     ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
                     ex.getMessage());
-            // Print stack trace for context in examples. Use logging in production.
-            ex.printStackTrace();
             throw ex;
         }
     }
@@ -87,12 +84,10 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
                     CdcTopicPartition cdcTopicPartition = new CdcTopicPartition(tp.getTopic(), position, tp.getVGroupId());
                     topicPartitions.add(cdcTopicPartition);
                 }
+                LOG.debug("Succeed to poll data, topic: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
+                        topic, groupId, clientId, records.count());
             }
 
-            if (!records.isEmpty()) {
-                LOG.debug("Succeed to poll data, topic: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
-                        topic, groupId, clientId);
-            }
             return new TDengineRecordsWithSplitIds(splitId, records, topicPartitions);
 
         } catch (SQLException ex) {
@@ -103,12 +98,14 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
                     clientId,
                     ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
                     ex.getMessage());
-            // Print stack trace for context in examples. Use logging in production.
-            ex.printStackTrace();
             throw new IOException(ex.getMessage());
         }
     }
 
+    /**
+     * Handle the split changes. This call should be non-blocking.
+     * @param splitsChange the split changes that the SplitReader needs to handle.
+     */
     @Override
     public void handleSplitsChanges(SplitsChange<TDengineCdcSplit> splitsChange) {
         List<TDengineCdcSplit> splits = splitsChange.splits();
@@ -118,23 +115,33 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
         this.properties.setProperty("group.id", splits.get(0).getGroupId());
         this.properties.setProperty("client.id", splits.get(0).getClientId());
         this.splitId = splits.get(0).splitId();
+        LOG.debug("handleSplitsChanges splitId:{}", splitId);
     }
 
     @Override
     public void wakeUp() {
 
     }
+
+    /** checkpoint completed commit offset
+     *
+     * @param offsetsToCommit vgroup offset info
+     * @throws SQLException
+     */
     public void commitOffsets(Map<TopicPartition, OffsetAndMetadata> offsetsToCommit) throws SQLException {
         if (offsetsToCommit != null && !offsetsToCommit.isEmpty()) {
             this.consumer.commitSync(offsetsToCommit);
         }
+        LOG.debug("commitOffsets Completed!");
     }
+
     @Override
     public void close() throws Exception {
         if (this.consumer != null) {
             this.consumer.unsubscribe();
             this.consumer.close();
         }
+        LOG.debug("TDengineCdcSplitReader close!");
     }
 
 }

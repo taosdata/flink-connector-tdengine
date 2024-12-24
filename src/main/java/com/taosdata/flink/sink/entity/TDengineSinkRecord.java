@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public class TDengineSinkRecord implements Serializable {
-    private static final Logger log = LoggerFactory.getLogger(SuperTableData.class);
+    private static final Logger log = LoggerFactory.getLogger(TDengineSinkRecord.class);
 
     private final List<Object> columnParams;
 

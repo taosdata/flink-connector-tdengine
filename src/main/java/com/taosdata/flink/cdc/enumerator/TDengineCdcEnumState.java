@@ -15,8 +15,6 @@ public class TDengineCdcEnumState {
         this.assignmentCdcSplits = assignmentCdcSplits;
     }
 
-
-
     public Deque<TDengineCdcSplit> getUnassignedCdcSplits() {
         return unassignedCdcSplits;
     }

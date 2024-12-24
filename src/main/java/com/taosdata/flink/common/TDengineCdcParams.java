@@ -110,5 +110,5 @@ public class TDengineCdcParams {
 
     public static final String TMQ_BATCH_MODE = "td.batch.mode";
 
-    public static final String TMQ_PULL_INTERVAL = "pull.interval";
+    public static final String TMQ_PULL_INTERVAL = "poll.interval_ms";
 }

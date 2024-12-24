@@ -5,12 +5,15 @@ import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
 public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, TDengineCdcEnumState> {
+    private final Logger LOG = LoggerFactory.getLogger(TDengineCdcEnumerator.class);
     private final SplitEnumeratorContext<TDengineCdcSplit> context;
     private final Boundedness boundedness;
 
@@ -33,6 +36,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
         this.properties = properties;
         assignmentCdcSplits = new ArrayList<>();
         this.taskIdSet = new HashSet<>();
+        LOG.info("create TDengineCdcEnumerator object, topic:{}, readerCount:{}", topic, readerCount);
     }
 
     public TDengineCdcEnumerator(SplitEnumeratorContext<TDengineCdcSplit> context,
@@ -48,6 +52,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
             this.isInitFinished = true;
         }
         this.taskIdSet = new HashSet<>();
+        LOG.warn("restore TDengineCdcEnumerator object, topic:{}, readerCount:{}, isInitFinished:{}", topic, readerCount, this.isInitFinished);
 
     }
     @Override
@@ -58,6 +63,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
             for (int i = 0; i < readerCount; i++) {
                 TDengineCdcSplit cdcSplit = new TDengineCdcSplit(topic, groupId, "clientId_" + i,  (List<CdcTopicPartition>)null);
                 unassignedCdcSplits.add(cdcSplit);
+                LOG.debug("start assigned split，split.id:{}", cdcSplit.splitId());
             }
             isInitFinished = true;
         }
@@ -66,11 +72,12 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
 
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-        int i = 0;
+        LOG.info("handleSplitRequest subtaskId:{}, requesterHostname:{}", subtaskId, requesterHostname);
     }
 
     @Override
     public void addSplitsBack(List<TDengineCdcSplit> splits, int subtaskId) {
+        LOG.warn("addSplitsBack subtaskId:{}", splits);
         if (!splits.isEmpty()) {
             TreeSet<TDengineCdcSplit> splitSet = new TreeSet<>(unassignedCdcSplits);
             splitSet.addAll(splits);
@@ -91,29 +98,34 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
 
     @Override
     public void addReader(int subtaskId) {
+        LOG.trace("addReader subtaskId:{}", subtaskId);
         checkReaderRegistered(subtaskId);
         if (!taskIdSet.contains(subtaskId)) {
             if (!unassignedCdcSplits.isEmpty()) {
                 TDengineCdcSplit cdcSplit = unassignedCdcSplits.pop();
                 assignmentCdcSplits.add(cdcSplit);
                 context.assignSplit(cdcSplit, subtaskId);
+                LOG.debug("addReader assigned subtaskId:{}, splitId:{}", subtaskId, cdcSplit.splitId());
             }
             taskIdSet.add(subtaskId);
         }
 
         if (unassignedCdcSplits.isEmpty()) {
+            LOG.debug("Task assigned completed！");
             context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
         }
     }
 
     @Override
     public TDengineCdcEnumState snapshotState(long checkpointId) throws Exception {
+        LOG.debug("split enumerator snapshotState, checkpointId:{}, unassigned:{}, assignment:{}",
+                checkpointId, unassignedCdcSplits.size(), assignmentCdcSplits.size());
         return new TDengineCdcEnumState(this.unassignedCdcSplits, this.assignmentCdcSplits, this.isInitFinished);
     }
 
     @Override
     public void close() throws IOException {
-
+        LOG.debug("split enumerator closed!");
     }
 
 }

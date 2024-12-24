@@ -16,5 +16,7 @@ public class TDengineConfigParams extends TSDBDriver {
     public static final String TD_SUPERTABLE_NAME = "super_table_name";
 
     public static final String TD_TABLE_NAME = "table_name";
-    public static final String BATCH_SIZE = "batch.size";
+    public static final String TD_BATCH_SIZE = "batch.size";
+
+    public static final String TD_STMT2_VERSION = "stmt2.version";
 }

@@ -27,14 +27,21 @@ public class TDengineRecordsWithSplitIds<OUT> implements RecordsWithSplitIds<Cdc
         this.splitId = splitId;
     }
 
+    /**
+     * Moves to the next split. Returns null, if no splits are left.
+     */
     @Nullable
     @Override
     public String nextSplit() {
         final String nextSplit = this.splitId;
+        // The data will only come from one split, so the next return is null
         this.splitId = null;
         return nextSplit;
     }
 
+    /**
+     * Gets the next record from the current split.
+     */
     @Nullable
     @Override
     public CdcRecords<OUT> nextRecordFromSplit() {
@@ -43,6 +50,7 @@ public class TDengineRecordsWithSplitIds<OUT> implements RecordsWithSplitIds<Cdc
                 return recordIterator.next();
             }
         }
+        // Returns null if no more records are left in this split.
         return null;
     }
 

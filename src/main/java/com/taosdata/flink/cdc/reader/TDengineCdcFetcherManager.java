@@ -34,6 +34,11 @@ public class TDengineCdcFetcherManager<T>  extends SingleThreadFetcherManager<T,
                                      Supplier<SplitReader<T, TDengineCdcSplit>> splitReaderSupplier) {
         super(elementsQueue, splitReaderSupplier);
     }
+
+    /**
+     *  When the checkpoint is completed, call the commitOffsets of splitReader for data commit
+     * @param offsetsToCommit The offset of data submission for vgroup
+     */
     public void commitOffsets(Map<TopicPartition, OffsetAndMetadata> offsetsToCommit) throws SQLException {
         LOG.debug("Committing offsets {}", offsetsToCommit);
         if (offsetsToCommit.isEmpty()) {

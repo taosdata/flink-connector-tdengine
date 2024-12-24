@@ -15,6 +15,15 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultTypeQueryable<RowData> {
+    /**
+     * Serialize ResultSet data to RowData
+     * @param data poll data
+     * @param topic  topic
+     * @param dbName database name
+     * @return RowData
+     * @throws DeserializerException
+     * @throws SQLException
+     */
     @Override
     public RowData deserialize(ResultSet data, String topic, String dbName) throws DeserializerException, SQLException {
         ResultSetMetaData metaData = data.getMetaData();
@@ -22,8 +31,10 @@ public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultType
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             Object value = data.getObject(i);
             if (value instanceof Timestamp) {
+                // Convert Timestamp to the TimestampData type supported by RowData
                 row.setField(i - 1, TimestampData.fromTimestamp((Timestamp) value));
             } else if (value instanceof String) {
+                // Convert String to the StringData type supported by RowData
                 row.setField(i - 1, StringData.fromString((String) value));
             } else {
                 row.setField(i - 1, value);

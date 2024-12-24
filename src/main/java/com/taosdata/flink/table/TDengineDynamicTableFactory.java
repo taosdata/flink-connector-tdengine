@@ -49,7 +49,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         connProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME));
         connProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, config.get(TDengineConnectorOptions.SINK_TABLE_NAME));
         connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, config.get(TDengineConnectorOptions.TD_JDBC_URL));
-        connProps.setProperty(TDengineConfigParams.BATCH_SIZE, "" + config.get(TDengineConnectorOptions.SINK_BATCH_SIZE));
+        connProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "" + config.get(TDengineConnectorOptions.SINK_BATCH_SIZE));
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         try {
             return new TDengineTableSink(connProps, physicalSchema, parallelism);

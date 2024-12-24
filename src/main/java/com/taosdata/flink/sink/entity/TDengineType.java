@@ -1,6 +1,6 @@
 package com.taosdata.flink.sink.entity;
 
-public class TaosType {
+public class TDengineType {
     public static final int TSDB_DATA_TYPE_BOOL = 1;
     public static final int TSDB_DATA_TYPE_TINYINT = 2;
     public static final int TSDB_DATA_TYPE_SMALLINT = 3;

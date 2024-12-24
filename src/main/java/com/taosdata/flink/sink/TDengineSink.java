@@ -29,6 +29,7 @@ public class TDengineSink<IN> implements Sink<IN> {
 
     private  String url;
     private String tdVersion;
+    private String stmt2Version;
     private  Properties properties;
 
     private  TDengineSinkRecordSerializer<IN> serializer;
@@ -44,7 +45,6 @@ public class TDengineSink<IN> implements Sink<IN> {
     }
 
     private void initSinkParams(List<String> fieldNameList) throws SQLException {
-
         this.url = properties.getProperty(TDengineConfigParams.TD_JDBC_URL);
         if (Strings.isNullOrEmpty(this.url)) {
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_URL_NOT_SET);
@@ -60,6 +60,8 @@ public class TDengineSink<IN> implements Sink<IN> {
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_TABLE_NAME_NULL);
         }
 
+        this.stmt2Version = properties.getProperty(TDengineConfigParams.TD_STMT2_VERSION, "3.3.5.0");
+
         Map<String, SinkMetaInfo> sinkMetaInfoMap = getMetaInfo();
         for (String fieldName : fieldNameList) {
             if (fieldName.equals("tbname")) {
@@ -74,7 +76,7 @@ public class TDengineSink<IN> implements Sink<IN> {
         }
 
 
-        String strBatchSize = properties.getProperty(TDengineConfigParams.BATCH_SIZE, "1");
+        String strBatchSize = properties.getProperty(TDengineConfigParams.TD_BATCH_SIZE, "1");
         this.batchSize = Integer.parseInt(strBatchSize);
         String sourceType = this.properties.getProperty(TDengineConfigParams.TD_SOURCE_TYPE, "");
         String batchMode = this.properties.getProperty(TDengineConfigParams.TD_BATCH_MODE, "false");
@@ -105,7 +107,7 @@ public class TDengineSink<IN> implements Sink<IN> {
     public SinkWriter<IN> createWriter(InitContext context) throws IOException {
         try {
             if (metaInfos != null) {
-                if (VersionComparator.compareVersion(tdVersion, "3.3.5.0") < 0) {
+                if (VersionComparator.compareVersion(tdVersion, stmt2Version) < 0) {
                     return new TDengineSqlWriter<IN>(this.url, this.dbName, this.superTableName,
                             this.normalTableName, this.properties, serializer, metaInfos);
                 }
@@ -135,7 +137,6 @@ public class TDengineSink<IN> implements Sink<IN> {
 
             statement.execute("describe `" + this.dbName + "`.`" + tableName + "`");
             rs = statement.getResultSet();
-            ResultSetMetaData meta = rs.getMetaData();
             while (rs.next()) {
                 SinkMetaInfo metaInfo = new SinkMetaInfo();
                 metaInfo.setFieldName(rs.getString(1));
