@@ -43,6 +43,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
                                  Boundedness boundedness, String topic, Properties properties, TDengineCdcEnumState checkpoint) {
         this.context = context;
         this.boundedness = boundedness;
+        // get reader count
         this.readerCount = context.currentParallelism();
         this.topic = topic;
         this.properties = properties;
@@ -55,6 +56,10 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
         LOG.warn("restore TDengineCdcEnumerator object, topic:{}, readerCount:{}, isInitFinished:{}", topic, readerCount, this.isInitFinished);
 
     }
+
+    /**
+     * Create consumers based on parallelism for data extraction
+     */
     @Override
     public void start() {
         if (!this.isInitFinished) {

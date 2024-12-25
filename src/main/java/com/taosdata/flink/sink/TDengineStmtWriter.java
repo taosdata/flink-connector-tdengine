@@ -149,6 +149,11 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
         }
     }
 
+    /**
+     * Binding SQL for Splicing Super Tables
+     * INSERT INTO suptable (tbname, location, groupId, ts, current, voltage, phase) VALUES (?,?,?,?,?,?,?)
+     * @return
+     */
     private String getSuperTableSql() {
         if (Strings.isNullOrEmpty(this.dbName) || Strings.isNullOrEmpty(this.superTableName) || this.sinkMetaInfos.isEmpty()) {
             LOG.warn("StatementData param error");
@@ -157,8 +162,6 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
 
         String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
         sql += String.join(",", sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") ";
-
-
 
         sql += " VALUES (?";
         for (int i = 1; i < this.sinkMetaInfos.size(); i++) {
@@ -169,6 +172,11 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
         return sql;
     }
 
+    /**
+     * Binding SQL for Splicing Normal Tables
+     * INSERT INTO tbname (ts, current, voltage, phase) VALUES (?,?,?,?)
+     * @return
+     */
     private String getNormalTableSql() {
         if (Strings.isNullOrEmpty(this.dbName) || Strings.isNullOrEmpty(this.normalTableName)) {
             LOG.error("NormalTableData param error");

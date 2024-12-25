@@ -1,4 +1,4 @@
-package com.taosdata.flink;
+package com.taosdata.flink.entity;
 
 import com.taosdata.jdbc.tmq.ReferenceDeserializer;
 

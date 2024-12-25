@@ -16,27 +16,30 @@ import com.taosdata.jdbc.TSDBErrorNumbers;
 import com.taosdata.jdbc.utils.Utils;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
 public class TDengineSink<IN> implements Sink<IN> {
-    private  String dbName;
-    private  String superTableName;
+    private final Logger LOG = LoggerFactory.getLogger(TDengineSink.class);
+    private String dbName;
+    private String superTableName;
 
-    private  String normalTableName;
+    private String normalTableName;
 
-    private  String url;
+    private String url;
     private String tdVersion;
     private String stmt2Version;
-    private  Properties properties;
+    private Properties properties;
 
-    private  TDengineSinkRecordSerializer<IN> serializer;
+    private TDengineSinkRecordSerializer<IN> serializer;
 
-    private  List<SinkMetaInfo> metaInfos;
+    private List<SinkMetaInfo> metaInfos;
 
-    private  int batchSize;
+    private int batchSize;
 
     public TDengineSink(Properties properties, List<String> fieldNameList) throws SQLException {
         this.properties = properties;
@@ -59,9 +62,9 @@ public class TDengineSink<IN> implements Sink<IN> {
         if (Strings.isNullOrEmpty(this.superTableName) && Strings.isNullOrEmpty(this.normalTableName)) {
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_TABLE_NAME_NULL);
         }
-
         this.stmt2Version = properties.getProperty(TDengineConfigParams.TD_STMT2_VERSION, "3.3.5.0");
-
+        // Based on the field list provided by the user, determine the type of each field.
+        // If the tbname field is specified, additional processing is required here.
         Map<String, SinkMetaInfo> sinkMetaInfoMap = getMetaInfo();
         for (String fieldName : fieldNameList) {
             if (fieldName.equals("tbname")) {
@@ -69,6 +72,8 @@ public class TDengineSink<IN> implements Sink<IN> {
             } else {
                 SinkMetaInfo sinkMetaInfo = sinkMetaInfoMap.get(fieldName);
                 if (sinkMetaInfo == null) {
+                    LOG.error("The field name does not exist in the meta information of the table! fieldName:{}, dbname:{}, superTableName:{}, tableName:{}",
+                            fieldName, this.dbName, this.superTableName, this.normalTableName);
                     throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_Field_NAME);
                 }
                 metaInfos.add(sinkMetaInfo);
@@ -82,10 +87,12 @@ public class TDengineSink<IN> implements Sink<IN> {
         String batchMode = this.properties.getProperty(TDengineConfigParams.TD_BATCH_MODE, "false");
         String outType = this.properties.getProperty(TDengineConfigParams.VALUE_DESERIALIZER);
         if (Strings.isNullOrEmpty(outType)) {
+            LOG.error("value.deserializer parameter not set!");
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_VALUE_DESERIALIZER);
         }
 
         if (outType.equals("RowData")) {
+            // If it is batchMode, the data source type needs to be set
             if (batchMode.equals("true")) {
                 if (sourceType.equals("tdengine_source")) {
                     this.serializer = (TDengineSinkRecordSerializer<IN>) new SourceRowDataBatchSerializer();
@@ -100,7 +107,7 @@ public class TDengineSink<IN> implements Sink<IN> {
         if (this.serializer == null) {
             this.serializer = (TDengineSinkRecordSerializer<IN>) Utils.newInstance(Utils.parseClassType(outType));
         }
-
+        LOG.debug("TDengineSink properties:{}", this.properties.toString());
     }
 
     @Override
@@ -108,18 +115,24 @@ public class TDengineSink<IN> implements Sink<IN> {
         try {
             if (metaInfos != null) {
                 if (VersionComparator.compareVersion(tdVersion, stmt2Version) < 0) {
+                    LOG.info("createWriter TDengine version not supported stmt2, create sql writer!");
                     return new TDengineSqlWriter<IN>(this.url, this.dbName, this.superTableName,
                             this.normalTableName, this.properties, serializer, metaInfos);
                 }
                 return new TDengineStmtWriter<>(this.url, this.dbName, this.superTableName,
                         this.normalTableName, this.properties, serializer, metaInfos, batchSize);
             }
+
+            LOG.error("createWriter meta info is null!");
             throw new SQLException("meta info is null!");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * get table meta info
+     */
     public Map<String, SinkMetaInfo> getMetaInfo() throws SQLException {
         String tableName = superTableName;
         if (Strings.isNullOrEmpty(tableName)) {
@@ -148,11 +161,8 @@ public class TDengineSink<IN> implements Sink<IN> {
             return metaInfos;
         } catch (SQLException ex) {
             // please refer to the JDBC specifications for detailed exceptions info
-            System.out.printf("Failed to create database power or stable meters, %sErrMessage: %s%n",
-                    ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
-                    ex.getMessage());
-            // Print stack trace for context in examples. Use logging in production.
-            ex.printStackTrace();
+            LOG.error("Failed to create database power or stable meters, dbname:{}, tableName:{}, ErrCode:{}, ErrMessage:{}",
+                    this.dbName, tableName, ex.getErrorCode(), ex.getMessage());
             throw ex;
         }
     }

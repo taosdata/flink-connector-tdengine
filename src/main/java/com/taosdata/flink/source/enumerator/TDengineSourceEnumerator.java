@@ -8,12 +8,15 @@ import com.taosdata.flink.source.entity.TimestampSplitInfo;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
 public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, TDengineSourceEnumState> {
+    private final Logger LOG = LoggerFactory.getLogger(TDengineSourceEnumerator.class);
     private Deque<TDengineSplit> unassignedSplits;
     private TreeSet<TDengineSplit> assignmentSplits;
     private final SplitEnumeratorContext<TDengineSplit> context;
@@ -35,6 +38,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         this.boundedness = boundedness;
         this.sourceSql = sourceSql;
         this.readerCount = context.currentParallelism();
+        LOG.info("create TDengineSourceEnumerator object, readerCount:{}", readerCount);
     }
 
     public TDengineSourceEnumerator(SplitEnumeratorContext<TDengineSplit> context,
@@ -50,8 +54,12 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
             unassignedSplits = splitsState.getUnassignedSqls();
             this.isInitFinished = true;
         }
+        LOG.warn("restore TDengineCdcEnumerator object, readerCount:{}, isInitFinished:{}", readerCount, this.isInitFinished);
     }
 
+    /**
+     * Split tasks according to rules
+     */
     @Override
     public void start() {
         if (!this.isInitFinished) {
@@ -59,12 +67,16 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
             this.assignmentSplits.clear();
             Deque<String> unassignedSql = new ArrayDeque<>();
             if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TIMESTAMP) {
+                // divide tasks by time
                 unassignedSql = splitByTimestamp();
             } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TAG) {
+                // divide tasks by tag
                 unassignedSql = splitByTags();
             } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TABLE) {
+                // divide tasks by table
                 unassignedSql = splitByTables();
             } else {
+                // single sql task
                 if (Strings.isNullOrEmpty(this.sourceSql.getSql())) {
                     String sql = "select " + this.sourceSql.getSelect()
                             + " from `" + this.sourceSql.getTableName() + "` ";
@@ -76,7 +88,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     unassignedSql.push(this.sourceSql.getSql());
                 }
             }
-
+            // Calculate the number of tasks to be assigned to each reader based on the number of readers
             if (unassignedSql.size() > this.readerCount) {
                 taskCount = unassignedSql.size() / this.readerCount;
                 if ((unassignedSql.size() % this.readerCount) > 0) {
@@ -84,6 +96,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 }
             }
 
+            // Create splits for each reader and assign tasks accordingly
             for (int i = 0; i < this.readerCount && !unassignedSql.isEmpty(); i++) {
                 TDengineSplit tdengineSplit = new TDengineSplit("reader_no_" + i);
                 List<String> taskSplits = new ArrayList<>(taskCount);
@@ -105,22 +118,31 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         isInitFinished = true;
     }
 
+    /**
+     * divide tasks by time
+     * @return Return SQL List, time intervals are often left-closed and right-open. For example:
+     *        select * from (select  ts, `current`, voltage, phase, tbname from meters where voltage > 100)
+     *        where ts >= "2024-11-12 14:55:00" and ts < "2024-11-12 15:00:00";
+     */
     private Deque<String> splitByTimestamp() {
         Deque<String> unassignedSql = new ArrayDeque<>();
         TimestampSplitInfo timestampSplitInfo = sourceSql.getTimestampSplitInfo();
         if (timestampSplitInfo != null && !Strings.isNullOrEmpty(timestampSplitInfo.getFieldName()) && timestampSplitInfo.getEndTime() > timestampSplitInfo.getStartTime()) {
             long timeDifference = timestampSplitInfo.getEndTime() - timestampSplitInfo.getStartTime();
             long nCount = 0;
+            // Obtain the number of separable tasks
             if (timestampSplitInfo.getInterval() > 0) {
                 nCount = timeDifference / timestampSplitInfo.getInterval();
             }
 
+            // single sql task
             if (nCount == 0) {
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
                         + timestampSplitInfo.getFieldName() + " >= " + timestampSplitInfo.getStartTime()
                         + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime();
                 unassignedSql.push(sql);
             } else {
+                // Splicing SQL based on time intervals
                 long startTime = timestampSplitInfo.getStartTime();
                 boolean bRemainder = timeDifference % timestampSplitInfo.getInterval() > 0;
                 for (int i = 0; i < nCount; i++) {

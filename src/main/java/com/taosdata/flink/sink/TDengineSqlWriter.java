@@ -62,34 +62,39 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
     public void initConnect() throws SQLException {
         try {
             if (Strings.isNullOrEmpty(this.dbName) || this.sinkMetaInfos == null || this.sinkMetaInfos.isEmpty()) {
-                LOG.warn("StatementData param error");
+                LOG.error("StatementData param error");
                 throw new RuntimeException("StatementData param error");
             }
+
             if (!Strings.isNullOrEmpty(this.superTableName)) {
+                // Splicing super table SQL prefix
                 sqlPrefix = "INSERT INTO `" + this.dbName + "`.`"
                         + this.superTableName + "` ("
                         + String.join(",", sinkMetaInfos.stream()
                         .map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES ";
 
             } else if (!Strings.isNullOrEmpty(this.normalTableName)) {
+                // Splicing normal table SQL prefix
                 sqlPrefix = "INSERT INTO `" + this.dbName + "`.`"
                         + this.normalTableName + "` ("
                         + String.join(",", sinkMetaInfos.stream()
                         .map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES ";
             }
             executeSqls.append(sqlPrefix);
+
             Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
             this.conn = DriverManager.getConnection(this.url, this.properties);
             statement = this.conn.createStatement();
 
         } catch (SQLException e) {
-            LOG.error("open exception error:{}", e.getSQLState());
+            LOG.error("init connect exception error:{}", e.getSQLState());
             throw e;
         } catch (ClassNotFoundException e) {
+            LOG.error("init connect exception error:{}", e.getMessage());
             throw new RuntimeException(e);
         }
 
-        LOG.info("connect websocket url ok");
+        LOG.info("connect websocket url ok, url:{}, prefix:{}", this.url, sqlPrefix);
     }
 
     @Override
@@ -114,6 +119,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
     @Override
     public void flush(boolean endOfInput) throws IOException, InterruptedException {
         try {
+            LOG.debug("flush write tdengine, endofInput:" + endOfInput);
             lock.lock();
             if (executeSqls.length() > sqlPrefix.length()) {
                 statement.executeUpdate(executeSqls.toString());
@@ -121,7 +127,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
                 executeSqls.append(sqlPrefix);
             }
         } catch (SQLException e) {
-            LOG.error("flush exception info:{}", e.getSQLState());
+            LOG.error("flush executeUpdate error:{}", e.getSQLState());
             throw new IOException(e.getMessage());
         } finally {
             lock.unlock();
@@ -148,7 +154,8 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
                 }
             }
             sb.append(")") ;
-            if ((executeSqls.length() + sb.length()) > ONE_MILLION) {
+            // Splicing SQL, writing nearly 1M to TDengine
+            if ((executeSqls.length() + sb.length()) >= ONE_MILLION) {
                 statement.executeUpdate(executeSqls.toString());
                 executeSqls.setLength(0);
                 executeSqls.append(sqlPrefix);

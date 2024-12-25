@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
-public class CdcRowDataBatchSerializer implements TDengineSinkRecordSerializer<ConsumerRecords<RowData>>{
+public class CdcRowDataBatchSerializer extends RowDataSerializerBase implements TDengineSinkRecordSerializer<ConsumerRecords<RowData>>{
 
     public CdcRowDataBatchSerializer() {
     }
@@ -35,41 +35,5 @@ public class CdcRowDataBatchSerializer implements TDengineSinkRecordSerializer<C
             sinkRecords.add(sinkRecord);
         }
         return sinkRecords;
-    }
-
-    private TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
-        if (record == null) {
-            throw new IOException("serialize RowData is null!");
-        }
-
-        GenericRowData rowData = (GenericRowData) record;
-        List<Object> tagParams = new ArrayList<>();
-        List<Object> columnParams = new ArrayList<>();
-        String tbname = "";
-        for (int i = 0; i < sinkMetaInfos.size(); i++) {
-            Object fieldVal = convertRowDataType(rowData.getField(i), sinkMetaInfos.get(i).getFieldType());
-            columnParams.add(fieldVal);
-        }
-
-        return new TDengineSinkRecord(columnParams);
-    }
-    private Object convertRowDataType(Object value, DataType fieldType) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof TimestampData) {
-            TimestampData timestampData = (TimestampData)value;
-            return timestampData.toTimestamp();
-        }
-        if (value instanceof StringData) {
-            StringData stringData = (StringData) value;
-            return stringData.toString();
-        }
-
-        if (fieldType.getTypeNo() == DATA_TYPE_BINARY.getTypeNo()) {
-            return new String((byte[]) value, StandardCharsets.UTF_8);
-        }
-
-        return  value;
     }
 }
