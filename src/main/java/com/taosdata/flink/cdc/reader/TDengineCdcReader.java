@@ -87,11 +87,11 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
             for (TDengineCdcSplit split : cdcSplits) {
                 // If the checkpoint is triggered before the partition starting offsets
                 // is retrieved, do not commit the offsets for those partitions.
-                if (split.getStartPartitions().size() > 0) {
+                if (!split.getStartPartitions().isEmpty()) {
                     for (CdcTopicPartition cdcTopicPartition : split.getStartPartitions()) {
                         Long offset = commitedOffsets.get(cdcTopicPartition.hashCode());
                         // Filter the offset of submitted records，avoid duplicate submissions
-                        if (offset == null || offset != cdcTopicPartition.getPartition()) {
+                        if (offset == null || !offset.equals(cdcTopicPartition.getPartition()) ) {
                             LOG.debug("TDengineCdcReader fetches the snapshot state of a given topic and partition，info:{}", cdcTopicPartition.toString());
                             offsetsList.add(cdcTopicPartition);
                         }

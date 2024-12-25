@@ -441,8 +441,8 @@
                         <include>**/*Test.java</include>
                     </includes>
                     <excludes>
-                        <exclude>**/FlinkSinkTest.java</exclude>
-                        <exclude>**/TDFlinkSourceTest</exclude>
+                        <exclude>**/TDFlinkTableTest.java</exclude>
+                        <exclude>**/TDFlinkSinkTest</exclude>
                     </excludes>
                     <testFailureIgnore>false</testFailureIgnore>
                 </configuration>

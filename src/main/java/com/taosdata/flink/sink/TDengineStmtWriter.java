@@ -161,7 +161,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
         }
 
         String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
-        sql += String.join(",", sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") ";
+        sql += sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") ";
 
         sql += " VALUES (?";
         for (int i = 1; i < this.sinkMetaInfos.size(); i++) {
@@ -182,8 +182,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             LOG.error("NormalTableData param error");
             return "";
         }
-        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + String.join(",",
-                this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES (?";
+        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
 
         for (int i = 1; i < this.sinkMetaInfos.size(); i++) {
             sql += ",?";

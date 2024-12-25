@@ -66,8 +66,8 @@ public class TDengineCdcEnumStateSerializer
      */
     @Override
     public byte[] serialize(TDengineCdcEnumState enumState) throws IOException {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             DataOutputStream out = new DataOutputStream(baos)) {
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+             DataOutputStream out = new DataOutputStream(byteArrayOutputStream)) {
             out.writeBoolean(enumState.isInitFinished());
             Deque<TDengineCdcSplit> splits = enumState.getUnassignedCdcSplits();
             out.writeInt(splits.size());
@@ -87,7 +87,7 @@ public class TDengineCdcEnumStateSerializer
             }
             out.flush();
 
-            return baos.toByteArray();
+            return byteArrayOutputStream.toByteArray();
         }
     }
 
@@ -100,8 +100,8 @@ public class TDengineCdcEnumStateSerializer
      */
     @Override
     public TDengineCdcEnumState deserialize(int version, byte[] serialized) throws IOException {
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
-             DataInputStream in = new DataInputStream(bais)) {
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serialized);
+             DataInputStream in = new DataInputStream(byteArrayInputStream)) {
             boolean isInitFinished = in.readBoolean();
             int count = in.readInt();
             Deque<TDengineCdcSplit> unassignedSplits = new ArrayDeque<>(count);

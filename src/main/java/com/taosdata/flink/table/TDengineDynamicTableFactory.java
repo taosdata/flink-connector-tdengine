@@ -73,7 +73,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
             }
         }
         LOG.error("The tdengine jdbc mode are invalid！mode:{}", mode);
-        throw new ValidationException(String.format("The tdengine jdbc mode are invalid！"));
+        throw new ValidationException("The tdengine jdbc mode are invalid！");
     }
 
     private static void validateSink(ReadableConfig tableOptions) {

@@ -22,17 +22,7 @@ import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
-import org.apache.flink.configuration.DescribedEnum;
-import org.apache.flink.configuration.description.Description;
-import org.apache.flink.configuration.description.InlineElement;
-import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.table.factories.FactoryUtil;
-
-import java.time.Duration;
-import java.util.List;
-
-import static org.apache.flink.configuration.description.TextElement.text;
-import static org.apache.flink.table.factories.FactoryUtil.FORMAT_SUFFIX;
 
 /** Options for the Kafka connector. */
 @PublicEvolving

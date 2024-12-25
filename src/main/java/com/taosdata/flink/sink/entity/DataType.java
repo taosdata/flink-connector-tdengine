@@ -7,7 +7,7 @@ package com.taosdata.flink.sink.entity;
  * unsigned int，Numeric Range：0-4294967294，NULL 为4294967295u
  * unsigned bigint，Numeric Range：0-18446744073709551614u，NULL 为18446744073709551615u。
  * example:
- *     create table tb(ts timestamp, a tinyint unsigned, b smallint unsigned, c int unsigned, d bigint unsigned))
+ *     create table tb(ts timestamp, a tinyint unsigned, b smallint unsigned, c int unsigned, d bigint unsigned)
  */
 public enum DataType {
     DATA_TYPE_BOOL("BOOL", 1),

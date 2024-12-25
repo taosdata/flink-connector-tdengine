@@ -23,7 +23,7 @@ public class TDengineTableSink implements DynamicTableSink {
 
     public TDengineTableSink(TDengineTableSink tableSink) {
         this.properties = tableSink.getProperties();
-        this.sinkParallelism = tableSink.sinkParallelism;
+        this.sinkParallelism = tableSink.getSinkParallelism();
         this.fieldNameList = tableSink.fieldNameList;
     }
 

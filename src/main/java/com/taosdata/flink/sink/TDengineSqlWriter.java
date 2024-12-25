@@ -70,15 +70,15 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
                 // Splicing super table SQL prefix
                 sqlPrefix = "INSERT INTO `" + this.dbName + "`.`"
                         + this.superTableName + "` ("
-                        + String.join(",", sinkMetaInfos.stream()
-                        .map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES ";
+                        + sinkMetaInfos.stream()
+                        .map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES ";
 
             } else if (!Strings.isNullOrEmpty(this.normalTableName)) {
                 // Splicing normal table SQL prefix
                 sqlPrefix = "INSERT INTO `" + this.dbName + "`.`"
                         + this.normalTableName + "` ("
-                        + String.join(",", sinkMetaInfos.stream()
-                        .map(SinkMetaInfo::getFieldName).collect(Collectors.toList())) + ") VALUES ";
+                        + sinkMetaInfos.stream()
+                        .map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES ";
             }
             executeSqls.append(sqlPrefix);
 

@@ -162,7 +162,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
 
             SplitResultRecords splitResultRecords = new SplitResultRecords();
             splitResultRecords.setMetaData(this.metaData);
-            splitResultRecords.setTdengineSplit(currSplit);
+            splitResultRecords.setTDengineSplit(currSplit);
             splitResultRecords.setSourceRecords(sourceRecords);
             return TDengineSourceRecordsWithSplitsIds.forRecords(currSplit.splitId, splitResultRecords);
         } catch (SQLException e) {

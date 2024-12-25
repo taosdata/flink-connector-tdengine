@@ -2,13 +2,12 @@ package com.taosdata.flink.source;
 
 import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.entity.SourceSplitSql;
-import com.taosdata.flink.source.entity.TDengineSourceRecordsWithSplitsIds;
-import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
-import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
-import com.taosdata.flink.source.serializable.TDengineSplitSerializer;
+import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
 import com.taosdata.flink.source.reader.TDengineRecordEmitter;
 import com.taosdata.flink.source.reader.TDengineSourceReader;
+import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
+import com.taosdata.flink.source.serializable.TDengineSplitSerializer;
 import com.taosdata.flink.source.split.TDengineSplit;
 import com.taosdata.flink.source.split.TDengineSplitReader;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -16,17 +15,13 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
-import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -73,14 +68,7 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
                 };
 
         SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier);
-
-        RecordEmitter recordEmitter;
-        if (isBatchMode) {
-            recordEmitter = new TDengineRecordEmitter<OUT>(true);
-        }else{
-            recordEmitter = new TDengineRecordEmitter<OUT>(false);
-        }
-
+        RecordEmitter recordEmitter = new TDengineRecordEmitter<OUT>(isBatchMode);
         return new TDengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
     }
 
@@ -108,11 +96,8 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
     public TypeInformation<OUT> getProducedType() {
         String outType = this.properties.getProperty("value.deserializer");
         if (!isBatchMode) {
-            if (outType == "RowData") {
+            if (outType.equals("RowData")) {
                 return (TypeInformation<OUT>) TypeInformation.of(RowData.class);
-            } else if (outType == "Map") {
-                Map<String, Object> map = new HashMap<>();
-                return (TypeInformation<OUT>) TypeInformation.of(map.getClass());
             }
         }
         return TypeInformation.of(this.typeClass);

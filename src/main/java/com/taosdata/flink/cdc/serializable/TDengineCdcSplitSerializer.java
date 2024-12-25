@@ -2,12 +2,10 @@ package com.taosdata.flink.cdc.serializable;
 
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
-import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 public class TDengineCdcSplitSerializer implements SimpleVersionedSerializer<TDengineCdcSplit> {
@@ -27,7 +25,7 @@ public class TDengineCdcSplitSerializer implements SimpleVersionedSerializer<TDe
             out.writeUTF(split.getClientId());
 
             List<CdcTopicPartition> partitions = split.getStartPartitions();
-            if (partitions != null && partitions.size() > 0) {
+            if (partitions != null && !partitions.isEmpty()) {
                 out.writeInt(partitions.size());
                 for (CdcTopicPartition partition : partitions) {
                     out.writeLong(partition.getPartition());

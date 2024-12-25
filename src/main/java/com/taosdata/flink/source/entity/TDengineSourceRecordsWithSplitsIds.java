@@ -1,6 +1,5 @@
 package com.taosdata.flink.source.entity;
 
-import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 
 import javax.annotation.Nullable;

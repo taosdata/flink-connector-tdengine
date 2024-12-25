@@ -40,10 +40,7 @@ public class TDengineTableCdc implements ScanTableSource {
         return new DataStreamScanProvider() {
             @Override
             public DataStream<RowData> produceDataStream(ProviderContext providerContext, StreamExecutionEnvironment execEnv) {
-                DataStreamSource<RowData> sourceStream =
-                        execEnv.fromSource(
-                                cdcSource, WatermarkStrategy.noWatermarks(), "tdengine-cdc");
-                return sourceStream;
+                return execEnv.fromSource(cdcSource, WatermarkStrategy.noWatermarks(), "tdengine-cdc");
             }
 
             @Override

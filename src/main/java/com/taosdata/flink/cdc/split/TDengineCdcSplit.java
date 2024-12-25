@@ -1,8 +1,6 @@
 package com.taosdata.flink.cdc.split;
 
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
-import com.taosdata.flink.source.split.TDengineSplit;
-import com.taosdata.jdbc.tmq.TopicPartition;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 import java.util.List;

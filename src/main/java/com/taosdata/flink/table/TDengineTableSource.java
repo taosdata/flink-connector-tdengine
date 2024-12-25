@@ -46,10 +46,7 @@ public class TDengineTableSource implements ScanTableSource {
         return new DataStreamScanProvider() {
             @Override
             public DataStream<RowData> produceDataStream(ProviderContext providerContext, StreamExecutionEnvironment execEnv) {
-                DataStreamSource<RowData> sourceStream =
-                        execEnv.fromSource(
-                                tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
-                return sourceStream;
+                return execEnv.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
             }
 
             @Override

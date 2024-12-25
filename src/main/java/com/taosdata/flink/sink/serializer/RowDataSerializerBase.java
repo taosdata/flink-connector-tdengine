@@ -20,7 +20,6 @@ public class RowDataSerializerBase {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
-        List<TDengineSinkRecord> sinkRecords = new ArrayList<>(1);
         GenericRowData rowData = (GenericRowData) record;
         List<Object> columnParams = new ArrayList<>();
         for (int i = 0; i < sinkMetaInfos.size(); i++) {

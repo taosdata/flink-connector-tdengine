@@ -1,16 +1,12 @@
 package com.taosdata.flink.cdc.reader;
 
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
-
 import com.taosdata.flink.cdc.split.TDengineCdcSplitReader;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TopicPartition;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
-import org.apache.flink.connector.base.source.reader.SourceReaderBase;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.fetcher.SplitFetcher;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
-import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

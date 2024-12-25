@@ -1,10 +1,8 @@
 package com.taosdata.flink.cdc.split;
 
-import com.google.common.base.Strings;
 import com.taosdata.flink.cdc.entity.CdcRecords;
 import com.taosdata.flink.cdc.entity.CdcTopicPartition;
 import com.taosdata.flink.common.TDengineCdcParams;
-import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TaosConsumer;
@@ -17,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.*;
 
@@ -26,7 +24,6 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
     private Properties properties;
     private String topic;
     private List<TDengineCdcSplit> tdengineSplits;
-    private List<TDengineCdcSplit> finishedSplits;
     private int pollIntervalMs;
     private String groupId;
     private String clientId;
@@ -35,7 +32,6 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
 
     public TDengineCdcSplitReader(String topic, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.topic = topic;
-        this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
         this.properties = properties;
         this.properties.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
@@ -53,17 +49,17 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
         try {
             this.consumer = new TaosConsumer<>(this.properties);
             consumer.subscribe(Collections.singletonList(topic));
-            LOG.info("Create consumer successfully, host: %s, groupId: %s, clientId: %s%n",
+            LOG.info("Create consumer successfully, host: {}, groupId: {}, clientId: {}",
                     properties.getProperty("bootstrap.servers"),
                     properties.getProperty("group.id"),
                     properties.getProperty("client.id"));
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             // please refer to the JDBC specifications for detailed exceptions info
-            LOG.error("Failed to create websocket consumer, host: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
+            LOG.error("Failed to create websocket consumer, host: {}, groupId: {}, clientId: {}, ErrCode: {}, ErrMessage: {}",
                     properties.getProperty("bootstrap.servers"),
                     properties.getProperty("group.id"),
                     properties.getProperty("client.id"),
-                    ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
+                    ex.getErrorCode(),
                     ex.getMessage());
             throw ex;
         }
@@ -84,7 +80,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
                     CdcTopicPartition cdcTopicPartition = new CdcTopicPartition(tp.getTopic(), position, tp.getVGroupId());
                     topicPartitions.add(cdcTopicPartition);
                 }
-                LOG.debug("Succeed to poll data, topic: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
+                LOG.debug("Succeed to poll data, topic: {}, groupId: {}, clientId: {}, count: {}",
                         topic, groupId, clientId, records.count());
             }
 
@@ -92,12 +88,8 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
 
         } catch (SQLException ex) {
             // please refer to the JDBC specifications for detailed exceptions info
-            LOG.error("Failed to poll data, topic: %s, groupId: %s, clientId: %s, %sErrMessage: %s%n",
-                    topic,
-                    groupId,
-                    clientId,
-                    ex instanceof SQLException ? "ErrCode: " + ((SQLException) ex).getErrorCode() + ", " : "",
-                    ex.getMessage());
+            LOG.error("Failed to poll data, topic: {}, groupId: {}, clientId: {}, ErrCode: {}, ErrMessage: {}",
+                    topic, groupId, clientId, ex.getErrorCode(), ex.getMessage());
             throw new IOException(ex.getMessage());
         }
     }

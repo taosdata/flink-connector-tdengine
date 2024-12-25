@@ -15,9 +15,7 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
-import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.slf4j.Logger;
@@ -115,11 +113,8 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
     public TypeInformation<OUT> getProducedType() {
         String outType = this.properties.getProperty("value.deserializer");
         if (!isBatchMode) {
-            if (outType == "RowData") {
+            if (outType.equals("RowData")) {
                 return (TypeInformation<OUT>) TypeInformation.of(RowData.class);
-            } else if (outType == "Map") {
-                Map<String, Object> map = new HashMap<>();
-                return (TypeInformation<OUT>) TypeInformation.of(map.getClass());
             }
         }
         return TypeInformation.of(this.typeClass);

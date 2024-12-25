@@ -20,9 +20,7 @@ package com.taosdata.flink.source.entity;
 import com.taosdata.flink.source.split.TDengineSplit;
 
 import java.sql.ResultSetMetaData;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /** Data structure to describe a set of T. */
 public final class SplitResultRecords<V> {
@@ -59,7 +57,7 @@ public final class SplitResultRecords<V> {
         return tdengineSplit;
     }
 
-    public void setTdengineSplit(TDengineSplit tdengineSplit) {
+    public void setTDengineSplit(TDengineSplit tdengineSplit) {
         this.tdengineSplit = new TDengineSplit(tdengineSplit);
     }
 }

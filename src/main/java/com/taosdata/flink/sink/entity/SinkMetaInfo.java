@@ -1,7 +1,5 @@
 package com.taosdata.flink.sink.entity;
 
-import org.immutables.value.internal.$processor$.encode.$Type;
-
 import java.io.Serializable;
 
 public class SinkMetaInfo implements Serializable {

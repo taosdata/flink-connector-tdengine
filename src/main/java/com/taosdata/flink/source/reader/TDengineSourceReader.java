@@ -31,7 +31,7 @@ public class TDengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBa
     protected void onSplitFinished(Map<String, TDengineSplitsState> finishedSplitIds) {
         finishedSplitIds.forEach((key, state) -> {
             if (state.getFinishList() != null && !state.getFinishList().isEmpty()) {
-                state.getFinishList().stream().forEach((task) -> {
+                state.getFinishList().forEach((task) -> {
                     LOG.info("Task {} of split reader {} has been completed!", key, task);
                 });
             }else{
@@ -53,8 +53,7 @@ public class TDengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBa
     @Override
     public List<TDengineSplit> snapshotState(long checkpointId) {
         LOG.trace("snapshotState checkpointId:{}", checkpointId);
-        List<TDengineSplit> splits = super.snapshotState(checkpointId);
-        return splits;
+        return super.snapshotState(checkpointId);
     }
 
     @Override

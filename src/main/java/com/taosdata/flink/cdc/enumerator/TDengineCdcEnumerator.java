@@ -20,7 +20,7 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
     private Deque<TDengineCdcSplit> unassignedCdcSplits;
     private List<TDengineCdcSplit> assignmentCdcSplits;
     private final int readerCount;
-    private int taskCount = 1;
+
     private String topic;
     private Properties properties;
     private boolean isInitFinished = false;
