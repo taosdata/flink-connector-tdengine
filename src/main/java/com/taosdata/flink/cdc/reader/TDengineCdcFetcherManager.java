@@ -24,15 +24,10 @@ public class TDengineCdcFetcherManager<T>  extends SingleThreadFetcherManager<T,
     /**
      * Creates a new SplitFetcherManager with a single I/O threads.
      *
-     * @param elementsQueue The queue that is used to hand over data from the I/O thread (the
-     *     fetchers) to the reader (which emits the records and book-keeps the state. This must be
-     *     the same queue instance that is also passed to the {@link SourceReaderBase}.
-     * @param splitReaderSupplier The factory for the split reader that connects to the source
-     *     system.
+     * @param splitReaderSupplier The factory for the split reader that connects to the source system.
      */
-    public TDengineCdcFetcherManager(FutureCompletingBlockingQueue<RecordsWithSplitIds<T>> elementsQueue,
-                                     Supplier<SplitReader<T, TDengineCdcSplit>> splitReaderSupplier) {
-        super(elementsQueue, splitReaderSupplier);
+    public TDengineCdcFetcherManager(Supplier<SplitReader<T, TDengineCdcSplit>> splitReaderSupplier) {
+        super(splitReaderSupplier);
     }
 
     /**

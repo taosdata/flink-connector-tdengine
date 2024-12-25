@@ -104,6 +104,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
 
     /**
      * Handle the split changes. This call should be non-blocking.
+     *
      * @param splitsChange the split changes that the SplitReader needs to handle.
      */
     @Override
@@ -123,7 +124,8 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
 
     }
 
-    /** checkpoint completed commit offset
+    /**
+     * checkpoint completed commit offset
      *
      * @param offsetsToCommit vgroup offset info
      * @throws SQLException
@@ -141,7 +143,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
             this.consumer.unsubscribe();
             this.consumer.close();
         }
-        LOG.debug("TDengineCdcSplitReader close!");
+        LOG.debug("cdc reader {} close!", splitId);
     }
 
 }

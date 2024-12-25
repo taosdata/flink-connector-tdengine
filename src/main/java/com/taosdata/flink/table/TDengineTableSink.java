@@ -1,32 +1,24 @@
 package com.taosdata.flink.table;
 
-import com.google.common.base.Strings;
 import com.taosdata.flink.sink.TDengineSink;
-import com.taosdata.flink.sink.serializer.RowDataSinkRecordSerializer;
-import com.taosdata.flink.sink.serializer.TDengineSinkRecordSerializer;
-import com.taosdata.flink.sink.entity.DataType;
-import com.taosdata.flink.sink.entity.SinkMetaInfo;
-import org.apache.flink.table.api.TableColumn;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.sink.SinkV2Provider;
-import org.apache.flink.table.data.RowData;
 
-import java.sql.*;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Properties;
 
 public class TDengineTableSink implements DynamicTableSink {
     private final Properties properties;
-    private List<String> fieldNameList;
+    private final List<String> fieldNameList;
 
     private final Integer sinkParallelism;
 
-    public TDengineTableSink(Properties properties, TableSchema physicalSchema, Integer sinkParallelism) throws SQLException {
+    public TDengineTableSink(Properties properties, List<String> fieldNameList, Integer sinkParallelism) throws SQLException {
         this.properties = properties;
         this.sinkParallelism = sinkParallelism;
-        fieldNameList = physicalSchema.getTableColumns().stream().map(TableColumn::getName).collect(Collectors.toList());
+        this.fieldNameList = fieldNameList;
     }
 
     public TDengineTableSink(TDengineTableSink tableSink) {

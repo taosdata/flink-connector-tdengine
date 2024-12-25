@@ -83,9 +83,11 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     if (!this.sourceSql.getWhere().isEmpty()) {
                         sql += "where " + this.sourceSql.getWhere();
                     }
+                    LOG.debug("single sql task, sql：{}", sql);
                     unassignedSql.push(sql);
                 } else {
                     unassignedSql.push(this.sourceSql.getSql());
+                    LOG.debug("single sql task, sql：{}", this.sourceSql.getSql());
                 }
             }
             // Calculate the number of tasks to be assigned to each reader based on the number of readers
@@ -95,6 +97,8 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     taskCount++;
                 }
             }
+
+            LOG.debug("Number of tasks per slice, count：{}", taskCount);
 
             // Create splits for each reader and assign tasks accordingly
             for (int i = 0; i < this.readerCount && !unassignedSql.isEmpty(); i++) {
@@ -140,6 +144,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
                         + timestampSplitInfo.getFieldName() + " >= " + timestampSplitInfo.getStartTime()
                         + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime();
+                LOG.debug("divide tasks by time, sql：{}", sql);
                 unassignedSql.push(sql);
             } else {
                 // Splicing SQL based on time intervals
@@ -149,6 +154,8 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
                             + " and " + timestampSplitInfo.getFieldName() + " < " + (startTime + timestampSplitInfo.getInterval());
+
+                    LOG.debug("divide tasks by time, sql：{}", sql);
                     unassignedSql.push(sql);
                     startTime += timestampSplitInfo.getInterval();
                 }
@@ -157,13 +164,19 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                     String sql = "select * from (" + sourceSql.getSql() + ") where "
                             + timestampSplitInfo.getFieldName() + " >= " + startTime
                             + " and " + timestampSplitInfo.getFieldName() + " < " + timestampSplitInfo.getEndTime();
+                    LOG.debug("divide tasks by time, sql：{}", sql);
                     unassignedSql.push(sql);
                 }
             }
         }
         return unassignedSql;
     }
-
+    /**
+     * divide tasks by tag
+     * @return Return SQL List. For example:
+     *         select * from (select  ts, current, voltage, phase, groupid, location from meters where voltage > 100)
+     *         where groupid >= 100 and location = 'SuhctA';
+     */
     private Deque<String> splitByTags() {
         Deque<String> unassignedSqls = new ArrayDeque<>();
         List<String> tags = sourceSql.getTagList();
@@ -171,12 +184,20 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
             for (int i = 0; i < tags.size(); i++) {
                 String sql = "select * from (" + sourceSql.getSql() + ") where "
                         + tags.get(i);
+                LOG.debug("divide tasks by tag, sql：{}", sql);
                 unassignedSqls.push(sql);
             }
         }
         return unassignedSqls;
     }
 
+
+    /**
+     * divide tasks by table
+     * @return Return SQL List. For example:
+     *         select  ts, current, voltage, phase, groupid, location from meters1 where voltage > 100
+     *         select  ts, current, voltage, phase, groupid, location from meters2 where voltage > 100
+     */
     private Deque<String> splitByTables() {
         Deque<String> unassignedSqls = new ArrayDeque<>();
         List<String> tableList = sourceSql.getTableList();
@@ -190,6 +211,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
                 if (!this.sourceSql.getOther().isEmpty()) {
                     sql += " " + sourceSql.getOther();
                 }
+                LOG.debug("divide tasks by table, sql：{}", sql);
                 unassignedSqls.push(sql);
             }
         }
@@ -198,7 +220,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-        int i = 0;
+        // the TDengine source pushes splits eagerly, rather than act upon split requests.
     }
 
     private void checkReaderRegistered(int readerId) {
@@ -210,6 +232,7 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public void addSplitsBack(List<TDengineSplit> splits, int subtaskId) {
+        LOG.warn("addSplitsBack subtaskId:{}", splits);
         if (!splits.isEmpty()) {
             TreeSet<TDengineSplit> splitSet = new TreeSet<>(unassignedSplits);
             splitSet.addAll(splits);
@@ -223,30 +246,36 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     @Override
     public void addReader(int subtaskId) {
+        LOG.trace("addReader subtaskId:{}", subtaskId);
         checkReaderRegistered(subtaskId);
         if (!taskIdSet.contains(subtaskId)) {
             if (!unassignedSplits.isEmpty()) {
                 TDengineSplit tdengineSplit = unassignedSplits.pop();
                 assignmentSplits.add(tdengineSplit);
                 context.assignSplit(tdengineSplit, subtaskId);
+                LOG.debug("addReader assigned subtaskId:{}, splitId:{}", subtaskId, tdengineSplit.splitId());
             } else {
                 context.assignSplit(new TDengineSplit("empty_" + subtaskId), subtaskId);
+                LOG.debug("No task assigned, send an empty task, causing the reader to hang，subtaskId:{}", subtaskId);
             }
             taskIdSet.add(subtaskId);
         }
 
         if (unassignedSplits.isEmpty()) {
             context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
+            LOG.debug("Notify registered readers that there are no tasks assigned!");
         }
     }
 
     @Override
     public TDengineSourceEnumState snapshotState(long checkpointId) throws Exception {
+        LOG.debug("split enumerator snapshotState, checkpointId:{}, unassigned:{}, assignment:{}",
+                checkpointId, unassignedSplits.size(), assignmentSplits.size());
         return new TDengineSourceEnumState(this.unassignedSplits, this.assignmentSplits, this.isInitFinished);
     }
 
     @Override
     public void close() throws IOException {
-
+        LOG.debug("split enumerator closed!");
     }
 }

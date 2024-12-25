@@ -52,7 +52,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
         if (autoCommit.equals("true")) {
             isAutoCommit = true;
         }
-        LOG.info("TDengineCdcSource properties:{}", this.properties.toString());
+        LOG.info("cdc properties:{}", this.properties.toString());
     }
 
     @Override
@@ -76,16 +76,19 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
                     try {
                         return new TDengineCdcSplitReader<OUT>(this.topic, this.properties, readerContext);
                     } catch (ClassNotFoundException e) {
+                        LOG.error("create TDengineCdcSplitReader exception:{}", e.getMessage());
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
+                        LOG.error("create TDengineCdcSplitReader exception:{}", e.getMessage());
+                        throw new RuntimeException(e);
+                    } catch (Exception e) {
+                        LOG.error("create TDengineCdcSplitReader exception:{}", e.getMessage());
                         throw new RuntimeException(e);
                     }
 
                 };
 
-        FutureCompletingBlockingQueue<RecordsWithSplitIds<OUT>>
-                elementsQueue = new FutureCompletingBlockingQueue<>();
-        SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(elementsQueue, splitReaderSupplier);
+        SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(splitReaderSupplier);
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {

@@ -1,8 +1,5 @@
 package com.taosdata.flink.entity;
 
-import com.taosdata.jdbc.tmq.ReferenceDeserializer;
-
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 
 public class ResultBean {

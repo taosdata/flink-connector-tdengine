@@ -21,6 +21,8 @@ import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcher
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineSourceEnumState>, ResultTypeQueryable<OUT>{
+    private final Logger LOG = LoggerFactory.getLogger(TDengineSource.class);
     private Properties properties;
     private SourceSplitSql sourceSql;
     private boolean isBatchMode = false;
@@ -42,6 +45,7 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
         if (batchMode.equals("true")) {
             isBatchMode = true;
         }
+        LOG.info("source properties:{}", this.properties.toString());
     }
 
     @Override
@@ -50,23 +54,25 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
     }
     @Override
     public SourceReader<OUT, TDengineSplit> createReader(SourceReaderContext sourceReaderContext) throws Exception {
+        // create TDengineSplitReader
         Supplier<TDengineSplitReader> splitReaderSupplier =
                 ()-> {
                     try {
                         return new TDengineSplitReader<OUT>(this.properties, sourceReaderContext);
                     } catch (ClassNotFoundException e) {
+                        LOG.error("create TDengineSplitReader exception:{}", e.getMessage());
                         throw new RuntimeException(e);
                     } catch (SQLException e) {
+                        LOG.error("create TDengineSplitReader exception:{}", e.getMessage());
                         throw new RuntimeException(e);
                     } catch (Exception e) {
+                        LOG.error("create TDengineSplitReader exception:{}", e.getMessage());
                         throw new RuntimeException(e);
                     }
 
                 };
 
-        FutureCompletingBlockingQueue<RecordsWithSplitIds<TDengineSourceRecordsWithSplitsIds>>
-                elementsQueue = new FutureCompletingBlockingQueue<>();
-        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(elementsQueue, splitReaderSupplier);
+        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier);
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {
@@ -85,7 +91,6 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
 
     @Override
     public SplitEnumerator<TDengineSplit, TDengineSourceEnumState> restoreEnumerator(SplitEnumeratorContext<TDengineSplit> splitEnumeratorContext, TDengineSourceEnumState splitsState) throws Exception {
-        //todo restore
         return new TDengineSourceEnumerator(splitEnumeratorContext, this.getBoundedness(), this.sourceSql, splitsState);
     }
 

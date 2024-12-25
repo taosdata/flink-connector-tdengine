@@ -1,7 +1,5 @@
 package com.taosdata.flink.source.entity;
 
-import com.sun.org.apache.bcel.internal.generic.PUSH;
-
 import java.io.Serializable;
 import java.util.List;
 

@@ -24,13 +24,12 @@ import java.util.*;
 public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<OUT>, TDengineSplit> {
     private static final Logger LOG = LoggerFactory.getLogger(TDengineSplitReader.class);
     private Properties properties;
-    private volatile boolean running = true;
     private String url;
     private Connection conn;
     private Statement stmt;
     private ResultSetMetaData metaData;
     private ResultSet resultSet;
-    private volatile int interval = 0;
+
     private volatile int batchSize;
     private int subtaskId;
     private List<TDengineSplit> tdengineSplits;
@@ -45,17 +44,17 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
     private TDengineRecordDeserialization<OUT> tdengineRecordDeserialization;
 
     private boolean isEnd = false;
+
     public TDengineSplitReader(Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.subtaskId = context.getIndexOfSubtask();
         this.finishedSplits = new ArrayList<>();
         this.tdengineSplits = new ArrayList<>();
-        this.properties = properties;
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
         this.url = this.properties.getProperty(TDengineConfigParams.TD_JDBC_URL, "");
         LOG.info("init connect websocket ok！");
 
-        Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
+        Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
         this.conn = DriverManager.getConnection(this.url, this.properties);
         this.stmt = this.conn.createStatement();
         String outType = this.properties.getProperty(TDengineConfigParams.VALUE_DESERIALIZER, "");
@@ -67,14 +66,16 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         String strBatchSize = properties.getProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
         batchSize = Integer.parseInt(strBatchSize);
     }
+
     private SplitResultRecord getRowData() throws SQLException {
         try {
+            // Determine whether the result set has been pulled successfully
             if (resultSet == null || !resultSet.next()) {
                 if (resultSet != null) {
                     resultSet.close();
                     resultSet = null;
                 }
-
+                // get next split tast
                 while (initNextSplitTask()) {
                     this.resultSet = stmt.executeQuery(currTask);
                     if (this.resultSet.next()) {
@@ -95,10 +96,9 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
             }
             return null;
         } catch (Exception e) {
-           throw e;
+            LOG.error("get rowdata excption:{}, currTask:{}", e.toString(), currTask);
+            throw e;
         }
-
-
     }
 
     private boolean initNextSplitTask() throws SQLException {
@@ -156,6 +156,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
             }
 
             if (sourceRecords.isEmpty()) {
+                LOG.info("source fetch fininshed!");
                 return TDengineSourceRecordsWithSplitsIds.forFinishedSplit(finishedSplits);
             }
 
@@ -163,14 +164,21 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
             splitResultRecords.setMetaData(this.metaData);
             splitResultRecords.setTdengineSplit(currSplit);
             splitResultRecords.setSourceRecords(sourceRecords);
-            return  TDengineSourceRecordsWithSplitsIds.forRecords(currSplit.splitId, splitResultRecords);
+            return TDengineSourceRecordsWithSplitsIds.forRecords(currSplit.splitId, splitResultRecords);
         } catch (SQLException e) {
+            LOG.error("source fetch excption:{}, currTask:{}", e.toString(), currTask);
             throw new RuntimeException(e);
         } catch (Exception e) {
+            LOG.error("source fetch excption:{}, currTask:{}", e.toString(), currTask);
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Handle the split changes. This call should be non-blocking.
+     *
+     * @param splitsChange the split changes that the SplitReader needs to handle.
+     */
     @Override
     public void handleSplitsChanges(SplitsChange<TDengineSplit> splitsChange) {
         List<TDengineSplit> splits = splitsChange.splits();
@@ -193,6 +201,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
             this.conn.close();
             this.conn = null;
         }
+        LOG.debug("source reader {} close!", subtaskId);
     }
 
 }

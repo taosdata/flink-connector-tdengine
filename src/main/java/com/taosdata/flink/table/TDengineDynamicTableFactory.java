@@ -1,11 +1,10 @@
 package com.taosdata.flink.table;
 
 import com.google.common.base.Strings;
+import com.taosdata.flink.common.TDengineCdcParams;
 import com.taosdata.flink.common.TDengineConfigParams;
-import com.taosdata.jdbc.TSDBDriver;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.source.DynamicTableSource;
@@ -13,7 +12,6 @@ import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.utils.TableSchemaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +38,11 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         helper.validate();
         validateSink(config);
         Integer parallelism = helper.getOptions().get(SINK_PARALLELISM);
-        TableSchema physicalSchema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
+        List<String> fieldNameList = context.getCatalogTable().getResolvedSchema().getColumnNames();
         Properties connProps = new Properties();
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_LOCALE, config.get(TDengineConnectorOptions.LOCALE));
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, config.get(TDengineConnectorOptions.SERVER_TIME_ZONE));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_LOCALE, config.get(TDengineConnectorOptions.LOCALE));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_TIME_ZONE, config.get(TDengineConnectorOptions.SERVER_TIME_ZONE));
         connProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, config.get(TDengineConnectorOptions.SINK_DBNAME_NAME));
         connProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME));
         connProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, config.get(TDengineConnectorOptions.SINK_TABLE_NAME));
@@ -52,8 +50,10 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         connProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "" + config.get(TDengineConnectorOptions.SINK_BATCH_SIZE));
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         try {
-            return new TDengineTableSink(connProps, physicalSchema, parallelism);
+            LOG.info("create dynamic table sink properties:{}", connProps.toString());
+            return new TDengineTableSink(connProps, fieldNameList, parallelism);
         } catch (SQLException e) {
+            LOG.error("createDynamicTableSink excption:{}", e.getSQLState());
             throw new RuntimeException(e);
         }
     }
@@ -63,6 +63,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         final FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
         final ReadableConfig config = helper.getOptions();
         helper.validate();
+        // get soure type
         String mode = config.get(TDengineConnectorOptions.TD_JDBC_MODE);
         if (!Strings.isNullOrEmpty(mode)) {
             if (mode.compareTo("source") == 0) {
@@ -71,10 +72,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
                 return createTableCdc(config);
             }
         }
-
-        throw new ValidationException(
-                String.format(
-                        "The tdengine jdbc mode are invalid！"));
+        LOG.error("The tdengine jdbc mode are invalid！mode:{}", mode);
+        throw new ValidationException(String.format("The tdengine jdbc mode are invalid！"));
     }
 
     private static void validateSink(ReadableConfig tableOptions) {
@@ -84,30 +83,34 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         Optional<String> superName = tableOptions.getOptional(TDengineConnectorOptions.SINK_SUPERTABLE_NAME);
 
         if (!jdbcUrl.isPresent() || Strings.isNullOrEmpty(jdbcUrl.get())) {
+            LOG.error("Option 'jdbcUrl' must be set.");
             throw new ValidationException("Option 'jdbcUrl' must be set.");
         }
 
         if (!dbname.isPresent() || Strings.isNullOrEmpty(dbname.get())) {
+            LOG.error("Option 'dbname' must be set.");
             throw new ValidationException("dbname must be set.");
         }
 
         if ((!tableName.isPresent() || Strings.isNullOrEmpty(tableName.get())) &&
                 (!superName.isPresent() || Strings.isNullOrEmpty(superName.get()))) {
+            LOG.error("Option tableName or superTableName must be set.");
             throw new ValidationException("tableName or superTableName must be set.");
         }
 
     }
-
 
     private static void validateSource(ReadableConfig tableOptions) {
         Optional<String> jdbcUrl = tableOptions.getOptional(TDengineConnectorOptions.TD_JDBC_URL);
         Optional<String> scanQuery = tableOptions.getOptional(TDengineConnectorOptions.SCAN_QUERY);
 
         if (!jdbcUrl.isPresent() || Strings.isNullOrEmpty(jdbcUrl.get())) {
+            LOG.error("Option 'jdbcUrl' must be set.");
             throw new ValidationException("Option 'jdbcUrl' must be set.");
         }
 
         if (!scanQuery.isPresent() || Strings.isNullOrEmpty(scanQuery.get())) {
+            LOG.error("Option 'scan_query' must be set.");
             throw new ValidationException("scan_query must be set.");
         }
     }
@@ -119,45 +122,52 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         final DataType physicalDataType = context.getPhysicalRowDataType();
 
         Properties connProps = new Properties();
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, config.get(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT));
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, config.get(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
         return new TDengineTableSource(url, scanQurey, physicalDataType, connProps);
     }
 
     private static void validateCdc(ReadableConfig tableOptions) {
         Optional<String> topic = tableOptions.getOptional(TDengineConnectorOptions.TOPIC);
         Optional<String> groupId = tableOptions.getOptional(TDengineConnectorOptions.GROUP_ID);
+        Optional<String> url = tableOptions.getOptional(TDengineConnectorOptions.CONNECT_URL);
         Optional<String> server = tableOptions.getOptional(TDengineConnectorOptions.BOOTSTRAP_SERVERS);
         if (!topic.isPresent() || Strings.isNullOrEmpty(topic.get())) {
+            LOG.error("Option 'topic' must be set.");
             throw new ValidationException("Option 'topic' must be set.");
         }
 
         if (!groupId.isPresent() || Strings.isNullOrEmpty(groupId.get())) {
+            LOG.error("Option 'group.id' must be set.");
             throw new ValidationException("Option 'group.id' must be set.");
         }
-        if (!server.isPresent() || Strings.isNullOrEmpty(server.get())) {
-            throw new ValidationException("Option 'bootstrap.servers' must be set.");
+
+        if (!url.isPresent() || Strings.isNullOrEmpty(url.get())) {
+            if (!server.isPresent() || Strings.isNullOrEmpty(server.get())) {
+                LOG.error("Option 'url' or 'bootstrap.servers' must be set.");
+                throw new ValidationException("Option 'url' or 'bootstrap.servers' must be set.");
+            }
         }
     }
 
     private DynamicTableSource createTableCdc(ReadableConfig config) {
         validateCdc(config);
         Properties properties = new Properties();
-        properties.setProperty("td.connect.type", "ws");
+        properties.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
         String optionVal = config.get(TDengineConnectorOptions.BOOTSTRAP_SERVERS);
-        properties.setProperty("bootstrap.servers", optionVal);
+        properties.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, optionVal);
         optionVal = config.get(TDengineConnectorOptions.AUTO_OFFSET_RESET);
-        properties.setProperty("auto.offset.reset", optionVal);
+        properties.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, optionVal);
         optionVal = config.get(TDengineConnectorOptions.GROUP_ID);
-        properties.setProperty("group.id", optionVal);
+        properties.setProperty(TDengineCdcParams.GROUP_ID, optionVal);
         optionVal = config.get(TDengineConnectorOptions.USERNAME);
-        properties.setProperty("td.connect.user", optionVal);
+        properties.setProperty(TDengineCdcParams.CONNECT_USER, optionVal);
         optionVal = config.get(TDengineConnectorOptions.PASSWORD);
-        properties.setProperty("td.connect.pass", optionVal);
+        properties.setProperty(TDengineCdcParams.CONNECT_PASS, optionVal);
         optionVal = config.get(TDengineConnectorOptions.ENABLE_AUTO_COMMIT);
-        properties.setProperty("enable.auto.commit", optionVal);
-        properties.setProperty("value.deserializer", "RowData");
-        properties.setProperty("value.deserializer.encoding", config.get(TDengineConnectorOptions.CHARSET));
+        properties.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, optionVal);
+        properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
+        properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, config.get(TDengineConnectorOptions.CHARSET));
         String topic = config.get(TDengineConnectorOptions.TOPIC);
         return new TDengineTableCdc(topic, properties);
     }
@@ -180,6 +190,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.TABLE_NAME);
         optionalOptions.add(TDengineConnectorOptions.SCAN_QUERY);
         optionalOptions.add(TDengineConnectorOptions.BOOTSTRAP_SERVERS);
+        optionalOptions.add(TDengineConnectorOptions.CONNECT_URL);
         optionalOptions.add(TDengineConnectorOptions.TOPIC);
         optionalOptions.add(TDengineConnectorOptions.GROUP_ID);
         optionalOptions.add(TDengineConnectorOptions.CLIENT_ID);
@@ -194,6 +205,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.CHARSET);
         optionalOptions.add(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT);
         optionalOptions.add(TDengineConnectorOptions.SERVER_TIME_ZONE);
+
         return optionalOptions;
     }
 

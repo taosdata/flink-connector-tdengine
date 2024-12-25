@@ -19,8 +19,10 @@ public class TDengineRowDataDeserialization implements TDengineRecordDeserializa
         List<Object> rowData = splitResultRecord.getSourceRecordList();
         for (int i = 0; i < rowData.size(); i++ ) {
             if (rowData.get(i) instanceof Timestamp) {
+                // Convert Timestamp to the TimestampData type supported by RowData
                rowData.set(i, TimestampData.fromTimestamp((Timestamp) rowData.get(i)));
             } else if (rowData.get(i) instanceof String) {
+                // Convert String to the StringData type supported by RowData
                 rowData.set(i, StringData.fromString((String) rowData.get(i)));
             }
         }

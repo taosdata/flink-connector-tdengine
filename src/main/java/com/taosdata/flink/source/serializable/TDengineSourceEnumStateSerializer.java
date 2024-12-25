@@ -35,22 +35,9 @@ import java.util.*;
 public class TDengineSourceEnumStateSerializer
         implements SimpleVersionedSerializer<TDengineSourceEnumState> {
 
-    /**
-     * state of VERSION_0 contains splitAssignments, which is a mapping from subtask ids to lists of
-     * assigned splits.
-     */
-    private static final int VERSION_0 = 0;
-    /**
-     * state of VERSION_1 only contains assignedPartitions, which is a list of assigned splits.
-     */
     private static final int VERSION_1 = 1;
-    /**
-     * state of VERSION_2 contains initialDiscoveryFinished and partitions with different assignment
-     * status.
-     */
-    private static final int VERSION_2 = 2;
 
-    private static final int CURRENT_VERSION = VERSION_2;
+    private static final int CURRENT_VERSION = VERSION_1;
 
     @Override
     public int getVersion() {

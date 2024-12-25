@@ -16,6 +16,7 @@ import com.taosdata.jdbc.TSDBErrorNumbers;
 import com.taosdata.jdbc.utils.Utils;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
+import org.apache.flink.api.connector.sink2.WriterInitContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,8 +111,12 @@ public class TDengineSink<IN> implements Sink<IN> {
         LOG.debug("TDengineSink properties:{}", this.properties.toString());
     }
 
-    @Override
     public SinkWriter<IN> createWriter(InitContext context) throws IOException {
+        throw new RuntimeException("The interface has been abandoned");
+    }
+
+    @Override
+    public SinkWriter<IN> createWriter(WriterInitContext context) throws IOException {
         try {
             if (metaInfos != null) {
                 if (VersionComparator.compareVersion(tdVersion, stmt2Version) < 0) {

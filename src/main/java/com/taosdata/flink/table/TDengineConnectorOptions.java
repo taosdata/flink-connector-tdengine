@@ -141,8 +141,14 @@ public class TDengineConnectorOptions {
                     .stringType()
                     .defaultValue("localhost:6041")
                     .withDescription(
-                            "Topic name to read data from when the table is used as source. It also supports topic list for source by separating topic by semicolon like 'topic-1;topic-2'. Note, only one of 'topic-pattern' and 'topic' can be specified for sources. "
-                                    + "When the table is used as sink, the topic name is the topic to write data. It also supports topic list for sinks. The provided topic-list is treated as a allow list of valid values for the `topic` metadata column. If  a list is provided, for sink table, 'topic' metadata column is writable and must be specified.");
+                            "cdc bootstrap servers address");
+
+    public static final ConfigOption<String> CONNECT_URL =
+            ConfigOptions.key("url")
+                    .stringType()
+                    .defaultValue("")
+                    .withDescription(
+                            "cdc connect url address");
 
     public static final ConfigOption<String> TOPIC =
             ConfigOptions.key("topic")
@@ -177,7 +183,7 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> ENABLE_AUTO_COMMIT =
             ConfigOptions.key("enable.auto.commit")
                     .stringType()
-                    .defaultValue("true")
+                    .defaultValue("false")
                     .withDescription(
                             "Whether to enable automatic consumption point submission, " +
                                     "'true: automatic submission, client application does not need to commit;" +
