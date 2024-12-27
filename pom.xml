@@ -48,19 +48,19 @@
     </properties>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>com.taosdata.jdbc</groupId>-->
-<!--            <artifactId>taos-jdbcdriver</artifactId>-->
-<!--            <version>3.4.0</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>com.taosdata.jdbc</groupId>
             <artifactId>taos-jdbcdriver</artifactId>
-            <version>3.5.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>/Users/menshibin/maven/taos-jdbcdriver-3.5.0-SNAPSHOT-dist.jar</systemPath>
+            <version>3.4.0</version>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.taosdata.jdbc</groupId>-->
+<!--            <artifactId>taos-jdbcdriver</artifactId>-->
+<!--            <version>3.5.0-SNAPSHOT</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>/Users/menshibin/maven/taos-jdbcdriver-3.5.0-SNAPSHOT-dist.jar</systemPath>-->
+<!--        </dependency>-->
 
         <!-- Core -->
         <dependency>

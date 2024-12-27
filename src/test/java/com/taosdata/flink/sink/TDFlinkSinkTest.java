@@ -218,7 +218,7 @@ public class TDFlinkSinkTest {
         env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
         env.getCheckpointConfig().setCheckpointTimeout(6000);
         env.getCheckpointConfig().setTolerableCheckpointFailureNumber(4);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
 
@@ -392,7 +392,7 @@ public class TDFlinkSinkTest {
         env.enableCheckpointing(500, AT_LEAST_ONCE);
         env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
         env.getCheckpointConfig().setCheckpointTimeout(5000);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
@@ -437,8 +437,8 @@ public class TDFlinkSinkTest {
         System.out.println("testCheckpointTDengineCdc start！");
         JobClient jobClient =checkpointTDengineCdc();
         Thread.sleep(4000L);
-        jobClient.stopWithSavepoint(false, "file:///Users/menshibin/flink/checkpoint/", SavepointFormatType.CANONICAL).get();
-//        jobClient.cancel().get();
+        jobClient.cancel().get();
+//        jobClient.stopWithSavepoint(false, null, SavepointFormatType.CANONICAL).get();
 
         jobClient =checkpointTDengineCdc();
         Thread.sleep(6000L);
@@ -454,7 +454,7 @@ public class TDFlinkSinkTest {
         env.enableCheckpointing(500, AT_LEAST_ONCE);
         env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
         env.getCheckpointConfig().setCheckpointTimeout(5000);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
 //        env.getCheckpointConfig().setTolerableCheckpointFailureNumber(7);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");

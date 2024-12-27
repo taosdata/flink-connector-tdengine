@@ -286,7 +286,7 @@ public class TDFlinkTableTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         env.enableCheckpointing(100, AT_LEAST_ONCE);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
         String tdengineSourceTableDDL = "CREATE TABLE `meters` (" +
                 " ts TIMESTAMP," +
@@ -338,7 +338,7 @@ public class TDFlinkTableTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(5);
         env.enableCheckpointing(1000, AT_LEAST_ONCE);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
         String tdengineSourceTableDDL = "CREATE TABLE `meters` (" +
                 " ts TIMESTAMP," +
