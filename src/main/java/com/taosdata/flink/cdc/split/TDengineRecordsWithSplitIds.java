@@ -17,7 +17,7 @@ public class TDengineRecordsWithSplitIds<OUT> implements RecordsWithSplitIds<Cdc
     private String splitId;
 
     public TDengineRecordsWithSplitIds(String splitId, ConsumerRecords<OUT> consumerRecords, List<CdcTopicPartition> topicPartitions) {
-        if (!consumerRecords.isEmpty()) {
+        if (consumerRecords != null && !consumerRecords.isEmpty()) {
             CdcRecords<OUT> cdcRecords = new CdcRecords<>(consumerRecords, topicPartitions);
             this.cdcRecordsList = new ArrayList<>(1);
             this.cdcRecordsList.add(cdcRecords);

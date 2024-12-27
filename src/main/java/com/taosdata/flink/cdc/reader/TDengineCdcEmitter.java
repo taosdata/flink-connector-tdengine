@@ -26,6 +26,6 @@ public class TDengineCdcEmitter<T> implements RecordEmitter<CdcRecords<T>, T, TD
             }
         }
         // After the data distribution is completed, update the slice status so that it can be stored at the checkpoint
-        splitsState.setTopicPartitions(sourceRecords.getPartitions());
+        splitsState.setStartPartitions(sourceRecords.getPartitions());
     }
 }

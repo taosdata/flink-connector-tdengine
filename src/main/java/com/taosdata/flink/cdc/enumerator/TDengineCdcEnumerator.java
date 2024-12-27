@@ -115,10 +115,10 @@ public class TDengineCdcEnumerator implements SplitEnumerator<TDengineCdcSplit, 
             taskIdSet.add(subtaskId);
         }
 
-        if (unassignedCdcSplits.isEmpty()) {
-            context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
-            LOG.debug("Notify registered readers that there are no tasks assigned!");
-        }
+//        if (unassignedCdcSplits.isEmpty()) {
+//            context.registeredReaders().keySet().forEach(context::signalNoMoreSplits);
+//            LOG.debug("Notify registered readers that there are no tasks assigned!");
+//        }
     }
 
     @Override

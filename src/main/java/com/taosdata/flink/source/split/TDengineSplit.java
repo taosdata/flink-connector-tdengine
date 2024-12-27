@@ -58,7 +58,7 @@ public class TDengineSplit implements SourceSplit, Comparable<TDengineSplit> {
 //        currTaskIterator = this.taskList.iterator();
     }
 
-    public List<String> gettasksplits() {
+    public List<String> getTaskSplits() {
         return taskList;
     }
 

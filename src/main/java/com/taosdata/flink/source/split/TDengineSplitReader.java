@@ -188,7 +188,7 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
 
     @Override
     public void wakeUp() {
-
+        LOG.debug("source reader {} wakeUp!", subtaskId);
     }
 
     @Override

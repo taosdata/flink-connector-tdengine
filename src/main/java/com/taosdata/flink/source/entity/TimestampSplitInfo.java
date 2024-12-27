@@ -16,7 +16,7 @@ public class TimestampSplitInfo implements Serializable {
         if (zone == null) {
             zone = ZoneId.systemDefault();
         }
-        this.startTime = startTime.atZone(zone).toInstant().toEpochMilli();;
+        this.startTime = startTime.atZone(zone).toInstant().toEpochMilli();
         this.endTime = endTime.atZone(zone).toInstant().toEpochMilli();
         this.fieldName = fieldName;
         this.interval = interval.toMillis();

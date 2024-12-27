@@ -43,6 +43,10 @@ public class TDengineSink<IN> implements Sink<IN> {
     private int batchSize;
 
     public TDengineSink(Properties properties, List<String> fieldNameList) throws SQLException {
+        if (properties == null || properties.isEmpty() || fieldNameList == null || fieldNameList.isEmpty()) {
+            LOG.error("Invalid parameter configuration!");
+            throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL, "Invalid parameter configuration");
+        }
         this.properties = properties;
         metaInfos = new ArrayList<>();
         initSinkParams(fieldNameList);
@@ -51,16 +55,19 @@ public class TDengineSink<IN> implements Sink<IN> {
     private void initSinkParams(List<String> fieldNameList) throws SQLException {
         this.url = properties.getProperty(TDengineConfigParams.TD_JDBC_URL);
         if (Strings.isNullOrEmpty(this.url)) {
+            LOG.error("tdengine sink url no set");
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_URL_NOT_SET);
         }
 
         this.dbName = properties.getProperty(TDengineConfigParams.TD_DATABASE_NAME);
         if (Strings.isNullOrEmpty(this.dbName)) {
+            LOG.error("tdengine sink dbname no set");
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
         }
         this.superTableName = properties.getProperty(TDengineConfigParams.TD_SUPERTABLE_NAME);
         this.normalTableName = properties.getProperty(TDengineConfigParams.TD_TABLE_NAME);
         if (Strings.isNullOrEmpty(this.superTableName) && Strings.isNullOrEmpty(this.normalTableName)) {
+            LOG.error("tdengine sink super table or normal table no set");
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_TABLE_NAME_NULL);
         }
         this.stmt2Version = properties.getProperty(TDengineConfigParams.TD_STMT2_VERSION, "3.3.5.0");

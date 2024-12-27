@@ -82,7 +82,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
             }
             executeSqls.append(sqlPrefix);
 
-            Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
+            Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
             this.conn = DriverManager.getConnection(this.url, this.properties);
             statement = this.conn.createStatement();
 

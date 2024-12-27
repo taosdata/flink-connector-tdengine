@@ -53,8 +53,8 @@ public class TDengineSourceEnumStateSerializer
             out.writeInt(taskList.size());
             for (TDengineSplit task : taskList) {
                 out.writeUTF(task.splitId());
-                out.writeInt(task.gettasksplits().size());
-                for (String split : task.gettasksplits()) {
+                out.writeInt(task.getTaskSplits().size());
+                for (String split : task.getTaskSplits()) {
                     out.writeUTF(split);
                 }
                 out.writeInt(task.getFinishList().size());
@@ -67,8 +67,8 @@ public class TDengineSourceEnumStateSerializer
             out.writeInt(unassignedSplits.size());
             for (TDengineSplit task : unassignedSplits) {
                 out.writeUTF(task.splitId());
-                out.writeInt(task.gettasksplits().size());
-                for (String split : task.gettasksplits()) {
+                out.writeInt(task.getTaskSplits().size());
+                for (String split : task.getTaskSplits()) {
                     out.writeUTF(split);
                 }
                 out.writeInt(task.getFinishList().size());

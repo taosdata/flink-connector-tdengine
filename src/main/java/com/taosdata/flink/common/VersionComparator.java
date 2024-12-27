@@ -1,8 +1,10 @@
 package com.taosdata.flink.common;
 
+import com.google.common.base.Strings;
+
 public class VersionComparator {
     public static int compareVersion(String version1, String version2) {
-        if (version1 == null || version2 == null) {
+        if (Strings.isNullOrEmpty(version1) || Strings.isNullOrEmpty(version2)) {
             throw new IllegalArgumentException("Version strings cannot be null");
         }
 

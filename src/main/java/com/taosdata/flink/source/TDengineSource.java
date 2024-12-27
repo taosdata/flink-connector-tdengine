@@ -15,6 +15,7 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
+import org.apache.flink.connector.base.source.reader.SourceReaderOptions;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
@@ -66,8 +67,9 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
                     }
 
                 };
-
-        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier);
+        Configuration configuration = new Configuration();
+        configuration.set(SourceReaderOptions.ELEMENT_QUEUE_CAPACITY, 1000);
+        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier, configuration);
         RecordEmitter recordEmitter = new TDengineRecordEmitter<OUT>(isBatchMode);
         return new TDengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
     }

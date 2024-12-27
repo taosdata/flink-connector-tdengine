@@ -19,7 +19,7 @@ public class TDengineSplitSerializer implements SimpleVersionedSerializer<TDengi
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(baos)) {
             out.writeUTF(split.splitId());
-            List<String> taskList = split.gettasksplits();
+            List<String> taskList = split.getTaskSplits();
             out.writeInt(taskList.size());
             for (String task : taskList) {
                 out.writeUTF(task);

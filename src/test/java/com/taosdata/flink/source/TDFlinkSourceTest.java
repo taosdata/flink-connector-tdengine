@@ -1,24 +1,18 @@
 package com.taosdata.flink.source;
 
 import com.taosdata.flink.cdc.TDengineCdcSource;
-import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.common.TDengineCdcParams;
-import com.taosdata.flink.sink.TDengineSink;
+import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
-
-import java.io.IOException;
-import java.util.List;
 import com.taosdata.jdbc.TSDBDriver;
 import com.taosdata.jdbc.tmq.ConsumerRecord;
 import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.testutils.InMemoryReporter;
@@ -26,15 +20,9 @@ import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
-
 import org.apache.flink.test.util.MiniClusterWithClientResource;
-import org.apache.flink.util.Collector;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +44,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSourceTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.95:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -193,7 +181,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql sql = new SourceSplitSql("select ts, `current`, voltage, phase, groupid, location from meters");
         sourceQuery(sql, 3, connProps);
         System.out.println("testTDengineSource finish！");
@@ -207,7 +195,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -232,7 +220,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, current, voltage, phase, groupid, location from meters")
                 .setTagList(Arrays.asList(
@@ -251,7 +239,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSelect("ts, current, voltage, phase, groupid, location")
                 .setTableList(Arrays.asList("d1001", "d1002"))
@@ -294,7 +282,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.95:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
@@ -331,11 +319,12 @@ public class TDFlinkSourceTest {
         env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
+        config.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "true");
         config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
         config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
         config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
@@ -369,7 +358,7 @@ public class TDFlinkSourceTest {
         env.setParallelism(3);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.95:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");

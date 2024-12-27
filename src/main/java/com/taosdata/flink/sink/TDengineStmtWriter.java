@@ -83,7 +83,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
 
     public void initConnect() throws SQLException {
         try {
-            Class.forName("com.taosdata.jdbc.rs.RestfulDriver");
+            Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
             this.conn = DriverManager.getConnection(this.url, this.properties);
         } catch (SQLException e) {
             LOG.error("init connect exception error:{}", e.getSQLState());
@@ -132,7 +132,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 recodeCount.set(0);
             }
         } catch (SQLException e) {
-            LOG.error("flush exception info:{}", e.getSQLState());
+            LOG.error("flush exception info:{}", e);
             throw new IOException(e.getMessage());
         } finally {
             lock.unlock();
@@ -160,7 +160,8 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             return "";
         }
 
-        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
+//        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
+        String sql = "INSERT INTO " + this.dbName + "." + this.superTableName + " (";
         sql += sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") ";
 
         sql += " VALUES (?";
@@ -182,8 +183,8 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             LOG.error("NormalTableData param error");
             return "";
         }
-        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
-
+//        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
+        String sql = "INSERT INTO " + this.dbName + "." + this.normalTableName + " (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
         for (int i = 1; i < this.sinkMetaInfos.size(); i++) {
             sql += ",?";
         }
@@ -226,7 +227,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                         break;
                     case TDengineType.TSDB_DATA_TYPE_BIGINT:
                         if (columnParams.get(i - 1) == null) {
-                            pstmt.setNull(i, Types.BIT);
+                            pstmt.setNull(i, Types.BIGINT);
                         } else {
                             pstmt.setLong(i, (long) columnParams.get(i - 1));
                         }

@@ -28,10 +28,7 @@ public final class SplitResultRecord {
     private final List<Object> sourceRecord;
 
     private ResultSetMetaData metaData;
-    public SplitResultRecord(List<Object> sourceRecord, ResultSetMetaData metaData, List<String> finishTaskList) {
-        this.sourceRecord = sourceRecord;
-        this.metaData = metaData;
-    }
+
     public SplitResultRecord(ResultSetMetaData metaData) {
         this.metaData = metaData;
         this.sourceRecord = new ArrayList<>();

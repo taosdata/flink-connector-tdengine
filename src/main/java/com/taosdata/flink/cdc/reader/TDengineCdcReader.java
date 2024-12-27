@@ -51,9 +51,11 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     @Override
     protected void onSplitFinished(Map<String, TDengineCdcSplitState> finishedSplitIds) {
-        finishedSplitIds.forEach((key, state) -> {
-            LOG.info("split reader {} has been completed!", state.splitId());
-        });
+        if (finishedSplitIds != null && !finishedSplitIds.isEmpty()) {
+            finishedSplitIds.forEach((key, state) -> {
+                LOG.info("split reader {} has been completed!", state.splitId());
+            });
+        }
     }
 
     @Override

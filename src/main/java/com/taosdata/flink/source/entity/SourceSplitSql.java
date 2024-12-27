@@ -20,14 +20,6 @@ public class SourceSplitSql implements Serializable {
 
     private TimestampSplitInfo timestampSplitInfo;
 
-    public SourceSplitSql(String select, String tableName, String where, String other, SplitType splitType) {
-        this.select = select;
-        this.tableName = tableName;
-        this.where = where;
-        this.other = other;
-        this.splitType = splitType;
-        this.sql = "";
-    }
     public SourceSplitSql() {
         this.select = "";
         this.tableName = "";

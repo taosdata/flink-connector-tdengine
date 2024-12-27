@@ -66,35 +66,43 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
             this.unassignedSplits.clear();
             this.assignmentSplits.clear();
             Deque<String> unassignedSql = new ArrayDeque<>();
-            if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TIMESTAMP) {
-                // divide tasks by time
-                unassignedSql = splitByTimestamp();
-            } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TAG) {
-                // divide tasks by tag
-                unassignedSql = splitByTags();
-            } else if (sourceSql.getSplitType() == SplitType.SPLIT_TYPE_TABLE) {
+
+            LOG.debug("enumerator split type is {} {}", sourceSql.getSplitType().getTypeName(), sourceSql.getSplitType().getTypeNo());
+
+            if (sourceSql.getSplitType().equals(SplitType.SPLIT_TYPE_TABLE)) {
                 // divide tasks by table
                 unassignedSql = splitByTables();
             } else {
-                // single sql task
                 if (Strings.isNullOrEmpty(this.sourceSql.getSql())) {
                     String sql = "select " + this.sourceSql.getSelect()
                             + " from `" + this.sourceSql.getTableName() + "` ";
                     if (!this.sourceSql.getWhere().isEmpty()) {
                         sql += "where " + this.sourceSql.getWhere();
                     }
+                    if (!this.sourceSql.getOther().isEmpty()) {
+                        sql += " " + this.sourceSql.getOther();
+                    }
                     LOG.debug("single sql task, sql：{}", sql);
-                    unassignedSql.push(sql);
+                    this.sourceSql.setSql(sql);
+                }
+
+                if (sourceSql.getSplitType().equals(SplitType.SPLIT_TYPE_TIMESTAMP)) {
+                    // divide tasks by time
+                    unassignedSql = splitByTimestamp();
+                } else if (sourceSql.getSplitType().equals(SplitType.SPLIT_TYPE_TAG)) {
+                    // divide tasks by tag
+                    unassignedSql = splitByTags();
                 } else {
+                    // single sql task
                     unassignedSql.push(this.sourceSql.getSql());
                     LOG.debug("single sql task, sql：{}", this.sourceSql.getSql());
                 }
-            }
-            // Calculate the number of tasks to be assigned to each reader based on the number of readers
-            if (unassignedSql.size() > this.readerCount) {
-                taskCount = unassignedSql.size() / this.readerCount;
-                if ((unassignedSql.size() % this.readerCount) > 0) {
-                    taskCount++;
+                // Calculate the number of tasks to be assigned to each reader based on the number of readers
+                if (unassignedSql.size() > this.readerCount) {
+                    taskCount = unassignedSql.size() / this.readerCount;
+                    if ((unassignedSql.size() % this.readerCount) > 0) {
+                        taskCount++;
+                    }
                 }
             }
 
@@ -124,9 +132,10 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     /**
      * divide tasks by time
+     *
      * @return Return SQL List, time intervals are often left-closed and right-open. For example:
-     *        select * from (select  ts, `current`, voltage, phase, tbname from meters where voltage > 100)
-     *        where ts >= "2024-11-12 14:55:00" and ts < "2024-11-12 15:00:00";
+     * select * from (select  ts, `current`, voltage, phase, tbname from meters where voltage > 100)
+     * where ts >= "2024-11-12 14:55:00" and ts < "2024-11-12 15:00:00";
      */
     private Deque<String> splitByTimestamp() {
         Deque<String> unassignedSql = new ArrayDeque<>();
@@ -171,11 +180,13 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
         }
         return unassignedSql;
     }
+
     /**
      * divide tasks by tag
+     *
      * @return Return SQL List. For example:
-     *         select * from (select  ts, current, voltage, phase, groupid, location from meters where voltage > 100)
-     *         where groupid >= 100 and location = 'SuhctA';
+     * select * from (select  ts, current, voltage, phase, groupid, location from meters where voltage > 100)
+     * where groupid >= 100 and location = 'SuhctA';
      */
     private Deque<String> splitByTags() {
         Deque<String> unassignedSqls = new ArrayDeque<>();
@@ -194,9 +205,10 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
 
     /**
      * divide tasks by table
+     *
      * @return Return SQL List. For example:
-     *         select  ts, current, voltage, phase, groupid, location from meters1 where voltage > 100
-     *         select  ts, current, voltage, phase, groupid, location from meters2 where voltage > 100
+     * select  ts, current, voltage, phase, groupid, location from meters1 where voltage > 100
+     * select  ts, current, voltage, phase, groupid, location from meters2 where voltage > 100
      */
     private Deque<String> splitByTables() {
         Deque<String> unassignedSqls = new ArrayDeque<>();
@@ -278,4 +290,5 @@ public class TDengineSourceEnumerator implements SplitEnumerator<TDengineSplit, 
     public void close() throws IOException {
         LOG.debug("split enumerator closed!");
     }
+
 }

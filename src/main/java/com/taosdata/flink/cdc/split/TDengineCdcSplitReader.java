@@ -30,6 +30,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
     private String splitId;
     private TaosConsumer<OUT> consumer;
 
+
     public TDengineCdcSplitReader(String topic, Properties properties, SourceReaderContext context) throws ClassNotFoundException, SQLException {
         this.topic = topic;
         this.tdengineSplits = new ArrayList<>();
@@ -113,7 +114,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
 
     @Override
     public void wakeUp() {
-
+        LOG.debug("cdc reader {} wakeUp!", splitId);
     }
 
     /**
@@ -134,7 +135,9 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
         if (this.consumer != null) {
             this.consumer.unsubscribe();
             this.consumer.close();
+            this.consumer = null;
         }
+
         LOG.debug("cdc reader {} close!", splitId);
     }
 

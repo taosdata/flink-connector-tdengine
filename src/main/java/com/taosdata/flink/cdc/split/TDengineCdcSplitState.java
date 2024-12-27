@@ -10,7 +10,6 @@ import java.util.List;
  * topic groupId clientId partitions
  */
 public class TDengineCdcSplitState extends TDengineCdcSplit {
-    private List<CdcTopicPartition> partitions;
 
     /**
      * @param topic
@@ -19,18 +18,11 @@ public class TDengineCdcSplitState extends TDengineCdcSplit {
      * @param partitions
      */
     public TDengineCdcSplitState(String topic, String groupId, String clientId, List<CdcTopicPartition> partitions) {
-        super(topic + "_" + groupId + "_"+ clientId, topic, groupId, clientId);
-        this.partitions = partitions;
+        super(topic, groupId, clientId, partitions);
+
     }
     public TDengineCdcSplitState(TDengineCdcSplit cdcSplit) {
-        super(cdcSplit.splitId, cdcSplit.getTopic(), cdcSplit.getGroupId(), cdcSplit.getClientId());
-        this.partitions = new ArrayList<>();
-    }
-    public List<CdcTopicPartition> getTopicPartitions() {
-        return partitions;
-    }
-    public void setTopicPartitions(List<CdcTopicPartition> partitions) {
-        this.partitions = partitions;
+        super(cdcSplit.getTopic(), cdcSplit.getGroupId(), cdcSplit.getClientId(), cdcSplit.getStartPartitions());
     }
 
     public TDengineCdcSplit toTDengineCdcSplit() {
@@ -38,6 +30,6 @@ public class TDengineCdcSplitState extends TDengineCdcSplit {
                 getTopic(),
                 getGroupId(),
                 getClientId(),
-                partitions);
+                getStartPartitions());
     }
 }

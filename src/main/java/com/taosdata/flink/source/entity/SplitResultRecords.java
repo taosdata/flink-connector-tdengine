@@ -28,11 +28,7 @@ public final class SplitResultRecords<V> {
     private ResultSetMetaData metaData;
     private SourceRecords<V> sourceRecords;
     private TDengineSplit tdengineSplit;
-    public SplitResultRecords(ResultSetMetaData metaData, SourceRecords sourceRecords, TDengineSplit tdengineSplit) {
-        this.metaData = metaData;
-        this.sourceRecords = sourceRecords;
-        this.tdengineSplit = new TDengineSplit(tdengineSplit);
-    }
+
     public SplitResultRecords() {
     }
 

@@ -8,6 +8,12 @@ public class ResultBean {
     private Float current;
     private Float phase;
 
+    private String location;
+
+    private int groupid;
+
+    private String tbname;
+
     public Timestamp getTs() {
         return ts;
     }
@@ -50,5 +56,29 @@ public class ResultBean {
         sb.append(", phase='").append(phase);
         sb.append('}');
         return sb.toString();
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public int getGroupid() {
+        return groupid;
+    }
+
+    public void setGroupid(int groupid) {
+        this.groupid = groupid;
+    }
+
+    public String getTbname() {
+        return tbname;
+    }
+
+    public void setTbname(String tbname) {
+        this.tbname = tbname;
     }
 }

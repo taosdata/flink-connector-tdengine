@@ -15,6 +15,7 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
+import org.apache.flink.connector.base.source.reader.SourceReaderOptions;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
@@ -49,6 +50,8 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
         String autoCommit = this.properties.getProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
         if (autoCommit.equals("true")) {
             isAutoCommit = true;
+        } else {
+            this.properties.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
         }
         LOG.info("cdc properties:{}", this.properties.toString());
     }
@@ -85,8 +88,9 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
                     }
 
                 };
-
-        SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(splitReaderSupplier);
+        Configuration configuration = new Configuration();
+        configuration.set(SourceReaderOptions.ELEMENT_QUEUE_CAPACITY, 1000);
+        SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(splitReaderSupplier, configuration);
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {

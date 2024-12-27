@@ -4,6 +4,7 @@ import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.cdc.split.TDengineCdcSplitReader;
 import com.taosdata.jdbc.tmq.OffsetAndMetadata;
 import com.taosdata.jdbc.tmq.TopicPartition;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.fetcher.SplitFetcher;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -22,8 +23,8 @@ public class TDengineCdcFetcherManager<T>  extends SingleThreadFetcherManager<T,
      *
      * @param splitReaderSupplier The factory for the split reader that connects to the source system.
      */
-    public TDengineCdcFetcherManager(Supplier<SplitReader<T, TDengineCdcSplit>> splitReaderSupplier) {
-        super(splitReaderSupplier);
+    public TDengineCdcFetcherManager(Supplier<SplitReader<T, TDengineCdcSplit>> splitReaderSupplier, Configuration configuration) {
+        super(splitReaderSupplier, configuration);
     }
 
     /**
