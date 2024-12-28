@@ -45,29 +45,67 @@
         <maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
         <hamcrest.version>1.3</hamcrest.version>
         <powermock.version>2.0.9</powermock.version>
+        <jackson.version>2.18.0</jackson.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.taosdata.jdbc</groupId>
-            <artifactId>taos-jdbcdriver</artifactId>
-            <version>3.4.0</version>
-        </dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
 
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>2.17.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>2.17.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+    <dependencies>
 <!--        <dependency>-->
 <!--            <groupId>com.taosdata.jdbc</groupId>-->
 <!--            <artifactId>taos-jdbcdriver</artifactId>-->
-<!--            <version>3.5.0-SNAPSHOT</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>/Users/menshibin/maven/taos-jdbcdriver-3.5.0-SNAPSHOT-dist.jar</systemPath>-->
+<!--            <version>3.4.0</version>-->
 <!--        </dependency>-->
+
+        <dependency>
+            <groupId>com.taosdata.jdbc</groupId>
+            <artifactId>taos-jdbcdriver</artifactId>
+            <version>3.5.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>/Users/menshibin/maven/taos-jdbcdriver-3.5.0-SNAPSHOT-dist.jar</systemPath>
+        </dependency>
 
         <!-- Core -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java</artifactId>
             <version>${flink.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Connectors -->
@@ -76,7 +114,6 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-base</artifactId>
             <version>${flink.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -92,8 +129,6 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-java-bridge</artifactId>
             <version>${flink.version}</version>
-            <scope>provided</scope>
-            <optional>true</optional>
         </dependency>
 
         <!-- Tests -->
@@ -129,14 +164,6 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-core</artifactId>
-            <version>${flink.version}</version>
-            <scope>test</scope>
-            <type>test-jar</type>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-java</artifactId>
             <version>${flink.version}</version>
             <scope>test</scope>
             <type>test-jar</type>
@@ -220,7 +247,7 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <filtering>false</filtering>
                 <excludes>
                     <exclude>**/*.md</exclude>
                 </excludes>
@@ -244,7 +271,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.3.0</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assembly/assembly-jar.xml</descriptor>
@@ -253,12 +280,11 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-
                     <archive>
                         <manifest>
                             <!-- 此处指定main方法入口的class，这里需要根据实际情况进行配置 -->
                             <!-- 其余的默认即可-->
-                            <mainClass>com.taosdata.flink.Main</mainClass>
+                            <mainClass>com.taosdata.flink.example.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -296,6 +322,7 @@
                         <include>**/*Test.java</include>
                     </includes>
                     <excludes>
+                        <exclude>**/TD*.java</exclude>
                     </excludes>
                     <testFailureIgnore>false</testFailureIgnore>
                 </configuration>

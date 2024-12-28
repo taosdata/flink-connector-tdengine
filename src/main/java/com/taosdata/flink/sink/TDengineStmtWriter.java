@@ -76,7 +76,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                     this.dbName, this.superTableName, this.normalTableName, this.sinkMetaInfos.size());
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_INVALID_VARIABLE);
         }
-
+        LOG.debug("prepare statement sql:{}", sql);
         pstmt = conn.prepareStatement(sql);
 
     }
@@ -99,6 +99,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
         List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
+        System.out.println("sink write start！");
         if (records == null || records.isEmpty()) {
             LOG.warn("element serializer result is null!");
             return;
@@ -132,6 +133,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 recodeCount.set(0);
             }
         } catch (SQLException e) {
+            System.out.println("flush exception info:" + e.getSQLState());
             LOG.error("flush exception info:{}", e);
             throw new IOException(e.getMessage());
         } finally {

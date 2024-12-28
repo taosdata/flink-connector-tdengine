@@ -36,7 +36,7 @@ public class TDengineTableSink implements DynamicTableSink {
     public SinkRuntimeProvider getSinkRuntimeProvider(Context context) {
         try {
             return SinkV2Provider.of(new TDengineSink<>( properties, fieldNameList), sinkParallelism);
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }

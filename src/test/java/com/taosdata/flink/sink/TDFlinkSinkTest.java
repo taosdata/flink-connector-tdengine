@@ -52,7 +52,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSinkTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -185,6 +185,10 @@ public class TDFlinkSinkTest {
     }
 
     @Test
+    void testPrepare() {
+        System.out.println("XXXXXX");
+    }
+    @Test
     void testTDengineSourceToSink() throws Exception {
         System.out.println("testTDengineSourceToSink start！");
         Properties connProps = new Properties();
@@ -194,7 +198,7 @@ public class TDFlinkSinkTest {
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
 //        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
         connProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "1");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -250,7 +254,7 @@ public class TDFlinkSinkTest {
         } else {
             sinkProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, normaltableName);
         }
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, fieldNames);
@@ -277,7 +281,7 @@ public class TDFlinkSinkTest {
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
 //        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
         connProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "1");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase from d1001")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -304,7 +308,7 @@ public class TDFlinkSinkTest {
         env.getCheckpointConfig().setTolerableCheckpointFailureNumber(4);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
@@ -324,7 +328,7 @@ public class TDFlinkSinkTest {
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         TDengineSink<ResultBean> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
@@ -345,7 +349,7 @@ public class TDFlinkSinkTest {
         env.setParallelism(3);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
@@ -395,7 +399,7 @@ public class TDFlinkSinkTest {
 //        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
@@ -419,7 +423,7 @@ public class TDFlinkSinkTest {
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
@@ -437,8 +441,7 @@ public class TDFlinkSinkTest {
         System.out.println("testCheckpointTDengineCdc start！");
         JobClient jobClient =checkpointTDengineCdc();
         Thread.sleep(4000L);
-        jobClient.cancel().get();
-//        jobClient.stopWithSavepoint(false, null, SavepointFormatType.CANONICAL).get();
+        jobClient.stopWithSavepoint(false, "file:///Users/menshibin/flink/checkpoint/", SavepointFormatType.CANONICAL).get();
 
         jobClient =checkpointTDengineCdc();
         Thread.sleep(6000L);
@@ -455,10 +458,10 @@ public class TDFlinkSinkTest {
         env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
         env.getCheckpointConfig().setCheckpointTimeout(5000);
 //        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
-//        env.getCheckpointConfig().setTolerableCheckpointFailureNumber(7);
+        env.getCheckpointConfig().setTolerableCheckpointFailureNumber(7);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
@@ -493,7 +496,7 @@ public class TDFlinkSinkTest {
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));

@@ -27,11 +27,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TDFlinkSinkSqlAllTypesTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
-    private static final String host = "localhost";
+    private static final String host = "192.168.1.98";
     private static final Random random = new Random(System.currentTimeMillis());
     private static final int BINARY_COLUMN_SIZE = 30;
     private List<String> schemaList;
@@ -253,7 +253,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/example_all_type_stmt0?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt0?user=root&password=taosdata");
         SourceSplitSql sql = new SourceSplitSql("select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,tbname from stb0");
         sourceQuery(sql, 1, connProps);
         System.out.println("testTDengineSource finish！");
@@ -274,7 +274,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "example_all_type_stmt1");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "stb1");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/example_all_type_stmt1?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt1?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         List<String> fieldNames = Arrays.asList("ts",
@@ -306,7 +306,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/example_all_type_stmt0?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt0?user=root&password=taosdata");
         SourceSplitSql sql = new SourceSplitSql("select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col from stb0");
         sinkToNormal(sql, 1, connProps);
         System.out.println("testTDengineSource finish！");
@@ -327,7 +327,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");
         sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "example_all_type_stmt1");
         sinkProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, "normal_test");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/example_all_type_stmt1?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt1?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         List<String> fieldNames = Arrays.asList("ts",

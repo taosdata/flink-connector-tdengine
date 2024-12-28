@@ -67,6 +67,7 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
                     }
 
                 };
+        LOG.debug("create TDengineSplitReader ");
         Configuration configuration = new Configuration();
         configuration.set(SourceReaderOptions.ELEMENT_QUEUE_CAPACITY, 1000);
         SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier, configuration);

@@ -42,7 +42,7 @@ public class TDengineSink<IN> implements Sink<IN> {
 
     private int batchSize;
 
-    public TDengineSink(Properties properties, List<String> fieldNameList) throws SQLException {
+    public TDengineSink(Properties properties, List<String> fieldNameList) throws SQLException, ClassNotFoundException {
         if (properties == null || properties.isEmpty() || fieldNameList == null || fieldNameList.isEmpty()) {
             LOG.error("Invalid parameter configuration!");
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL, "Invalid parameter configuration");
@@ -52,7 +52,7 @@ public class TDengineSink<IN> implements Sink<IN> {
         initSinkParams(fieldNameList);
     }
 
-    private void initSinkParams(List<String> fieldNameList) throws SQLException {
+    private void initSinkParams(List<String> fieldNameList) throws SQLException, ClassNotFoundException {
         this.url = properties.getProperty(TDengineConfigParams.TD_JDBC_URL);
         if (Strings.isNullOrEmpty(this.url)) {
             LOG.error("tdengine sink url no set");
@@ -73,9 +73,12 @@ public class TDengineSink<IN> implements Sink<IN> {
         this.stmt2Version = properties.getProperty(TDengineConfigParams.TD_STMT2_VERSION, "3.3.5.0");
         // Based on the field list provided by the user, determine the type of each field.
         // If the tbname field is specified, additional processing is required here.
+        Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
         Map<String, SinkMetaInfo> sinkMetaInfoMap = getMetaInfo();
         for (String fieldName : fieldNameList) {
+
             if (fieldName.equals("tbname")) {
+                LOG.debug("fieldName:{}", fieldName);
                 metaInfos.add(new SinkMetaInfo(false, DataType.DATA_TYPE_VARCHAR, "tbname", 192));
             } else {
                 SinkMetaInfo sinkMetaInfo = sinkMetaInfoMap.get(fieldName);
@@ -85,6 +88,7 @@ public class TDengineSink<IN> implements Sink<IN> {
                     throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_Field_NAME);
                 }
                 metaInfos.add(sinkMetaInfo);
+                LOG.debug("fieldName:{}, type:{}", sinkMetaInfo.getFieldName(), sinkMetaInfo.getFieldType().getTypeName());
             }
         }
 
@@ -131,6 +135,7 @@ public class TDengineSink<IN> implements Sink<IN> {
                     return new TDengineSqlWriter<IN>(this.url, this.dbName, this.superTableName,
                             this.normalTableName, this.properties, serializer, metaInfos);
                 }
+                LOG.info("createWriter TDengine version supported stmt2, create stmt2 writer!");
                 return new TDengineStmtWriter<>(this.url, this.dbName, this.superTableName,
                         this.normalTableName, this.properties, serializer, metaInfos, batchSize);
             }
