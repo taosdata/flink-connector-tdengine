@@ -110,10 +110,10 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 setStmtParam(pstmt, record.getColumnParams());
                 pstmt.addBatch();
                 recodeCount.incrementAndGet();
-            }
-            if (recodeCount.get() >= batchSize) {
-                pstmt.executeBatch();
-                recodeCount.set(0);
+                if (recodeCount.get() >= batchSize) {
+                    pstmt.executeBatch();
+                    recodeCount.set(0);
+                }
             }
         } catch (SQLException e) {
             LOG.error("invoke exception info:{}", e.getSQLState());

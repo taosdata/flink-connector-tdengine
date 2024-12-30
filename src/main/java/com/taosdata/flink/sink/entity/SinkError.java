@@ -17,7 +17,7 @@ public class SinkError {
         SinkErrorMap.put(SinkErrorNumbers.ERROR_DB_NAME_NULL, "db name must be set");
         SinkErrorMap.put(SinkErrorNumbers.ERROR_TABLE_NAME_NULL, "table name must be set");
         SinkErrorMap.put(SinkErrorNumbers.ERROR_INVALID_VALUE_DESERIALIZER, "invalid serialization type");
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_INVALID_SINK_Field_NAME, "invalid field name");
+        SinkErrorMap.put(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME, "invalid field name");
     }
 
     public static SQLException createSQLException(int errorCode) {

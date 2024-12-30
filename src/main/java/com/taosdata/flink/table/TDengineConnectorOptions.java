@@ -129,7 +129,7 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> BOOTSTRAP_SERVERS =
             ConfigOptions.key("bootstrap.servers")
                     .stringType()
-                    .defaultValue("192.168.1.98:6041")
+                    .defaultValue("localhost:6041")
                     .withDescription(
                             "cdc bootstrap servers address");
 

@@ -12,7 +12,7 @@ public class TDengineConfigParams extends TSDBDriver {
 
     public static final String TD_JDBC_URL = "url";
 
-    public static final String TD_DATABASE_NAME = "database_name";
+
     public static final String TD_SUPERTABLE_NAME = "super_table_name";
 
     public static final String TD_TABLE_NAME = "table_name";

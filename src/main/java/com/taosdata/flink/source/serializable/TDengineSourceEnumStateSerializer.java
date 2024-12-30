@@ -29,7 +29,7 @@ import java.util.*;
 
 /**
  * The {@link SimpleVersionedSerializer Serializer} for the enumerator
- * state of Kafka source.
+ * state of source.
  */
 @Internal
 public class TDengineSourceEnumStateSerializer

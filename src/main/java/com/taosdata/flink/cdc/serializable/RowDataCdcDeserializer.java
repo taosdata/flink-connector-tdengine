@@ -28,16 +28,16 @@ public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultType
     public RowData deserialize(ResultSet data, String topic, String dbName) throws DeserializerException, SQLException {
         ResultSetMetaData metaData = data.getMetaData();
         GenericRowData row = new GenericRowData(metaData.getColumnCount());
-        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+        for (int i = 0; i < metaData.getColumnCount(); i++) {
             Object value = data.getObject(i);
             if (value instanceof Timestamp) {
                 // Convert Timestamp to the TimestampData type supported by RowData
-                row.setField(i - 1, TimestampData.fromTimestamp((Timestamp) value));
+                row.setField(i , TimestampData.fromTimestamp((Timestamp) value));
             } else if (value instanceof String) {
                 // Convert String to the StringData type supported by RowData
-                row.setField(i - 1, StringData.fromString((String) value));
+                row.setField(i , StringData.fromString((String) value));
             } else {
-                row.setField(i - 1, value);
+                row.setField(i , value);
             }
         }
         return row;

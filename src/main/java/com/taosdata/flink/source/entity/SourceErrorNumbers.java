@@ -5,12 +5,12 @@ import java.util.Set;
 
 public class SourceErrorNumbers {
 
-    public static final int ERROR_SERVER_ADDRESS = 0x2000;
-    public static final int ERROR_TMQ_GROUP_ID_CONFIGURATION = 0x2001;
+    public static final int ERROR_SERVER_ADDRESS = 0xa000;
+    public static final int ERROR_TMQ_GROUP_ID_CONFIGURATION = 0xa001;
 
-    public static final int ERROR_TMQ_TOPIC = 0x2002;
+    public static final int ERROR_TMQ_TOPIC = 0xa002;
 
-    public static final int ERROR_CONVERT_NOT_PROVIDED = 0x2003;
+    public static final int ERROR_CONVERT_NOT_PROVIDED = 0xa003;
 
 
     private static final Set<Integer> errorNumbers = new HashSet<>();

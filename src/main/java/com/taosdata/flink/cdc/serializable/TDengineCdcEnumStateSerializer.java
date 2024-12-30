@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * The {@link SimpleVersionedSerializer Serializer} for the enumerator
- * state of Kafka source.
+ * state of tdengine source.
  */
 @Internal
 public class TDengineCdcEnumStateSerializer

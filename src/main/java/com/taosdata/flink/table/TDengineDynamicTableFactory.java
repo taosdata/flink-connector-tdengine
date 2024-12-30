@@ -43,7 +43,7 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_LOCALE, config.get(TDengineConnectorOptions.LOCALE));
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_TIME_ZONE, config.get(TDengineConnectorOptions.SERVER_TIME_ZONE));
-        connProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, config.get(TDengineConnectorOptions.SINK_DBNAME_NAME));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, config.get(TDengineConnectorOptions.SINK_DBNAME_NAME));
         connProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, config.get(TDengineConnectorOptions.SINK_SUPERTABLE_NAME));
         connProps.setProperty(TDengineConfigParams.TD_TABLE_NAME, config.get(TDengineConnectorOptions.SINK_TABLE_NAME));
         connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, config.get(TDengineConnectorOptions.TD_JDBC_URL));

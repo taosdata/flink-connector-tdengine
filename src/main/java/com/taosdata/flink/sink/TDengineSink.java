@@ -59,7 +59,7 @@ public class TDengineSink<IN> implements Sink<IN> {
             throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_URL_NOT_SET);
         }
 
-        this.dbName = properties.getProperty(TDengineConfigParams.TD_DATABASE_NAME);
+        this.dbName = properties.getProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME);
         if (Strings.isNullOrEmpty(this.dbName)) {
             LOG.error("tdengine sink dbname no set");
             throw SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
@@ -85,7 +85,7 @@ public class TDengineSink<IN> implements Sink<IN> {
                 if (sinkMetaInfo == null) {
                     LOG.error("The field name does not exist in the meta information of the table! fieldName:{}, dbname:{}, superTableName:{}, tableName:{}",
                             fieldName, this.dbName, this.superTableName, this.normalTableName);
-                    throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_Field_NAME);
+                    throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME);
                 }
                 metaInfos.add(sinkMetaInfo);
                 LOG.debug("fieldName:{}, type:{}", sinkMetaInfo.getFieldName(), sinkMetaInfo.getFieldType().getTypeName());
