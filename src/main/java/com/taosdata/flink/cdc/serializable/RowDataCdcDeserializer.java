@@ -28,7 +28,7 @@ public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultType
     public RowData deserialize(ResultSet data, String topic, String dbName) throws DeserializerException, SQLException {
         ResultSetMetaData metaData = data.getMetaData();
         GenericRowData row = new GenericRowData(metaData.getColumnCount());
-        for (int i = 0; i < metaData.getColumnCount(); i++) {
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
             Object value = data.getObject(i);
             if (value instanceof Timestamp) {
                 // Convert Timestamp to the TimestampData type supported by RowData

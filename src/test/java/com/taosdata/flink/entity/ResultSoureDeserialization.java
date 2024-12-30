@@ -31,11 +31,11 @@ public class ResultSoureDeserialization implements TDengineRecordDeserialization
             } else if (metaData.getColumnName(i).equals("phase")) {
                 resultBean.setPhase((Float) rowData.get(i - 1));
             } else if (metaData.getColumnName(i).equals("location")) {
-                resultBean.setLocation((String) rowData.get(i - 1));
+                resultBean.setLocation(new String ((byte[]) rowData.get(i - 1)));
             } else if (metaData.getColumnName(i).equals("groupid")) {
                 resultBean.setGroupid((Integer) rowData.get(i - 1));
             } else if (metaData.getColumnName(i).equals("tbname")) {
-                resultBean.setTbname((String) rowData.get(i - 1));
+                resultBean.setLocation(new String ((byte[]) rowData.get(i - 1)));
             }
         }
         return resultBean;
