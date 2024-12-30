@@ -18,7 +18,7 @@ public class TDengineCdcParams {
     /**
      * commit interval. unit milliseconds
      */
-    public static final String AUTO_COMMIT_INTERVAL = "auto.commit.interval.ms";
+    public static final String AUTO_COMMIT_INTERVAL_MS = "auto.commit.interval.ms";
 
     /**
      * only valid in first group id create.
@@ -110,5 +110,9 @@ public class TDengineCdcParams {
 
     public static final String TMQ_BATCH_MODE = "td.batch.mode";
 
-    public static final String TMQ_PULL_INTERVAL = "poll.interval_ms";
+    public static final String POLL_INTERVAL_MS = "poll.interval_ms";
+
+    public static final String TMQ_SESSION_TIMEOUT_MS = "session.timeout.ms";
+
+    public static final String TMQ_MAX_POLL_INTERVAL_MS = "max.poll.interval.ms";
 }

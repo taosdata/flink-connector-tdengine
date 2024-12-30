@@ -36,7 +36,7 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
         this.tdengineSplits = new ArrayList<>();
         this.properties = properties;
         this.properties.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        String pollInterval = this.properties.getProperty(TDengineCdcParams.TMQ_PULL_INTERVAL, "100");
+        String pollInterval = this.properties.getProperty(TDengineCdcParams.POLL_INTERVAL_MS, "500");
         pollIntervalMs = Integer.parseInt(pollInterval);
 
         String outType = this.properties.getProperty(TDengineCdcParams.VALUE_DESERIALIZER);

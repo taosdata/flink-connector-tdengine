@@ -42,6 +42,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
         this.topic = topic;
         this.properties = properties;
         this.typeClass = typeClass;
+        this.properties.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
         String batchMode = this.properties.getProperty(TDengineCdcParams.TMQ_BATCH_MODE, "false");
         if (batchMode.equals("true")) {
             isBatchMode = true;

@@ -166,6 +166,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         properties.setProperty(TDengineCdcParams.CONNECT_PASS, optionVal);
         optionVal = config.get(TDengineConnectorOptions.ENABLE_AUTO_COMMIT);
         properties.setProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, optionVal);
+        optionVal = config.get(TDengineConnectorOptions.TMQ_POLL_INTERVAL_MS);
+        properties.setProperty(TDengineConnectorOptions.TMQ_POLL_INTERVAL_MS.key(), optionVal);
         properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
         properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, config.get(TDengineConnectorOptions.CHARSET));
         String topic = config.get(TDengineConnectorOptions.TOPIC);
@@ -205,6 +207,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.CHARSET);
         optionalOptions.add(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT);
         optionalOptions.add(TDengineConnectorOptions.SERVER_TIME_ZONE);
+        optionalOptions.add(TDengineConnectorOptions.TMQ_POLL_INTERVAL_MS);
+
 
         return optionalOptions;
     }

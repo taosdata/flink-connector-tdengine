@@ -19,7 +19,6 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
-import org.junit.Assert;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -193,7 +192,7 @@ public class Main {
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
         config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
         config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");

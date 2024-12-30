@@ -87,18 +87,10 @@
 
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>com.taosdata.jdbc</groupId>-->
-<!--            <artifactId>taos-jdbcdriver</artifactId>-->
-<!--            <version>3.4.0</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>com.taosdata.jdbc</groupId>
             <artifactId>taos-jdbcdriver</artifactId>
-            <version>3.5.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>/Users/menshibin/maven/taos-jdbcdriver-3.5.0-SNAPSHOT-dist.jar</systemPath>
+            <version>3.5.0</version>
         </dependency>
 
         <!-- Core -->
@@ -122,6 +114,23 @@
             <version>${flink.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-scala_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-core</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
         <!-- Table ecosystem -->
 
         <!-- Projects depending on this project won't depend on flink-table-*. -->
@@ -161,13 +170,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-core</artifactId>
-            <version>${flink.version}</version>
-            <scope>test</scope>
-            <type>test-jar</type>
-        </dependency>
 
         <dependency>
             <groupId>org.yaml</groupId>
@@ -228,19 +230,6 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.10.1</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-scala_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -321,9 +310,6 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <excludes>
-                        <exclude>**/TD*.java</exclude>
-                    </excludes>
                     <testFailureIgnore>false</testFailureIgnore>
                 </configuration>
             </plugin>

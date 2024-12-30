@@ -99,7 +99,6 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
         List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
-        System.out.println("sink write start！");
         if (records == null || records.isEmpty()) {
             LOG.warn("element serializer result is null!");
             return;
@@ -133,7 +132,6 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 recodeCount.set(0);
             }
         } catch (SQLException e) {
-            System.out.println("flush exception info:" + e.getSQLState());
             LOG.error("flush exception info:{}", e);
             throw new IOException(e.getMessage());
         } finally {
@@ -162,8 +160,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             return "";
         }
 
-//        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
-        String sql = "INSERT INTO " + this.dbName + "." + this.superTableName + " (";
+        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
         sql += sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") ";
 
         sql += " VALUES (?";
@@ -185,8 +182,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             LOG.error("NormalTableData param error");
             return "";
         }
-//        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
-        String sql = "INSERT INTO " + this.dbName + "." + this.normalTableName + " (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
+        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.normalTableName + "` (" + this.sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") VALUES (?";
         for (int i = 1; i < this.sinkMetaInfos.size(); i++) {
             sql += ",?";
         }

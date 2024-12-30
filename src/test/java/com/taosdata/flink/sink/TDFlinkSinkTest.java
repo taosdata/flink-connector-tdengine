@@ -6,7 +6,6 @@ import com.taosdata.flink.common.TDengineCdcParams;
 import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.entity.ResultBean;
 import com.taosdata.flink.source.TDengineSource;
-import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
@@ -311,7 +310,7 @@ public class TDFlinkSinkTest {
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
         config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
         config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
@@ -321,8 +320,8 @@ public class TDFlinkSinkTest {
         DataStreamSource<ResultBean> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
 
         Properties sinkProps = new Properties();
-        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
-        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, "UTF-8");
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultBeanSinkSerializer");
         sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
@@ -352,7 +351,7 @@ public class TDFlinkSinkTest {
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
         config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
         config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");
@@ -402,7 +401,7 @@ public class TDFlinkSinkTest {
         config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
-        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
+        config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
         config.setProperty(TDengineCdcParams.GROUP_ID, "group_1");
         config.setProperty(TDengineCdcParams.CONNECT_USER, "root");
         config.setProperty(TDengineCdcParams.CONNECT_PASS, "taosdata");

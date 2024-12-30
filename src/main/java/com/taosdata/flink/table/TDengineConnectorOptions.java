@@ -53,7 +53,7 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> HOSTNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_HOST)
                     .stringType()
-                    .defaultValue("192.168.1.98")
+                    .defaultValue("localhost")
                     .withDescription("IP address or hostname of the MySQL database server.");
 
     public static final ConfigOption<String> PORT =
@@ -161,6 +161,14 @@ public class TDengineConnectorOptions {
                     .noDefaultValue()
                     .withDescription(
                             "Client ID, Maximum length: 192.");
+
+
+    public static final ConfigOption<String> TMQ_POLL_INTERVAL_MS =
+            ConfigOptions.key("poll.interval_ms")
+                    .stringType()
+                    .defaultValue("root")
+                    .withDescription(
+                            "user name");
 
     public static final ConfigOption<String> AUTO_OFFSET_RESET =
             ConfigOptions.key("auto.offset.reset")

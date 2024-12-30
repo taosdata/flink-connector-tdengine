@@ -44,4 +44,7 @@ public final class SplitResultRecord {
         return sourceRecord.iterator();
     }
 
+    public ResultSetMetaData getMetaData() {
+        return metaData;
+    }
 }
