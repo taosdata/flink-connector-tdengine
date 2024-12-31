@@ -301,7 +301,7 @@ public class TDFlinkSourceTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
-        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
             GenericRowData row = (GenericRowData) rowData;
@@ -336,7 +336,7 @@ public class TDFlinkSourceTest {
         Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
         SourceSplitSql sql = new SourceSplitSql("select ts, `current`, voltage, phase, tbname from meters");
         TDengineSource<SourceRecords<RowData>> source = new TDengineSource<>(connProps, sql, typeClass);
-        DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<SourceRecords<RowData>, String>) records -> {
             StringBuilder sb = new StringBuilder();
             Iterator<RowData> iterator = records.iterator();
@@ -378,7 +378,7 @@ public class TDFlinkSourceTest {
         config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
         config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
         TDengineCdcSource<RowData> tdengineSource = new TDengineCdcSource<>("topic_meters", config, RowData.class);
-        DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
             sb.append("tsxx: " + rowData.getTimestamp(0, 0) +
@@ -418,7 +418,7 @@ public class TDFlinkSourceTest {
 
         Class<ConsumerRecords<RowData>> typeClass = (Class<ConsumerRecords<RowData>>) (Class<?>) ConsumerRecords.class;
         TDengineCdcSource<ConsumerRecords<RowData>> tdengineSource = new TDengineCdcSource<>("topic_meters", config, typeClass);
-        DataStreamSource<ConsumerRecords<RowData>> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<ConsumerRecords<RowData>> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<ConsumerRecords<RowData>, String>) records -> {
             Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
             StringBuilder sb = new StringBuilder();

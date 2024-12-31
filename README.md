@@ -4,7 +4,7 @@ Apache Flink is an open-source distributed stream batch integrated processing fr
 
 With the help of TDengine's Flink connector, Apache Flink can seamlessly integrate with the TDengine database. On the one hand, it can accurately store the results obtained after complex calculations and deep analysis into the TDengine database, achieving efficient storage and management of data; On the other hand, it is also possible to quickly and stably read massive amounts of data from the TDengine database, and conduct comprehensive and in-depth analysis and processing on this basis, fully tapping into the potential value of the data, providing strong data support and scientific basis for enterprise decision-making, greatly improving the efficiency and quality of data processing, and enhancing the competitiveness and innovation ability of enterprises in the digital age.
 
-## Preconditions
+## Prerequisites
 
 Prepare the following environment:
 - TDengine cluster has been deployed and is running normally (both enterprise and community versions are available)
@@ -319,7 +319,7 @@ The subscription result is RowData data type example:
     config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
     config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
     TDengineCdcSource<RowData> tdengineSource = new TDengineCdcSource<>("topic_meters", config, RowData.class);
-    DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
+    DataStreamSource<RowData> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
     DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
         StringBuilder sb = new StringBuilder();
         sb.append("tsxx: " + rowData.getTimestamp(0, 0) +
@@ -361,7 +361,7 @@ static void testCustomTypeCdc() throws Exception {
     config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultDeserializer");
     config.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, "UTF-8");
     TDengineCdcSource<ResultBean> tdengineSource = new TDengineCdcSource<>("topic_meters", config, ResultBean.class);
-    DataStreamSource<ResultBean> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "kafka-source");
+    DataStreamSource<ResultBean> input = env.fromSource(tdengineSource, WatermarkStrategy.noWatermarks(), "tdengine-source");
     DataStream<String> resultStream = input.map((MapFunction<ResultBean, String>) rowData -> {
         StringBuilder sb = new StringBuilder();
         sb.append("ts: " + rowData.getTs() +
@@ -405,6 +405,7 @@ The core function of Sink is to efficiently and accurately write Flink processed
 | TDengineConfigParams.PROPERTYKEYDISABLE_SSL_CERTVNet    |                                               boolean                                                | Disable SSL certificate verification. true:  close, false:  Not closed. The default is false                                                                                        ||
 
 #### Use Sink connector
+
 Write the received RowData type data into TDengine example:
  
 ```java
@@ -486,6 +487,7 @@ static void testBatchToTdSink() throws Exception {
 ### Table SQL
 
 ETL (Extract, Transform, Load) data processing: Flink SQL with JDBC can be used to extract data from multiple different data source databases (such as TDengine, MySQL, Oracle, etc.), perform transformation operations (such as data cleaning, format conversion, associating data from different tables, etc.) in Flink, and then load the processed results into the target data source (such as TDengine, MySQL, etc.).
+
 #### Source connector
 
 Parameter configuration instructions:
@@ -503,6 +505,7 @@ Parameter configuration instructions:
 | sink.table.name       | string | Name of the regular table or sub table written ||
 
 #### Example of using Source connector
+
 ```java
  static void testTableToSink() throws Exception {
         System.out.println("testTableToSink start！");
@@ -553,6 +556,7 @@ Parameter configuration instructions:
 ```
 
 #### CDC connector
+
 Parameter configuration instructions:
 
 | Parameter Name    | Type | Parameter Description                                                                | Remarks|
@@ -560,7 +564,7 @@ Parameter configuration instructions:
 | connector         | string | connector identifier, set `tdengine-connector`                                       ||
 | user              | string | username, default root                                                               ||
 | password          | string | password, default taosdata                                                           ||
-| bootstrap. servers | string | server address                                                                       ||
+| bootstrap. servers| string | server address                                                                       ||
 | topic             | string | subscribe to topic                                                                   ||
 | td.jdbc.mode      | strng | connector type: `cdc`, `sink`                                                            | |
 | group.id          | string | Consumption group ID, sharing consumption progress within the same consumption group ||

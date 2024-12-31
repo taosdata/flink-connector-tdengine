@@ -263,7 +263,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
-        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
 
         Properties sinkProps = new Properties();
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
@@ -316,7 +316,7 @@ public class TDFlinkSinkSqlAllTypesTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
         TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
-        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "kafka-source");
+        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
 
         Properties sinkProps = new Properties();
         sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");

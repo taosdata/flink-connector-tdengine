@@ -24,7 +24,7 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.table.factories.FactoryUtil;
 
-/** Options for the Kafka connector. */
+/** Options for the tdengine connector. */
 @PublicEvolving
 public class TDengineConnectorOptions {
 
