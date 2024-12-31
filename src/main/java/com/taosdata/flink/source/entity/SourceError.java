@@ -1,4 +1,4 @@
-package com.taosdata.flink.sink.entity;
+package com.taosdata.flink.source.entity;
 
 import com.taosdata.jdbc.TSDBErrorNumbers;
 
@@ -10,22 +10,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class SinkError {
-    private static final Map<Integer, String> SinkErrorMap = new HashMap<>();
+public class SourceError {
+    private static final Map<Integer, String> SourceErrorMap = new HashMap<>();
 
     static {
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_DB_NAME_NULL, "db name must be set");
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_TABLE_NAME_NULL, "table name must be set");
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_INVALID_VALUE_DESERIALIZER, "invalid serialization type");
-        SinkErrorMap.put(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME, "invalid field name");
+        SourceErrorMap.put(SourceErrorNumbers.ERROR_SERVER_ADDRESS, "Service address configuration error");
+        SourceErrorMap.put(SourceErrorNumbers.ERROR_TMQ_GROUP_ID_CONFIGURATION, "Consumer group id configuration error");
+        SourceErrorMap.put(SourceErrorNumbers.ERROR_TMQ_TOPIC, "Tmq topic configuration error");
+        SourceErrorMap.put(SourceErrorNumbers.ERROR_CONVERT_NOT_PROVIDED, "Data conversion function not provided");
     }
 
     public static SQLException createSQLException(int errorCode) {
         String message;
-        if (SinkErrorNumbers.contains(errorCode))
-            message = SinkErrorMap.get(errorCode);
+        if (SourceErrorNumbers.contains(errorCode))
+            message = SourceErrorMap.get(errorCode);
         else
-            message = SinkErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
+            message = SourceErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
         return createSQLException(errorCode, message);
     }
 
@@ -51,7 +51,7 @@ public class SinkError {
     }
 
     public static RuntimeException createRuntimeException(int errorCode, Throwable t) {
-        String message = SinkErrorMap.get(errorCode);
+        String message = SourceErrorMap.get(errorCode);
         return new RuntimeException("ERROR (0x" + Integer.toHexString(errorCode) + "): " + message, t);
     }
 
@@ -68,9 +68,9 @@ public class SinkError {
     public static IllegalArgumentException createIllegalArgumentException(int errorCode) {
         String message;
         if (TSDBErrorNumbers.contains(errorCode))
-            message = SinkErrorMap.get(errorCode);
+            message = SourceErrorMap.get(errorCode);
         else
-            message = SinkErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
+            message = SourceErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
 
         return new IllegalArgumentException("ERROR (0x" + Integer.toHexString(errorCode) + "): " + message);
     }
@@ -78,9 +78,9 @@ public class SinkError {
     public static RuntimeException createRuntimeException(int errorCode) {
         String message;
         if (TSDBErrorNumbers.contains(errorCode))
-            message = SinkErrorMap.get(errorCode);
+            message = SourceErrorMap.get(errorCode);
         else
-            message = SinkErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
+            message = SourceErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
 
         return new RuntimeException("ERROR (0x" + Integer.toHexString(errorCode) + "): " + message);
     }
@@ -92,9 +92,9 @@ public class SinkError {
     public static IllegalStateException createIllegalStateException(int errorCode) {
         String message;
         if (TSDBErrorNumbers.contains(errorCode))
-            message = SinkErrorMap.get(errorCode);
+            message = SourceErrorMap.get(errorCode);
         else
-            message = SinkErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
+            message = SourceErrorMap.get(TSDBErrorNumbers.ERROR_UNKNOWN);
 
         return new IllegalStateException("ERROR (0x" + Integer.toHexString(errorCode) + "): " + message);
     }

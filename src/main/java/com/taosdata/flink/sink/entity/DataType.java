@@ -1,13 +1,13 @@
 package com.taosdata.flink.sink.entity;
 
 /**
- * 系统增加新的无符号数据类型，分别是：
- * unsigned tinyint， 数值范围：0-254, NULL 为255
- * unsigned smallint，数值范围： 0-65534， NULL 为65535
- * unsigned int，数值范围：0-4294967294，NULL 为4294967295u
- * unsigned bigint，数值范围：0-18446744073709551614u，NULL 为18446744073709551615u。
+ * The system has added new unsigned data types, namely：
+ * unsigned tinyint， Numeric Range：0-254, NULL 为255
+ * unsigned smallint，Numeric Range： 0-65534， NULL 为65535
+ * unsigned int，Numeric Range：0-4294967294，NULL 为4294967295u
+ * unsigned bigint，Numeric Range：0-18446744073709551614u，NULL 为18446744073709551615u。
  * example:
- * create table tb(ts timestamp, a tinyint unsigned, b smallint unsigned, c int unsigned, d bigint unsigned)),
+ *     create table tb(ts timestamp, a tinyint unsigned, b smallint unsigned, c int unsigned, d bigint unsigned)
  */
 public enum DataType {
     DATA_TYPE_BOOL("BOOL", 1),
@@ -42,5 +42,12 @@ public enum DataType {
         return typeNo;
     }
 
-
+    public static DataType getDataType(String inputTypeName) {
+        for (DataType splitType : DataType.values()) {
+            if (splitType.typeName.equalsIgnoreCase(inputTypeName)) {
+                return splitType;
+            }
+        }
+        return null;
+    }
 }
