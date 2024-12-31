@@ -276,7 +276,7 @@
                             <goal>report</goal>
                         </goals>
 
-                        <phase>test</phase>
+                        <phase>verify</phase>
                     </execution>
                     <!-- Optionally check coverage thresholds -->
                     <execution>

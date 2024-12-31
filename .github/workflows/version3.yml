@@ -71,6 +71,9 @@ jobs:
           TDENGINE_CLOUD_URL: ${{ secrets.TDENGINE_CLOUD_URL }}
         run: mvn -B clean verify --file pom.xml
 
+      - name: List Jacoco files
+        run: ls target/site/jacoco/
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
