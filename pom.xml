@@ -354,9 +354,6 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <excludes>
-                        <exclude>**/TD*</exclude>
-                    </excludes>
                     <testFailureIgnore>false</testFailureIgnore>
                 </configuration>
             </plugin>
