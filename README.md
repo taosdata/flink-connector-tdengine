@@ -134,16 +134,16 @@ The configuration parameters in Properties are as follows:
 
 |Parameter Name | Type | Parameter Description | Remarks|
 | ----------------------- | :-----: | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TDengineConfigParams. PROPERTYKEYUSER | string | Login TDengine username, default value 'root' ||
-| TDengineConfigParams. PROPERTYKEY-PASSWORD | string | User login password, default value 'taosdata' ||
-| TDengineConfigParams. If the downstream operator receives data of RowData type, it only needs to be set to RowData. If the user needs to customize the type, the complete class path needs to be set here|
-| TDengineConfigParams. TD_STACTMODE | boolean | This parameter is used to batch push data to downstream operators. If set to True, when creating a TDengine Source object, the data type needs to be specified as SourceRecords \<type \>| The type here is the type used to receive data from downstream operators|
-| TDengineConfigParams. PROPERTYKEY_CARSET | string | The character set used by the client, with the default value being the system character set. ||
-| TDengineConfigParams. PROPERTYKEY.MSSAGE_maIT_TIMEOUT | integer | Message timeout, in milliseconds, default value is 60000 ||
-| TDengineConfigParams. Whether compression is enabled during the transmission process. true:  Enable, false:  Not enabled. Default is false ||
-| TDengineConfigParams. Whether to enable automatic reconnection or not. true:  Enable, false:  Not enabled. Default to false||
-| TDengineConfigParams. PROPERTYKEY-RECONNECT-RETR_COUNT | integer | number of automatic reconnection retries, default value 3 | only takes effect when PROPERTYKEY-INABLE AUTO-RECONNECT is true|
-| TDengineConfigParams. PROPERTYKEYDISABLE_SSL_CERTVNet | boolean | Disable SSL certificate verification. true:  close, false:  Not closed. The default is false||
+| TDengineConfigParams.PROPERTYKEYUSER | string | Login TDengine username, default value 'root' ||
+| TDengineConfigParams.PROPERTYKEY-PASSWORD | string | User login password, default value 'taosdata' ||
+| TDengineConfigParams.If the downstream operator receives data of RowData type, it only needs to be set to RowData. If the user needs to customize the type, the complete class path needs to be set here|
+| TDengineConfigParams.TD_STACTMODE | boolean | This parameter is used to batch push data to downstream operators. If set to True, when creating a TDengine Source object, the data type needs to be specified as SourceRecords \<type \>| The type here is the type used to receive data from downstream operators|
+| TDengineConfigParams.PROPERTYKEY_CARSET | string | The character set used by the client, with the default value being the system character set. ||
+| TDengineConfigParams.PROPERTYKEY.MSSAGE_maIT_TIMEOUT | integer | Message timeout, in milliseconds, default value is 60000 ||
+| TDengineConfigParams.Whether compression is enabled during the transmission process. true:  Enable, false:  Not enabled. Default is false ||
+| TDengineConfigParams.Whether to enable automatic reconnection or not. true:  Enable, false:  Not enabled. Default to false||
+| TDengineConfigParams.PROPERTYKEY-RECONNECT-RETR_COUNT | integer | number of automatic reconnection retries, default value 3 | only takes effect when PROPERTYKEY-INABLE AUTO-RECONNECT is true|
+| TDengineConfigParams.PROPERTYKEYDISABLE_SSL_CERTVNet | boolean | Disable SSL certificate verification. true:  close, false:  Not closed. The default is false||
 
 #### Split by time
 
@@ -490,17 +490,17 @@ ETL (Extract, Transform, Load) data processing: Flink SQL with JDBC can be used 
 
 Parameter configuration instructions:
 
-| Parameter Name        | Type | Parameter Description | Remarks|
-|-----------------------| :-----: | ------------ | ------ |
-| connector             | string | connector identifier, set tdengine connector||
-| td.jdbc.url           | string | URL of the connection ||
-| td.jdbc.mode          | strng | connector type, set source, cdc, sink| |
-| table.name            | string | Original or target table name ||
-| scan.query            | string | SQL statement to retrieve data||
-| sink.db.name          | string | Target database name||
-| sink.superstable.name | string | Write the name of the superstable||
-| sink.batch.size       | integer | batch size written||
-| sink.table.name       | string | Name of the regular table or sub table written||
+| Parameter Name        | Type | Parameter Description                          | Remarks|
+|-----------------------| :-----: |------------------------------------------------| ------ |
+| connector             | string | connector identifier, set `tdengine-connector` ||
+| td.jdbc.url           | string | URL of the connection                          ||
+| td.jdbc.mode          | strng | connector type: `source`, `cdc`, `sink`        | |
+| table.name            | string | Original or target table name                  ||
+| scan.query            | string | SQL statement to retrieve data                 ||
+| sink.db.name          | string | Target database name                           ||
+| sink.superstable.name | string | Write the name of the superstable              ||
+| sink.batch.size       | integer | batch size written                             ||
+| sink.table.name       | string | Name of the regular table or sub table written ||
 
 #### Example of using Source connector
 ```java
@@ -555,21 +555,21 @@ Parameter configuration instructions:
 #### CDC connector
 Parameter configuration instructions:
 
-|Parameter Name | Type | Parameter Description | Remarks|
-| ----------------------- | :-----: | ------------ |-------|
-|Connector | string | connector identifier, set tdengine connector||
-|User | string | username, default root ||
-|Password | string | password, default taosdata ||
-|Bootstrap. servers | string | server address ||
-|Topic | string | subscribe to topic||
-|Td. jdbc. mode | strng | connector type, cdc, sink| |
-|Group.id | string | Consumption group ID, sharing consumption progress within the same consumption group ||
-|Auto.offset.reset | string | initial position for consumer group subscription | earliest: subscribe from scratch<br/>latest: default;  Subscribe only from the latest data|
-|Poll.interval_mas | integer | Pull data interval, default 500ms ||
-|Sink. db. name | string | Target database name||
-|Sink. superstable. name | string | Write the name of the superstable||
-|Sink. batch. size | integer | batch size written||
-|Sink. table. name | string | Name of the regular table or sub table written||
+| Parameter Name    | Type | Parameter Description                                                                | Remarks|
+|-------------------| :-----: |--------------------------------------------------------------------------------------|-------|
+| connector         | string | connector identifier, set `tdengine-connector`                                       ||
+| user              | string | username, default root                                                               ||
+| password          | string | password, default taosdata                                                           ||
+| bootstrap. servers | string | server address                                                                       ||
+| topic             | string | subscribe to topic                                                                   ||
+| td.jdbc.mode      | strng | connector type: `cdc`, `sink`                                                            | |
+| group.id          | string | Consumption group ID, sharing consumption progress within the same consumption group ||
+| auto.offset.reset | string | initial position for consumer group subscription                                     | earliest: subscribe from scratch<br/>latest: default;  Subscribe only from the latest data|
+| poll.interval_mas | integer | Pull data interval, default 500ms                                                    ||
+| sink.db.name      | string | Target database name                                                                 ||
+| sink.superstable.name | string | Write the name of the superstable                                                    ||
+| sink.batch.size   | integer | batch size written                                                                   ||
+| sink.table.name   | string | Name of the regular table or sub table written                                       ||
 
 #### Example of using CDC connector
 
