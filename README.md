@@ -333,7 +333,7 @@ The subscription result is RowData data type example:
     });
     resultStream.print();
     JobClient jobClient = env.executeAsync("Flink test cdc Example");
-    Thread.sleep(5000L);
+    Thread.sleep(8000L);
     // The task submitted by Flink UI cannot be cancle and needs to be stopped on the UI page.
     jobClient.cancel().get();
 }
@@ -377,7 +377,7 @@ static void testCustomTypeCdc() throws Exception {
     });
     resultStream.print();
     JobClient jobClient = env.executeAsync("Flink test cdc Example");
-    Thread.sleep(5000L);
+    Thread.sleep(8000L);
     jobClient.cancel().get();
 }
 ````
@@ -477,7 +477,7 @@ static void testBatchToTdSink() throws Exception {
     TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
     input.sinkTo(sink);
     JobClient jobClient = env.executeAsync("Flink test cdc Example");
-    Thread.sleep(6000L);
+    Thread.sleep(8000L);
     jobClient.cancel().get();
     System.out.println("testTDengineCdcToTdSink finish！");
 }

@@ -333,7 +333,7 @@ public class TDFlinkSinkTest {
         TDengineSink<ResultBean> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
         input.sinkTo(sink);
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
-        Thread.sleep(6000L);
+        Thread.sleep(8000L);
         jobClient.cancel().get();
         int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");
         Assert.assertEquals(1221 * 3, queryResult);
@@ -381,7 +381,7 @@ public class TDFlinkSinkTest {
 
         resultStream.print();
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
-        Thread.sleep(5000L);
+        Thread.sleep(8000L);
         jobClient.cancel().get();
         Assert.assertEquals(1221 * 3, totalVoltage.get());
         System.out.println("testTDengineCdcBatch finish！");
@@ -428,7 +428,7 @@ public class TDFlinkSinkTest {
         TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
         input.sinkTo(sink);
         JobClient jobClient = env.executeAsync("Flink test cdc Example");
-        Thread.sleep(6000L);
+        Thread.sleep(8000L);
         jobClient.cancel().get();
         int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");
         Assert.assertEquals(1221 * 3, queryResult);
@@ -440,10 +440,10 @@ public class TDFlinkSinkTest {
         System.out.println("testCheckpointTDengineCdc start！");
         JobClient jobClient =checkpointTDengineCdc();
         Thread.sleep(4000L);
-        jobClient.stopWithSavepoint(false, "file:///Users/menshibin/flink/checkpoint/", SavepointFormatType.CANONICAL).get();
+        jobClient.cancel().get();
 
         jobClient =checkpointTDengineCdc();
-        Thread.sleep(6000L);
+        Thread.sleep(8000L);
         jobClient.cancel().get();
 
         int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");

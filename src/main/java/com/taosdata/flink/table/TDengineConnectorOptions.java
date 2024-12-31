@@ -166,9 +166,8 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> TMQ_POLL_INTERVAL_MS =
             ConfigOptions.key("poll.interval_ms")
                     .stringType()
-                    .defaultValue("root")
-                    .withDescription(
-                            "user name");
+                    .defaultValue("500")
+                    .withDescription("user name");
 
     public static final ConfigOption<String> AUTO_OFFSET_RESET =
             ConfigOptions.key("auto.offset.reset")

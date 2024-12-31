@@ -92,6 +92,8 @@ public class TDengineCdcSplitReader<OUT> implements SplitReader<CdcRecords<OUT>,
             LOG.error("Failed to poll data, topic: {}, groupId: {}, clientId: {}, ErrCode: {}, ErrMessage: {}",
                     topic, groupId, clientId, ex.getErrorCode(), ex.getMessage());
             throw new IOException(ex.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 

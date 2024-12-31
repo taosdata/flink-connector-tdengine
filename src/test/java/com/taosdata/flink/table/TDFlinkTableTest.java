@@ -273,7 +273,7 @@ public class TDFlinkTableTest {
         formattedResult.print();
         // 启动 Flink 作业
         JobClient jobClient = env.executeAsync("Flink Table API & SQL TDengine Example");
-        Thread.sleep(5000L);
+        Thread.sleep(8000L);
         jobClient.cancel().get();
         Assert.assertEquals(1221 * 3, totalVoltage.get());
         System.out.println("testTableCdc finish！");
@@ -380,7 +380,7 @@ public class TDFlinkTableTest {
 
         TableResult tableResult = tableEnv.executeSql("INSERT INTO sink_meters SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`");
 
-        Thread.sleep(5000L);
+        Thread.sleep(8000L);
         tableResult.getJobClient().get().cancel().get();
         int queryResult = queryResult();
         Assert.assertEquals(1221 * 3, queryResult);

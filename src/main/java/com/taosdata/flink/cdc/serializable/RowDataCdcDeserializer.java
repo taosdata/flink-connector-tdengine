@@ -32,12 +32,12 @@ public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultType
             Object value = data.getObject(i);
             if (value instanceof Timestamp) {
                 // Convert Timestamp to the TimestampData type supported by RowData
-                row.setField(i , TimestampData.fromTimestamp((Timestamp) value));
+                row.setField(i - 1 , TimestampData.fromTimestamp((Timestamp) value));
             } else if (value instanceof String) {
                 // Convert String to the StringData type supported by RowData
-                row.setField(i , StringData.fromString((String) value));
+                row.setField(i - 1 , StringData.fromString((String) value));
             } else {
-                row.setField(i , value);
+                row.setField(i - 1 , value);
             }
         }
         return row;
