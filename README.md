@@ -21,9 +21,9 @@ Flink Connector supports all platforms that can run Flink 1.19 and above version
 
 ## Version History
 
-|Flink Connector Version | Major Changes | TDengine Version|
-| ------------------| ------------------------------------ | ---------------- |
-|        1.1.0      | 1.  Support SQL queries on data in TDengine database<br/>2 Support CDC subscription to data in TDengine database<br/>3 Supports reading and writing to TDengine database using Table SQL | 3.3.5.0 and above versions|
+| Flink Connector Version | Major Changes | TDengine Version|
+|-------------------------| ------------------------------------ | ---------------- |
+| 2.0.0                   | 1.  Support SQL queries on data in TDengine database<br/>2 Support CDC subscription to data in TDengine database<br/>3 Supports reading and writing to TDengine database using Table SQL | 3.3.5.0 and above versions|
 
 ## Exception and error codes
 
