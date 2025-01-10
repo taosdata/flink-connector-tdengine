@@ -160,8 +160,8 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             return "";
         }
 
-//        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
-        String sql = "INSERT INTO " + this.dbName + "." + this.superTableName + " (";
+        String sql = "INSERT INTO `" + this.dbName + "`.`" + this.superTableName + "` (";
+//        String sql = "INSERT INTO " + this.dbName + "." + this.superTableName + " (";
         sql += sinkMetaInfos.stream().map(SinkMetaInfo::getFieldName).collect(Collectors.joining(",")) + ") ";
 
         sql += " VALUES (?";

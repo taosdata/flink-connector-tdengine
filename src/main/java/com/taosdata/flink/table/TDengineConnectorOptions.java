@@ -42,51 +42,51 @@ public class TDengineConnectorOptions {
             ConfigOptions.key("td.jdbc.mode")
                     .stringType()
                     .noDefaultValue()
-                    .withDescription("Url address or hostname of the database server.");
+                    .withDescription("The modes of Flink connector are source, cdc, and sink.");
 
     public static final ConfigOption<String> TD_BATCH_MODE =
             ConfigOptions.key("td.batch.mode")
                     .stringType()
                     .defaultValue("false")
-                    .withDescription("Url address or hostname of the database server.");
+                    .withDescription("Is the data being written in batches");
 
     public static final ConfigOption<String> HOSTNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_HOST)
                     .stringType()
                     .defaultValue("localhost")
-                    .withDescription("IP address or hostname of the MySQL database server.");
+                    .withDescription("IP address or hostname of the TDengine database server.");
 
     public static final ConfigOption<String> PORT =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_PORT)
                     .stringType()
                     .defaultValue("6041")
-                    .withDescription("Integer port number of the MySQL database server.");
+                    .withDescription("Integer port number of the TDengine database server.");
 
     public static final ConfigOption<String> USERNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_USER)
                     .stringType()
                     .defaultValue("root")
                     .withDescription(
-                            "Name of the MySQL database to use when connecting to the MySQL database server.");
+                            "Username for connecting to TDengine service.");
 
     public static final ConfigOption<String> PASSWORD =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_PASSWORD)
                     .stringType()
                     .defaultValue("taosdata")
                     .withDescription(
-                            "Password to use when connecting to the MySQL database server.");
+                            "Password to use when connecting to the  TDengine server.");
 
     public static final ConfigOption<String> DATABASE_NAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_DBNAME)
                     .stringType()
                     .noDefaultValue()
-                    .withDescription("Database name of the MySQL server to monitor.");
+                    .withDescription("Database name of the TDengine database.");
 
     public static final ConfigOption<String> TABLE_NAME =
             ConfigOptions.key("table.name")
                     .stringType()
                     .noDefaultValue()
-                    .withDescription("Table name of the database to monitor.");
+                    .withDescription("Table name of the database.");
 
     public static final ConfigOption<String> SERVER_TIME_ZONE =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_TIME_ZONE)
@@ -217,12 +217,12 @@ public class TDengineConnectorOptions {
             .key("sink.db.name")
             .stringType()
             .defaultValue("")
-            .withDescription("tdengine database name");
+            .withDescription("Sink database name of the TDengine database.");
     public static final ConfigOption<Integer> SINK_BATCH_SIZE = ConfigOptions
             .key("sink.batch.size")
             .intType()
             .defaultValue(500)
-            .withDescription("tdengine database name");
+            .withDescription("sink batch size");
 
 
 
