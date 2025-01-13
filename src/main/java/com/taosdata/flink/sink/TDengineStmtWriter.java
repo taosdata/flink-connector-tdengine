@@ -98,13 +98,13 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
 
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
-        List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
-        if (records == null || records.isEmpty()) {
-            LOG.warn("element serializer result is null!");
-            return;
-        }
-
         try {
+            List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
+            if (records == null || records.isEmpty()) {
+                LOG.warn("element serializer result is null!");
+                return;
+            }
+
             lock.lock();
             for (TDengineSinkRecord record : records) {
                 setStmtParam(pstmt, record.getColumnParams());
@@ -152,6 +152,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
     /**
      * Binding SQL for Splicing Super Tables
      * INSERT INTO suptable (tbname, location, groupId, ts, current, voltage, phase) VALUES (?,?,?,?,?,?,?)
+     *
      * @return
      */
     private String getSuperTableSql() {
@@ -176,6 +177,7 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
     /**
      * Binding SQL for Splicing Normal Tables
      * INSERT INTO tbname (ts, current, voltage, phase) VALUES (?,?,?,?)
+     *
      * @return
      */
     private String getNormalTableSql() {

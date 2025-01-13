@@ -99,13 +99,13 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
 
     @Override
     public void write(IN element, Context context) throws IOException, InterruptedException {
-        List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
-        if(records == null || records.isEmpty()){
-            LOG.warn("element serializer result is null!");
-            return;
-        }
-
         try {
+            List<TDengineSinkRecord> records = serializer.serialize(element, sinkMetaInfos);
+            if (records == null || records.isEmpty()) {
+                LOG.warn("element serializer result is null!");
+                return;
+            }
+
             lock.lock();
             executeTableSql(records);
         } catch (SQLException e) {
@@ -145,7 +145,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
     }
 
     private void executeTableSql(List<TDengineSinkRecord> records) throws SQLException, UnsupportedEncodingException {
-        for (TDengineSinkRecord sinkRecord:records) {
+        for (TDengineSinkRecord sinkRecord : records) {
             StringBuilder sb = new StringBuilder("(");
             for (int i = 0; i < this.sinkMetaInfos.size(); i++) {
                 sb.append(getStringParam(sinkRecord.getColumnParams().get(i), sinkMetaInfos.get(i).getFieldType().getTypeNo()));
@@ -153,7 +153,7 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
                     sb.append(",");
                 }
             }
-            sb.append(")") ;
+            sb.append(")");
             // Splicing SQL, writing nearly 1M to TDengine
             if ((executeSqls.length() + sb.length()) >= ONE_MILLION) {
                 statement.executeUpdate(executeSqls.toString());
@@ -176,8 +176,8 @@ public class TDengineSqlWriter<IN> implements SinkWriter<IN> {
             case TDengineType.TSDB_DATA_TYPE_TIMESTAMP:
                 if (columnParam instanceof Timestamp) {
                     return "" + ((Timestamp) columnParam).getTime();
-                }else if (columnParam instanceof String) {
-                    return "'" + columnParam +"'";
+                } else if (columnParam instanceof String) {
+                    return "'" + columnParam + "'";
                 }
             case TDengineType.TSDB_DATA_TYPE_BIGINT:
             case TDengineType.TSDB_DATA_TYPE_FLOAT:

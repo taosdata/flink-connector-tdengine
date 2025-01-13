@@ -1,22 +1,29 @@
 package com.taosdata.flink.sink.serializer;
 
+import com.taosdata.flink.sink.TDengineSink;
 import com.taosdata.flink.sink.entity.DataType;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
+import com.taosdata.jdbc.TSDBError;
+import com.taosdata.jdbc.TSDBErrorNumbers;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.data.binary.BinaryRowData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
 public class RowDataSerializerBase {
+    private final Logger LOG = LoggerFactory.getLogger(RowDataSerializerBase.class);
 //    public TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
 //        if (record == null) {
 //            throw new IOException("serialize RowData is null!");
@@ -50,7 +57,7 @@ public class RowDataSerializerBase {
 //        return  value;
 //    }
 
-    public TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
+    public TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException, SQLException {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
@@ -113,6 +120,9 @@ public class RowDataSerializerBase {
                             columnParams.add(timeVal);
                         }
                         break;
+                    default:
+                        LOG.error("Unknown data type：" + sinkMetaInfos.get(i).getFieldType());
+                        throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
 
                 }
             } else {
