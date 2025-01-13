@@ -53,7 +53,7 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> HOSTNAME =
             ConfigOptions.key(TSDBDriver.PROPERTY_KEY_HOST)
                     .stringType()
-                    .defaultValue("192.168.1.98")
+                    .defaultValue("localhost")
                     .withDescription("IP address or hostname of the TDengine database server.");
 
     public static final ConfigOption<String> PORT =
@@ -129,7 +129,7 @@ public class TDengineConnectorOptions {
     public static final ConfigOption<String> BOOTSTRAP_SERVERS =
             ConfigOptions.key("bootstrap.servers")
                     .stringType()
-                    .defaultValue("192.168.1.98:6041")
+                    .defaultValue("localhost:6041")
                     .withDescription(
                             "cdc bootstrap servers address");
 
