@@ -7,6 +7,7 @@ import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
+import org.apache.flink.table.data.binary.BinaryRowData;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,36 +17,109 @@ import java.util.List;
 import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_BINARY;
 
 public class RowDataSerializerBase {
+//    public TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
+//        if (record == null) {
+//            throw new IOException("serialize RowData is null!");
+//        }
+//        GenericRowData rowData = (GenericRowData) record;
+//        List<Object> columnParams = new ArrayList<>();
+//        for (int i = 0; i < sinkMetaInfos.size(); i++) {
+//            Object fieldVal = convertRowDataType(rowData.getField(i), sinkMetaInfos.get(i).getFieldType());
+//            columnParams.add(fieldVal);
+//        }
+//
+//        return new TDengineSinkRecord(columnParams);
+//    }
+//    private Object convertRowDataType(Object value, DataType fieldType) {
+//        if (value == null) {
+//            return null;
+//        }
+//        if (value instanceof TimestampData) {
+//            TimestampData timestampData = (TimestampData)value;
+//            return timestampData.toTimestamp();
+//        }
+//        if (value instanceof StringData) {
+//            StringData stringData = (StringData) value;
+//            return stringData.toString();
+//        }
+//
+//        if (fieldType.getTypeNo() == DATA_TYPE_BINARY.getTypeNo()) {
+//            return new String((byte[]) value, StandardCharsets.UTF_8);
+//        }
+//
+//        return  value;
+//    }
+
     public TDengineSinkRecord getSinkRecord(RowData record, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
         if (record == null) {
             throw new IOException("serialize RowData is null!");
         }
-        GenericRowData rowData = (GenericRowData) record;
+
         List<Object> columnParams = new ArrayList<>();
         for (int i = 0; i < sinkMetaInfos.size(); i++) {
-            Object fieldVal = convertRowDataType(rowData.getField(i), sinkMetaInfos.get(i).getFieldType());
-            columnParams.add(fieldVal);
-        }
+            if (!record.isNullAt(i)) {
+                switch (sinkMetaInfos.get(i).getFieldType()) {
+                    case DATA_TYPE_BINARY:
+                    case DATA_TYPE_VARCHAR:
+                        Object binaryVal = new String(record.getBinary(i), StandardCharsets.UTF_8);
+                        columnParams.add(binaryVal);
+                        break;
+                    case DATA_TYPE_INT:
+                        Object intVal = record.getInt(i);
+                        columnParams.add(intVal);
+                        break;
+                    case DATA_TYPE_BOOL:
+                        Object bVal = record.getBoolean(i);
+                        columnParams.add(bVal);
+                        break;
+                    case DATA_TYPE_FLOAT:
+                        Object floatVal = record.getFloat(i);
+                        columnParams.add(floatVal);
+                        break;
+                    case DATA_TYPE_DOUBLE:
+                        Object doubleVal = record.getDouble(i);
+                        columnParams.add(doubleVal);
+                        break;
+                    case DATA_TYPE_BIGINT:
+                        Object longVal = record.getLong(i);
+                        columnParams.add(longVal);
+                        break;
+                    case DATA_TYPE_TINYINT:
+                        Object byteVal = record.getByte(i);
+                        columnParams.add(byteVal);
+                        break;
+                    case DATA_TYPE_JSON:
+                    case DATA_TYPE_NCHAR:
+                        Object strVal = null;
+                        if (record.getString(i) != null) {
+                            strVal = record.getString(i).toString();
+                        }
+                        columnParams.add(strVal);
+                        break;
+                    case DATA_TYPE_VARBINARY:
+                    case DATA_TYPE_GEOMETRY:
+                        Object binary = record.getBinary(i);
+                        columnParams.add(binary);
+                        break;
+                    case DATA_TYPE_SMALLINT:
+                        Object shortVal = record.getShort(i);
+                        columnParams.add(shortVal);
+                        break;
+                    case DATA_TYPE_TIMESTAMP:
+                        Object timeVal = null;
+                        if (record.getTimestamp(i, 5) != null) {
+                            columnParams.add(record.getTimestamp(i, 5).toTimestamp());
+                        } else {
+                            columnParams.add(timeVal);
+                        }
+                        break;
 
+                }
+            } else {
+                columnParams.add(null);
+            }
+        }
         return new TDengineSinkRecord(columnParams);
     }
-    private Object convertRowDataType(Object value, DataType fieldType) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof TimestampData) {
-            TimestampData timestampData = (TimestampData)value;
-            return timestampData.toTimestamp();
-        }
-        if (value instanceof StringData) {
-            StringData stringData = (StringData) value;
-            return stringData.toString();
-        }
 
-        if (fieldType.getTypeNo() == DATA_TYPE_BINARY.getTypeNo()) {
-            return new String((byte[]) value, StandardCharsets.UTF_8);
-        }
-
-        return  value;
-    }
 }
