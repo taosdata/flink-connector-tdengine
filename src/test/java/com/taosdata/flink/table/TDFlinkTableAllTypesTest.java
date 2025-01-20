@@ -33,11 +33,11 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkTableAllTypesTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
-    private static final String host = "192.168.1.98";
+    private static final String host = "localhost";
     private static final Random random = new Random(System.currentTimeMillis());
     private static final int BINARY_COLUMN_SIZE = 30;
     private List<String> schemaList;
@@ -297,7 +297,7 @@ public class TDFlinkTableAllTypesTest {
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/table_all_type_stmt0?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/table_all_type_stmt0?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'stb0'," +
                 "  'scan.query' = 'select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0'" +
@@ -326,7 +326,7 @@ public class TDFlinkTableAllTypesTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/table_all_type_stmt1?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/table_all_type_stmt1?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'table_all_type_stmt1'," +
                 "  'sink.supertable.name' = 'stb1'" +
                 ")";
@@ -370,7 +370,7 @@ public class TDFlinkTableAllTypesTest {
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = '192.168.1.98:6041'," +
+                "  'bootstrap.servers' = 'localhost:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_22'," +
                 "  'auto.offset.reset' = 'earliest'," +
@@ -401,7 +401,7 @@ public class TDFlinkTableAllTypesTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'cdc'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'table_all_type_stmt1'," +
                 "  'sink.supertable.name' = 'stb1'" +
                 ")";

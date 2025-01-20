@@ -32,7 +32,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkTableTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -176,7 +176,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, tbname FROM `meters`'" +
@@ -234,7 +234,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = '192.168.1.98:6041'," +
+                "  'bootstrap.servers' = 'localhost:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_20'," +
                 "  'auto.offset.reset' = 'earliest'," +
@@ -299,7 +299,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`'" +
@@ -317,7 +317,7 @@ public class TDFlinkTableTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -351,7 +351,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = '192.168.1.98:6041'," +
+                "  'bootstrap.servers' = 'localhost:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_22'," +
                 "  'auto.offset.reset' = 'earliest'," +
@@ -371,7 +371,7 @@ public class TDFlinkTableTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'cdc'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -402,7 +402,7 @@ public class TDFlinkTableTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power'," +
                 "  'sink.table.name' = 'd1001'" +
                 ")";
