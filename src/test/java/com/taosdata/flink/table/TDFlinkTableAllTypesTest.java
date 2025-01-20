@@ -187,7 +187,7 @@ public class TDFlinkTableAllTypesTest {
 
 
     public void checkResult() throws Exception {
-        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag FROM example_all_type_stmt1.stb1";
+        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag FROM table_all_type_stmt1.stb1";
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
