@@ -21,7 +21,6 @@ import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.Assert;
@@ -45,7 +44,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSourceTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -182,7 +181,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql sql = new SourceSplitSql("select ts, `current`, voltage, phase, groupid, location from meters");
         sourceQuery(sql, 3, connProps);
         System.out.println("testTDengineSource finish！");
@@ -196,7 +195,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -221,7 +220,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, current, voltage, phase, groupid, location from meters")
                 .setTagList(Arrays.asList(
@@ -240,7 +239,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSelect("ts, current, voltage, phase, groupid, location")
                 .setTableList(Arrays.asList("d1001", "d1002"))
@@ -259,7 +258,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultSoureDeserialization");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -304,7 +303,7 @@ public class TDFlinkSourceTest {
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
-            GenericRowData row = (GenericRowData) rowData;
+            RowData row = rowData;
             sb.append("ts: " + row.getTimestamp(0, 0) +
                     ", current: " + row.getFloat(1) +
                     ", voltage: " + row.getInt(2) +
@@ -330,7 +329,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_TIME_ZONE, "UTC-8");
         connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(3);
         Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
@@ -341,7 +340,7 @@ public class TDFlinkSourceTest {
             StringBuilder sb = new StringBuilder();
             Iterator<RowData> iterator = records.iterator();
             while (iterator.hasNext()) {
-                GenericRowData row = (GenericRowData) iterator.next();
+                RowData row =  iterator.next();
                 sb.append("ts: " + row.getTimestamp(0, 0) +
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +
@@ -367,7 +366,7 @@ public class TDFlinkSourceTest {
         env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
@@ -405,7 +404,7 @@ public class TDFlinkSourceTest {
         env.setParallelism(3);
         Properties config = new Properties();
         config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+        config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
         config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
         config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
         config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
@@ -423,7 +422,7 @@ public class TDFlinkSourceTest {
             Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
             StringBuilder sb = new StringBuilder();
             while (iterator.hasNext()) {
-                GenericRowData row = (GenericRowData) iterator.next().value();
+                RowData row = iterator.next().value();
                 sb.append("tsxx: " + row.getTimestamp(0, 0) +
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +

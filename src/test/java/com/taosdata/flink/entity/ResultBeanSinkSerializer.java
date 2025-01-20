@@ -4,10 +4,7 @@ import com.taosdata.flink.sink.entity.DataType;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.entity.TDengineSinkRecord;
 import com.taosdata.flink.sink.serializer.TDengineSinkRecordSerializer;
-import org.apache.flink.table.data.GenericRowData;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.data.StringData;
-import org.apache.flink.table.data.TimestampData;
+
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

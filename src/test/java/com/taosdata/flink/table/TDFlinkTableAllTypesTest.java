@@ -1,7 +1,8 @@
-package com.taosdata.flink.source;
+package com.taosdata.flink.table;
 
 import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.sink.TDengineSink;
+import com.taosdata.flink.source.TDengineSource;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.jdbc.TSDBConstants;
 import com.taosdata.jdbc.TSDBDriver;
@@ -12,6 +13,9 @@ import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.Assert;
@@ -19,14 +23,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TDFlinkSourceAllTypesTest {
+import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
+
+public class TDFlinkTableAllTypesTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
     String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
@@ -64,13 +68,15 @@ public class TDFlinkSourceAllTypesTest {
 
     private void init(Connection conn) throws SQLException {
         schemaList = new ArrayList<>();
-        schemaList.add("drop database if exists example_all_type_stmt0");
-        schemaList.add("drop database if exists example_all_type_stmt1");
-        schemaList.add("CREATE DATABASE IF NOT EXISTS example_all_type_stmt0");
-        schemaList.add("CREATE DATABASE IF NOT EXISTS example_all_type_stmt1");
+        schemaList.add("DROP TOPIC IF EXISTS topic_table_all_type_stmt");
+        schemaList.add("drop database if exists table_all_type_stmt0");
+        schemaList.add("drop database if exists table_all_type_stmt1");
+        schemaList.add("CREATE DATABASE IF NOT EXISTS table_all_type_stmt0");
+        schemaList.add("CREATE DATABASE IF NOT EXISTS table_all_type_stmt1");
+
 
         for (int i = 1; i >= 0; i--) {
-            schemaList.add("USE example_all_type_stmt" + i);
+            schemaList.add("USE table_all_type_stmt" + i);
             String table = "CREATE STABLE IF NOT EXISTS stb" + i +
                     "(ts TIMESTAMP, " +
                     "int_col INT, " +
@@ -92,7 +98,7 @@ public class TDFlinkSourceAllTypesTest {
                     "geometry_tag GEOMETRY(100))";
             schemaList.add(table);
         }
-
+        schemaList.add("CREATE TOPIC topic_table_all_type_stmt as select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from table_all_type_stmt0.stb0");
         try (Statement stmt = conn.createStatement()) {
             for (int i = 0; i < schemaList.size(); i++) {
                 stmt.execute(schemaList.get(i));
@@ -163,13 +169,13 @@ public class TDFlinkSourceAllTypesTest {
             pstmt.addBatch();
 
             pstmt.executeBatch();
-            System.out.println("Successfully inserted rows to example_all_type_stmt.ntb");
+            System.out.println("Successfully inserted rows to table_all_type_stmt.ntb");
         }
     }
 
 
     public void checkResult() throws Exception {
-        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag FROM example_all_type_stmt1.stb1";
+        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag FROM table_all_type_stmt1.stb1";
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -262,61 +268,153 @@ public class TDFlinkSourceAllTypesTest {
     }
 
     @Test
-    void testTDengineSource() throws Exception {
-        System.out.println("testTDengineSource start！");
-        Properties connProps = new Properties();
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
-        connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt0?user=root&password=taosdata");
-        SourceSplitSql sql = new SourceSplitSql("select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0");
-        sourceQuery(sql, 1, connProps);
-        System.out.println("testTDengineSource finish！");
-    }
-
-    public void sourceQuery(SourceSplitSql sql, int parallelism, Properties connProps) throws Exception {
+    void testTableToSink() throws Exception {
+        System.out.println("testTableToSink start！");
+        EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(parallelism);
-        TDengineSource<RowData> source = new TDengineSource<>(connProps, sql, RowData.class);
-        DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
+        env.setParallelism(3);
+        env.enableCheckpointing(100, AT_LEAST_ONCE);
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
+        String tdengineSourceTableDDL = "CREATE TABLE `stb0` (" +
+                "ts TIMESTAMP, " +
+                "int_col INT, " +
+                "long_col BIGINT, " +
+                "double_col DOUBLE, " +
+                "bool_col BOOLEAN, " +
+                "binary_col BINARY, " +
+                "nchar_col String, " +
+                "varbinary_col BINARY, " +
+                "geometry_col BINARY, " +
+                "int_tag INT, " +
+                "long_tag BIGINT, " +
+                "double_tag DOUBLE, " +
+                "bool_tag BOOLEAN, " +
+                "binary_tag BINARY, " +
+                "nchar_tag String, " +
+                "varbinary_tag BINARY, " +
+                "geometry_tag BINARY, " +
+                "tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/table_all_type_stmt0?user=root&password=taosdata'," +
+                "  'td.jdbc.mode' = 'source'," +
+                "  'table.name' = 'stb0'," +
+                "  'scan.query' = 'select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0'" +
+                ")";
 
-        Properties sinkProps = new Properties();
-        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
-        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
-        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-//        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
-        sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");
-        sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, "example_all_type_stmt1");
-        sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "stb1");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/example_all_type_stmt1?user=root&password=taosdata");
-        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
-        List<String> fieldNames = Arrays.asList("ts",
-                "int_col",
-                "long_col",
-                "double_col",
-                "bool_col",
-                "binary_col",
-                "nchar_col",
-                "varbinary_col",
-                "geometry_col",
-                "int_tag",
-                "long_tag",
-                "double_tag",
-                "bool_tag",
-                "binary_tag",
-                "nchar_tag",
-                "varbinary_tag",
-                "geometry_tag",
-                "tbname");
+        String tdengineSinkTableDDL = "CREATE TABLE `stb1` (" +
+                "ts TIMESTAMP, " +
+                "int_col INT, " +
+                "long_col BIGINT, " +
+                "double_col DOUBLE, " +
+                "bool_col BOOLEAN, " +
+                "binary_col BINARY, " +
+                "nchar_col String, " +
+                "varbinary_col VARBINARY, " +
+                "geometry_col BINARY, " +
+                "int_tag INT, " +
+                "long_tag BIGINT, " +
+                "double_tag DOUBLE, " +
+                "bool_tag BOOLEAN, " +
+                "binary_tag BINARY, " +
+                "nchar_tag String, " +
+                "varbinary_tag BINARY, " +
+                "geometry_tag BINARY, " +
+                "tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/table_all_type_stmt1?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'table_all_type_stmt1'," +
+                "  'sink.supertable.name' = 'stb1'" +
+                ")";
 
-        TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, fieldNames);
-        input.sinkTo(sink);
-        env.execute("flink tdengine source");
+        tableEnv.executeSql(tdengineSourceTableDDL);
+        tableEnv.executeSql(tdengineSinkTableDDL);
+
+        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0");
+        tableResult.await();
         checkResult();
+        System.out.println("testTableToSink finish！");
     }
 
+    @Test
+    void testCdcTableToSink() throws Exception {
+        System.out.println("testCdcTableToSink start！");
+        EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(5);
+        env.enableCheckpointing(1000, AT_LEAST_ONCE);
+//        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
+        String tdengineSourceTableDDL = "CREATE TABLE `stb0` (" +
+                "ts TIMESTAMP, " +
+                "int_col INT, " +
+                "long_col BIGINT, " +
+                "double_col DOUBLE, " +
+                "bool_col BOOLEAN, " +
+                "binary_col BINARY, " +
+                "nchar_col String, " +
+                "varbinary_col BINARY, " +
+                "geometry_col BINARY, " +
+                "int_tag INT, " +
+                "long_tag BIGINT, " +
+                "double_tag DOUBLE, " +
+                "bool_tag BOOLEAN, " +
+                "binary_tag BINARY, " +
+                "nchar_tag String, " +
+                "varbinary_tag BINARY, " +
+                "geometry_tag BINARY, " +
+                "tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'bootstrap.servers' = '192.168.1.98:6041'," +
+                "  'td.jdbc.mode' = 'cdc'," +
+                "  'group.id' = 'group_22'," +
+                "  'auto.offset.reset' = 'earliest'," +
+                "  'enable.auto.commit' = 'false'," +
+                "  'topic' = 'topic_table_all_type_stmt'" +
+                ")";
+
+
+        String tdengineSinkTableDDL = "CREATE TABLE `stb1` (" +
+                "ts TIMESTAMP, " +
+                "int_col INT, " +
+                "long_col BIGINT, " +
+                "double_col DOUBLE, " +
+                "bool_col BOOLEAN, " +
+                "binary_col BINARY, " +
+                "nchar_col String, " +
+                "varbinary_col VARBINARY, " +
+                "geometry_col BINARY, " +
+                "int_tag INT, " +
+                "long_tag BIGINT, " +
+                "double_tag DOUBLE, " +
+                "bool_tag BOOLEAN, " +
+                "binary_tag BINARY, " +
+                "nchar_tag String, " +
+                "varbinary_tag BINARY, " +
+                "geometry_tag BINARY, " +
+                "tbname VARBINARY" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'cdc'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'table_all_type_stmt1'," +
+                "  'sink.supertable.name' = 'stb1'" +
+                ")";
+
+        tableEnv.executeSql(tdengineSourceTableDDL);
+        tableEnv.executeSql(tdengineSinkTableDDL);
+
+
+        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0");
+        Thread.sleep(8000L);
+        tableResult.getJobClient().get().cancel().get();
+        checkResult();
+        System.out.println("testCdcTableToSink finish！");
+    }
 
 }

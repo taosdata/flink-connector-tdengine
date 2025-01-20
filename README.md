@@ -200,7 +200,7 @@ static void testSource() throws Exception {
     connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
     connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_TIME_ZONE, "UTC-8");
     connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(3);
 
@@ -241,7 +241,7 @@ void testCustomTypeSource() throws Exception {
     connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
     connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
     connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultSoureDeserialization");
-    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
     SourceSplitSql splitSql = new SourceSplitSql();
     splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
             .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
@@ -311,7 +311,7 @@ The subscription result is RowData data type example:
     env.getConfig().setRestartStrategy(RestartStrategies.noRestart());
     Properties config = new Properties();
     config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
     config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
     config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
     config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
@@ -354,7 +354,7 @@ static void testCustomTypeCdc() throws Exception {
     env.getCheckpointConfig().setTolerableCheckpointFailureNumber(4);
     Properties config = new Properties();
     config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
     config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
     config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
     config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL_MS, "1000");
@@ -415,7 +415,7 @@ Write the received RowData type data into TDengine example:
 static void testRowDataToSink() throws Exception {
     Properties connProps = new Properties();
     connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
-    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+    connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
     SourceSplitSql splitSql = getTimeSplit();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
@@ -427,7 +427,7 @@ static void testRowDataToSink() throws Exception {
     sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");
     sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
     sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-    sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata");
+    sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata");
     sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
     // Arrays.asList The list of target table field names needs to be consistent with the data order
@@ -451,7 +451,7 @@ static void testBatchToTdSink() throws Exception {
     env.getCheckpointConfig().setCheckpointTimeout(5000);
     Properties config = new Properties();
     config.setProperty(TDengineCdcParams.CONNECT_TYPE, "ws");
-    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "localhost:6041");
+    config.setProperty(TDengineCdcParams.BOOTSTRAP_SERVERS, "192.168.1.98:6041");
     config.setProperty(TDengineCdcParams.AUTO_OFFSET_RESET, "earliest");
     config.setProperty(TDengineCdcParams.MSG_WITH_TABLE_NAME, "true");
     config.setProperty(TDengineCdcParams.AUTO_COMMIT_INTERVAL, "1000");
@@ -475,7 +475,7 @@ static void testBatchToTdSink() throws Exception {
     sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_cdc");
     sinkProps.setProperty(TDengineConfigParams.TD_DATABASE_NAME, "power_sink");
     sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-    sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+    sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata");
     sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
     TDengineSink<ConsumerRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
@@ -527,7 +527,7 @@ Parameter configuration instructions:
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`'" +
@@ -545,7 +545,7 @@ Parameter configuration instructions:
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -597,7 +597,7 @@ static void testCdcTableToSink() throws Exception {
             " tbname VARBINARY" +
             ") WITH (" +
             "  'connector' = 'tdengine-connector'," +
-            "  'bootstrap.servers' = 'localhost:6041'," +
+            "  'bootstrap.servers' = '192.168.1.98:6041'," +
             "  'td.jdbc.mode' = 'cdc'," +
             "  'group.id' = 'group_22'," +
             "  'auto.offset.reset' = 'earliest'," +
@@ -617,7 +617,7 @@ static void testCdcTableToSink() throws Exception {
             ") WITH (" +
             "  'connector' = 'tdengine-connector'," +
             "  'td.jdbc.mode' = 'cdc'," +
-            "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+            "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
             "  'sink.db.name' = 'power_sink'," +
             "  'sink.supertable.name' = 'sink_meters'" +
             ")";

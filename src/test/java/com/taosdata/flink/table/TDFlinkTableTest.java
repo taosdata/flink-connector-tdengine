@@ -11,9 +11,9 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.Assert;
@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
@@ -31,7 +32,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkTableTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.1.98:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -175,7 +176,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, tbname FROM `meters`'" +
@@ -196,7 +197,7 @@ public class TDFlinkTableTest {
                 RowData rowData = value.f1;
                 // 根据需要格式化 RowData 的内容
                 StringBuilder sb = new StringBuilder();
-                GenericRowData row = (GenericRowData) rowData;
+                RowData row = rowData;
                 sb.append("table_ts: " + row.getTimestamp(0, 0) +
                         ", table_current: " + row.getFloat(1) +
                         ", table_voltage: " + row.getInt(2) +
@@ -233,7 +234,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = 'localhost:6041'," +
+                "  'bootstrap.servers' = '192.168.1.98:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_20'," +
                 "  'auto.offset.reset' = 'earliest'," +
@@ -255,7 +256,7 @@ public class TDFlinkTableTest {
             public String map(Tuple2<Boolean, RowData> value) throws Exception {
                 RowData rowData = value.f1;
                 StringBuilder sb = new StringBuilder();
-                GenericRowData row = (GenericRowData) rowData;
+                RowData row = rowData;
                 sb.append("table_cdc_ts: " + row.getTimestamp(0, 0) +
                         ", table_cdc_current: " + row.getFloat(1) +
                         ", table_cdc_voltage: " + row.getInt(2) +
@@ -298,7 +299,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'meters'," +
                 "  'scan.query' = 'SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`'" +
@@ -316,7 +317,7 @@ public class TDFlinkTableTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -350,7 +351,7 @@ public class TDFlinkTableTest {
                 " tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
-                "  'bootstrap.servers' = 'localhost:6041'," +
+                "  'bootstrap.servers' = '192.168.1.98:6041'," +
                 "  'td.jdbc.mode' = 'cdc'," +
                 "  'group.id' = 'group_22'," +
                 "  'auto.offset.reset' = 'earliest'," +
@@ -370,7 +371,7 @@ public class TDFlinkTableTest {
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'cdc'," +
-                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
                 "  'sink.db.name' = 'power_sink'," +
                 "  'sink.supertable.name' = 'sink_meters'" +
                 ")";
@@ -388,7 +389,27 @@ public class TDFlinkTableTest {
     }
 
 
-
+    @Test
+    void testSql() throws ExecutionException, InterruptedException {
+        EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+        // TDengine汇表DDL
+        String tdengineSinkTableDDL = "CREATE TABLE `d1001` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://192.168.1.98:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power'," +
+                "  'sink.table.name' = 'd1001'" +
+                ")";
+        tEnv.executeSql(tdengineSinkTableDDL);
+        TableResult tableResult = tEnv.executeSql("INSERT INTO d1001 VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
+        tableResult.await();
+    }
 
 
 }
