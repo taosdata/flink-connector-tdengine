@@ -87,6 +87,7 @@ TDengine currently supports timestamp, number, character, and boolean types, and
 | GEOMETRY          | byte[]        |
 
 ## Instructions for use
+
 ### Flink Semantic Selection Instructions
 
 The semantic reason for using At Least One (at least once) is:
@@ -94,11 +95,13 @@ The semantic reason for using At Least One (at least once) is:
 -Due to TDengine's use of timestamps as primary keys, downstream operators of duplicate data can perform filtering operations to avoid duplicate calculations.
 -Using At Least One (at least once) to ensure high data processing performance and low data latency, the setting method is as follows:
 
-```text
+```java
 StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 env.enableCheckpointing(5000);
 env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE);
 ```
+
+### Usage mode
 
 If using Maven to manage a project, simply add the following dependencies in pom.xml.
 
@@ -152,14 +155,14 @@ Users can split the SQL query into multiple subtasks based on time, entering: st
 ```java
 SourceSplitSql splitSql = new SourceSplitSql();
 splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
-.setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
-.setTimestampSplitInfo(new TimestampSplitInfo(
-        "2024-12-19 16:12:48.000",
-        "2024-12-19 19:12:48.000",
-                               "ts",
-                       Duration.ofHours(1),
-        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
-        ZoneId.of("Asia/Shanghai")));
+        .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
+        .setTimestampSplitInfo(new TimestampSplitInfo(
+                "2024-12-19 16:12:48.000",
+                "2024-12-19 19:12:48.000",
+                                       "ts",
+                               Duration.ofHours(1),
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"),
+                ZoneId.of("Asia/Shanghai")));
 ```
 
 Splitting by Super Table TAG

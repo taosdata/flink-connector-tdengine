@@ -16,6 +16,7 @@ public class SinkMetaInfo implements Serializable {
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.length = length;
+
     }
 
     public boolean isTag() {
@@ -49,4 +50,5 @@ public class SinkMetaInfo implements Serializable {
     public void setLength(int length) {
         this.length = length;
     }
+
 }

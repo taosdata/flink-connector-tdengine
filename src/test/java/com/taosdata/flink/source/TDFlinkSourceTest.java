@@ -21,7 +21,6 @@ import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.Assert;
@@ -304,7 +303,7 @@ public class TDFlinkSourceTest {
         DataStreamSource<RowData> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
         DataStream<String> resultStream = input.map((MapFunction<RowData, String>) rowData -> {
             StringBuilder sb = new StringBuilder();
-            GenericRowData row = (GenericRowData) rowData;
+            RowData row = rowData;
             sb.append("ts: " + row.getTimestamp(0, 0) +
                     ", current: " + row.getFloat(1) +
                     ", voltage: " + row.getInt(2) +
@@ -341,7 +340,7 @@ public class TDFlinkSourceTest {
             StringBuilder sb = new StringBuilder();
             Iterator<RowData> iterator = records.iterator();
             while (iterator.hasNext()) {
-                GenericRowData row = (GenericRowData) iterator.next();
+                RowData row =  iterator.next();
                 sb.append("ts: " + row.getTimestamp(0, 0) +
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +
@@ -423,7 +422,7 @@ public class TDFlinkSourceTest {
             Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
             StringBuilder sb = new StringBuilder();
             while (iterator.hasNext()) {
-                GenericRowData row = (GenericRowData) iterator.next().value();
+                RowData row = iterator.next().value();
                 sb.append("tsxx: " + row.getTimestamp(0, 0) +
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +

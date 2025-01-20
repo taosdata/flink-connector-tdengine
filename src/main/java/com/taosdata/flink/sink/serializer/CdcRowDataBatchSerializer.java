@@ -7,6 +7,7 @@ import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.table.data.RowData;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +18,7 @@ public class CdcRowDataBatchSerializer extends RowDataSerializerBase implements 
     }
 
     @Override
-    public List<TDengineSinkRecord> serialize(ConsumerRecords<RowData> records, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
+    public List<TDengineSinkRecord> serialize(ConsumerRecords<RowData> records, List<SinkMetaInfo> sinkMetaInfos) throws IOException, SQLException {
         if (records == null || records.isEmpty()) {
             throw new IOException("serialize ConsumerRecords is null!");
         }

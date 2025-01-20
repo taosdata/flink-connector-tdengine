@@ -210,5 +210,18 @@ public class VarbinaryTest {
         state = enumerator.snapshotState(1);
         assertNotNull(state.getUnassignedSqls().getFirst().getTaskSplits().get(0));
 
+        splitSql = new SourceSplitSql();
+        splitSql.setSql("select ts, `current`, voltage, phase, groupid, location from meters")
+                .setSplitType(SplitType.SPLIT_TYPE_TAG)
+                //按照时间分片
+                .setTagList(Arrays.asList(
+                        "groupid >100 and location = 'SuhctA'",
+                        "groupid >50 and groupid < 100 and location = 'SuhctB'",
+                        "groupid >0 and groupid < 50 and location = 'SuhctC'"));
+        enumerator = new TDengineSourceEnumerator(context, Boundedness.BOUNDED, splitSql, splitsState);
+        enumerator.start();
+        state = enumerator.snapshotState(1);
+        assertNotNull(state.getUnassignedSqls().getFirst().getTaskSplits().get(0));
+
     }
 }

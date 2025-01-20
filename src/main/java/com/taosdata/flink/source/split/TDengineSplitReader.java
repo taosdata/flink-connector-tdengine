@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<OUT>, TDengineSplit> {
     private static final Logger LOG = LoggerFactory.getLogger(TDengineSplitReader.class);
@@ -53,7 +54,6 @@ public class TDengineSplitReader<OUT> implements SplitReader<SplitResultRecords<
         properties.setProperty(TSDBDriver.PROPERTY_KEY_BATCH_LOAD, "true");
         this.properties = properties;
         this.url = this.properties.getProperty(TDengineConfigParams.TD_JDBC_URL, "");
-
 
         Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
         this.conn = DriverManager.getConnection(this.url, this.properties);

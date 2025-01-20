@@ -18,13 +18,11 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
@@ -366,7 +364,7 @@ public class TDFlinkSinkTest {
             Iterator<ConsumerRecord<RowData>> iterator = records.iterator();
             StringBuilder sb = new StringBuilder();
             while (iterator.hasNext()) {
-                GenericRowData row = (GenericRowData) iterator.next().value();
+                RowData row = iterator.next().value();
                 sb.append("tsxx: " + row.getTimestamp(0, 0) +
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +
@@ -481,6 +479,7 @@ public class TDFlinkSinkTest {
                     Thread.sleep(2000L);
 //                    throw new IOException("custom error flag, restart application");
                 }
+
                 out.collect(value);
                 System.out.println("to sink:" + totalVoltage.toString());
                 Thread.sleep(100);

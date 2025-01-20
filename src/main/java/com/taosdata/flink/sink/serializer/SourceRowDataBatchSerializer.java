@@ -6,6 +6,7 @@ import com.taosdata.flink.source.entity.SourceRecords;
 import org.apache.flink.table.data.RowData;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +18,7 @@ public class SourceRowDataBatchSerializer extends RowDataSerializerBase implemen
     }
 
     @Override
-    public List<TDengineSinkRecord> serialize(SourceRecords<RowData> records, List<SinkMetaInfo> sinkMetaInfos) throws IOException {
+    public List<TDengineSinkRecord> serialize(SourceRecords<RowData> records, List<SinkMetaInfo> sinkMetaInfos) throws IOException, SQLException {
         if (records == null || records.isEmpty()) {
             throw new IOException("serialize SourceRecords is null!");
         }
