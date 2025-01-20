@@ -339,7 +339,7 @@ public class TDFlinkTableAllTypesTest {
                 "bool_col BOOLEAN, " +
                 "binary_col BINARY, " +
                 "nchar_col String, " +
-                "varbinary_col VARBINARY, " +
+                "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
                 "tinyint_col TINYINT, " +
                 "smallint_col SMALLINT, " +
@@ -422,7 +422,7 @@ public class TDFlinkTableAllTypesTest {
                 "bool_col BOOLEAN, " +
                 "binary_col BINARY, " +
                 "nchar_col String, " +
-                "varbinary_col VARBINARY, " +
+                "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
                 "tinyint_col TINYINT, " +
                 "smallint_col SMALLINT, " +
