@@ -86,7 +86,9 @@ public class TDFlinkTableAllTypesTest {
                     "binary_col BINARY(100), " +
                     "nchar_col NCHAR(100), " +
                     "varbinary_col VARBINARY(100), " +
-                    "geometry_col GEOMETRY(100)) " +
+                    "geometry_col GEOMETRY(100)," +
+                    "tinyint_col TINYINT, " +
+                    "smallint_col SMALLINT) " +
                     "tags (" +
                     "int_tag INT, " +
                     "long_tag BIGINT, " +
@@ -95,10 +97,12 @@ public class TDFlinkTableAllTypesTest {
                     "binary_tag BINARY(100), " +
                     "nchar_tag NCHAR(100), " +
                     "varbinary_tag VARBINARY(100), " +
-                    "geometry_tag GEOMETRY(100))";
+                    "geometry_tag GEOMETRY(100), " +
+                    "tinyint_tag TINYINT, " +
+                    "smallint_tag SMALLINT)";
             schemaList.add(table);
         }
-        schemaList.add("CREATE TOPIC topic_table_all_type_stmt as select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from table_all_type_stmt0.stb0");
+        schemaList.add("CREATE TOPIC topic_table_all_type_stmt as select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag,tbname from table_all_type_stmt0.stb0");
         try (Statement stmt = conn.createStatement()) {
             for (int i = 0; i < schemaList.size(); i++) {
                 stmt.execute(schemaList.get(i));
@@ -107,7 +111,7 @@ public class TDFlinkTableAllTypesTest {
     }
 
     private void stmtAll(Connection conn) throws SQLException {
-        String sql = "INSERT INTO ? using stb0 tags(?,?,?,?,?,?,?,?) VALUES (?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO ? using stb0 tags(?,?,?,?,?,?,?,?,?,?) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
         try (TSWSPreparedStatement pstmt = conn.prepareStatement(sql).unwrap(TSWSPreparedStatement.class)) {
 
@@ -127,6 +131,8 @@ public class TDFlinkTableAllTypesTest {
                     0x00, 0x00, 0x00, 0x59,
                     0x40, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59, 0x40});
+            pstmt.setTagByte(9, (byte) 9);
+            pstmt.setTagShort(10, (short) 13);
 
             long current = System.currentTimeMillis();
 
@@ -144,6 +150,8 @@ public class TDFlinkTableAllTypesTest {
                     0x00, 0x00, 0x00, 0x59,
                     0x40, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59, 0x40});
+            pstmt.setByte(10, (byte) 9);
+            pstmt.setShort(11, (short) 13);
             pstmt.addBatch();
             pstmt.executeBatch();
 
@@ -156,6 +164,8 @@ public class TDFlinkTableAllTypesTest {
             pstmt.setTagNull(6, TSDBConstants.TSDB_DATA_TYPE_NCHAR);
             pstmt.setTagNull(7, TSDBConstants.TSDB_DATA_TYPE_VARBINARY);
             pstmt.setTagNull(8, TSDBConstants.TSDB_DATA_TYPE_GEOMETRY);
+            pstmt.setTagNull(9, TSDBConstants.TSDB_DATA_TYPE_TINYINT);
+            pstmt.setTagNull(10, TSDBConstants.TSDB_DATA_TYPE_SMALLINT);
 
             pstmt.setTimestamp(1, new Timestamp(current + 1));
             pstmt.setNull(2, Types.INTEGER);
@@ -166,6 +176,8 @@ public class TDFlinkTableAllTypesTest {
             pstmt.setNull(7, Types.NCHAR);
             pstmt.setNull(8, Types.VARBINARY);
             pstmt.setNull(9, Types.VARBINARY);
+            pstmt.setNull(10, Types.TINYINT);
+            pstmt.setNull(11, Types.SMALLINT);
             pstmt.addBatch();
 
             pstmt.executeBatch();
@@ -175,7 +187,7 @@ public class TDFlinkTableAllTypesTest {
 
 
     public void checkResult() throws Exception {
-        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag FROM table_all_type_stmt1.stb1";
+        String sql = "SELECT tbname, ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag FROM example_all_type_stmt1.stb1";
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -184,7 +196,7 @@ public class TDFlinkTableAllTypesTest {
              Statement stmt = connection.createStatement(); ResultSet resultSet = stmt.executeQuery(sql)) {
             Assert.assertNotNull(resultSet);
 
-            if (resultSet.next()) {
+            while (resultSet.next()) {
                  if (resultSet.getString(1).equals("ntb")) {
                      assertExceptTimestamp(resultSet, 3);
                  } else {
@@ -212,6 +224,9 @@ public class TDFlinkTableAllTypesTest {
         Assert.assertNull(rs.getString(index++));
         Assert.assertNull(rs.getBytes(index++));
         Assert.assertNull(rs.getBytes(index++));
+        Assert.assertEquals(0, rs.getByte(index++));
+        Assert.assertEquals(0, rs.getShort(index++));
+
 
         Assert.assertEquals(0, rs.getInt(index++));
         Assert.assertEquals(0, rs.getLong(index++));
@@ -220,7 +235,10 @@ public class TDFlinkTableAllTypesTest {
         Assert.assertNull(rs.getString(index++));
         Assert.assertNull(rs.getString(index++));
         Assert.assertNull(rs.getBytes(index++));
-        Assert.assertNull(rs.getBytes(index));
+        Assert.assertNull(rs.getBytes(index++));
+        Assert.assertEquals(0, rs.getByte(index++));
+        Assert.assertEquals(0, rs.getShort(index++));
+
     }
 
     private void assertExceptTimestamp(ResultSet rs, int index) throws SQLException {
@@ -233,6 +251,8 @@ public class TDFlinkTableAllTypesTest {
         Assert.assertEquals("nchar_value",rs.getString(index++));
         Assert.assertNotNull(rs.getBytes(index++));
         Assert.assertNotNull(rs.getBytes(index++));
+        Assert.assertEquals((byte) 9, rs.getByte(index++));
+        Assert.assertEquals((short) 13,rs.getShort(index++));
 
         Assert.assertEquals(1, rs.getInt(index++));
         Assert.assertEquals(1000000000000L, rs.getLong(index++));
@@ -241,7 +261,10 @@ public class TDFlinkTableAllTypesTest {
         Assert.assertEquals("binary_value", rs.getString(index++));
         Assert.assertEquals("nchar_value",rs.getString(index++));
         Assert.assertNotNull(rs.getBytes(index++));
-        Assert.assertNotNull(rs.getBytes(index));
+        Assert.assertNotNull(rs.getBytes(index++));
+        Assert.assertEquals((byte) 9, rs.getByte(index++));
+        Assert.assertEquals((short) 13,rs.getShort(index++));
+
     }
 
 
@@ -272,7 +295,7 @@ public class TDFlinkTableAllTypesTest {
         System.out.println("testTableToSink start！");
         EnvironmentSettings fsSettings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(3);
+        env.setParallelism(1);
         env.enableCheckpointing(100, AT_LEAST_ONCE);
 //        env.getCheckpointConfig().setCheckpointStorage("file:///Users/menshibin/flink/checkpoint/");
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, fsSettings);
@@ -286,6 +309,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
+                "tinyint_col TINYINT, " +
+                "smallint_col SMALLINT, " +
                 "int_tag INT, " +
                 "long_tag BIGINT, " +
                 "double_tag DOUBLE, " +
@@ -294,13 +319,15 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_tag String, " +
                 "varbinary_tag BINARY, " +
                 "geometry_tag BINARY, " +
+                "tinyint_tag TINYINT, " +
+                "smallint_tag SMALLINT, " +
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/table_all_type_stmt0?user=root&password=taosdata'," +
                 "  'td.jdbc.mode' = 'source'," +
                 "  'table.name' = 'stb0'," +
-                "  'scan.query' = 'select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0'" +
+                "  'scan.query' = 'select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag, tbname from stb0'" +
                 ")";
 
 
@@ -314,6 +341,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_col String, " +
                 "varbinary_col VARBINARY, " +
                 "geometry_col BINARY, " +
+                "tinyint_col TINYINT, " +
+                "smallint_col SMALLINT, " +
                 "int_tag INT, " +
                 "long_tag BIGINT, " +
                 "double_tag DOUBLE, " +
@@ -322,6 +351,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_tag String, " +
                 "varbinary_tag BINARY, " +
                 "geometry_tag BINARY, " +
+                "tinyint_tag TINYINT, " +
+                "smallint_tag SMALLINT, " +
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
@@ -334,7 +365,7 @@ public class TDFlinkTableAllTypesTest {
         tableEnv.executeSql(tdengineSourceTableDDL);
         tableEnv.executeSql(tdengineSinkTableDDL);
 
-        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0");
+        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag,tbname from stb0");
         tableResult.await();
         checkResult();
         System.out.println("testTableToSink finish！");
@@ -359,6 +390,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
+                "tinyint_col TINYINT, " +
+                "smallint_col SMALLINT, " +
                 "int_tag INT, " +
                 "long_tag BIGINT, " +
                 "double_tag DOUBLE, " +
@@ -367,6 +400,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_tag String, " +
                 "varbinary_tag BINARY, " +
                 "geometry_tag BINARY, " +
+                "tinyint_tag TINYINT, " +
+                "smallint_tag SMALLINT, " +
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
@@ -389,6 +424,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_col String, " +
                 "varbinary_col VARBINARY, " +
                 "geometry_col BINARY, " +
+                "tinyint_col TINYINT, " +
+                "smallint_col SMALLINT, " +
                 "int_tag INT, " +
                 "long_tag BIGINT, " +
                 "double_tag DOUBLE, " +
@@ -397,6 +434,8 @@ public class TDFlinkTableAllTypesTest {
                 "nchar_tag String, " +
                 "varbinary_tag BINARY, " +
                 "geometry_tag BINARY, " +
+                "tinyint_tag TINYINT, " +
+                "smallint_tag SMALLINT, " +
                 "tbname VARBINARY" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
@@ -410,7 +449,7 @@ public class TDFlinkTableAllTypesTest {
         tableEnv.executeSql(tdengineSinkTableDDL);
 
 
-        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col,int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag,tbname from stb0");
+        TableResult tableResult = tableEnv.executeSql("INSERT INTO stb1 select ts,int_col,long_col,double_col,bool_col,binary_col,nchar_col,varbinary_col,geometry_col, tinyint_col, smallint_col, int_tag,long_tag,double_tag,bool_tag,binary_tag,nchar_tag,varbinary_tag,geometry_tag, tinyint_tag, smallint_tag,tbname from stb0");
         Thread.sleep(8000L);
         tableResult.getJobClient().get().cancel().get();
         checkResult();
