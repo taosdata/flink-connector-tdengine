@@ -13,6 +13,7 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.types.RowKind;
 
 import java.util.Properties;
 
@@ -31,7 +32,11 @@ public class TDengineTableCdc implements ScanTableSource {
 
     @Override
     public ChangelogMode getChangelogMode() {
-        return ChangelogMode.insertOnly();
+        return ChangelogMode.newBuilder()
+                .addContainedKind(RowKind.INSERT)
+                .addContainedKind(RowKind.UPDATE_AFTER)
+                .addContainedKind(RowKind.DELETE)
+                .build();
     }
 
     @Override
