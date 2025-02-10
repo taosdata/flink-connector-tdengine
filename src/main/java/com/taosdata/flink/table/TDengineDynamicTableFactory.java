@@ -123,6 +123,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
 
         Properties connProps = new Properties();
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, config.get(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_RECONNECT_INTERVAL_MS, config.get(TDengineConnectorOptions.RECONNECT_INTERVAL_MS));
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_RECONNECT_RETRY_COUNT, config.get(TDengineConnectorOptions.RECONNECT_RETRY_COUNT));
         connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, config.get(TDengineConnectorOptions.CHARSET));
         return new TDengineTableSource(url, scanQurey, physicalDataType, connProps);
     }
@@ -170,6 +172,9 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         properties.setProperty(TDengineConnectorOptions.TMQ_POLL_INTERVAL_MS.key(), optionVal);
         properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER, "RowData");
         properties.setProperty(TDengineCdcParams.VALUE_DESERIALIZER_ENCODING, config.get(TDengineConnectorOptions.CHARSET));
+        properties.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, config.get(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT));
+        properties.setProperty(TDengineConfigParams.PROPERTY_KEY_RECONNECT_INTERVAL_MS, config.get(TDengineConnectorOptions.RECONNECT_INTERVAL_MS));
+        properties.setProperty(TDengineConfigParams.PROPERTY_KEY_RECONNECT_RETRY_COUNT, config.get(TDengineConnectorOptions.RECONNECT_RETRY_COUNT));
         String topic = config.get(TDengineConnectorOptions.TOPIC);
         return new TDengineTableCdc(topic, properties);
     }
@@ -206,6 +211,8 @@ public class TDengineDynamicTableFactory implements DynamicTableSourceFactory, D
         optionalOptions.add(TDengineConnectorOptions.LOCALE);
         optionalOptions.add(TDengineConnectorOptions.CHARSET);
         optionalOptions.add(TDengineConnectorOptions.ENABLE_AUTO_RECONNECT);
+        optionalOptions.add(TDengineConnectorOptions.RECONNECT_INTERVAL_MS);
+        optionalOptions.add(TDengineConnectorOptions.RECONNECT_RETRY_COUNT);
         optionalOptions.add(TDengineConnectorOptions.SERVER_TIME_ZONE);
         optionalOptions.add(TDengineConnectorOptions.TMQ_POLL_INTERVAL_MS);
 
