@@ -115,6 +115,19 @@ public class TDengineConnectorOptions {
             .defaultValue("true")
             .withDescription("tdengine database enable auto reconnect");
 
+    public static final ConfigOption<String> RECONNECT_INTERVAL_MS = ConfigOptions
+            .key(TSDBDriver.PROPERTY_KEY_RECONNECT_INTERVAL_MS)
+            .stringType()
+            .defaultValue("2000")
+            .withDescription("tdengine database auto reconnect interval");
+
+    public static final ConfigOption<String> RECONNECT_RETRY_COUNT = ConfigOptions
+            .key(TSDBDriver.PROPERTY_KEY_RECONNECT_RETRY_COUNT)
+            .stringType()
+            .defaultValue("3")
+            .withDescription("tdengine database auto reconnect interval");
+
+
     public static final ConfigOption<String> SCAN_QUERY =
             ConfigOptions.key("scan.query")
                     .stringType()
