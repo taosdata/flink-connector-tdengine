@@ -296,7 +296,8 @@ public class TDFlinkTableTest {
                 " phase FLOAT," +
                 " location VARBINARY," +
                 " groupid INT," +
-                " tbname VARBINARY" +
+                " tbname VARBINARY," +
+                " PRIMARY KEY (ts) NOT ENFORCED" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
