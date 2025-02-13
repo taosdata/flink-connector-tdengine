@@ -1,4 +1,4 @@
-name: version3
+name: build
 
 on:
   push:
