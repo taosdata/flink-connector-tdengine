@@ -179,7 +179,7 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " tbname VARBINARY" +
+                " tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata'," +
@@ -235,9 +235,9 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " location VARBINARY," +
+                " location VARCHAR(255)," +
                 " groupid INT," +
-                " tbname VARBINARY" +
+                " tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'bootstrap.servers' = 'localhost:6041'," +
@@ -300,9 +300,9 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " location VARBINARY," +
+                " location VARCHAR(255)," +
                 " groupid INT," +
-                " tbname VARBINARY," +
+                " tbname VARCHAR(255)," +
                 " PRIMARY KEY (ts) NOT ENFORCED" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
@@ -318,9 +318,9 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " location VARBINARY," +
+                " location VARCHAR(255)," +
                 " groupid INT," +
-                " tbname VARBINARY" +
+                " tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
@@ -353,9 +353,9 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " location VARBINARY," +
+                " location VARCHAR(255)," +
                 " groupid INT," +
-                " tbname VARBINARY" +
+                " tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'bootstrap.servers' = 'localhost:6041'," +
@@ -371,9 +371,9 @@ public class TDFlinkTableTest {
                 " `current` FLOAT," +
                 " voltage INT," +
                 " phase FLOAT," +
-                " location VARBINARY," +
+                " location VARCHAR(255)," +
                 " groupid INT," +
-                " tbname VARBINARY" +
+                " tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'cdc'," +

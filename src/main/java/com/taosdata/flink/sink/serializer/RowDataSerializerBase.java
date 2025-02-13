@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +26,11 @@ public class RowDataSerializerBase {
                 switch (sinkMetaInfos.get(i).getFieldType()) {
                     case DATA_TYPE_BINARY:
                     case DATA_TYPE_VARCHAR:
-                        Object binaryVal = new String(record.getBinary(i), StandardCharsets.UTF_8);
-                        columnParams.add(binaryVal);
+                        Object strVal = null;
+                        if (record.getString(i) != null) {
+                            strVal = record.getString(i).toString();
+                        }
+                        columnParams.add(strVal);
                         break;
                     case DATA_TYPE_INT:
                         Object intVal = record.getInt(i);
@@ -56,11 +58,11 @@ public class RowDataSerializerBase {
                         break;
                     case DATA_TYPE_JSON:
                     case DATA_TYPE_NCHAR:
-                        Object strVal = null;
+                        Object strNcharVal = null;
                         if (record.getString(i) != null) {
-                            strVal = record.getString(i).toString();
+                            strNcharVal = record.getString(i).toString();
                         }
-                        columnParams.add(strVal);
+                        columnParams.add(strNcharVal);
                         break;
                     case DATA_TYPE_VARBINARY:
                     case DATA_TYPE_GEOMETRY:

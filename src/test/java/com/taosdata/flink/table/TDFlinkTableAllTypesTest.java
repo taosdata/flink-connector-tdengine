@@ -305,7 +305,7 @@ public class TDFlinkTableAllTypesTest {
                 "long_col BIGINT, " +
                 "double_col DOUBLE, " +
                 "bool_col BOOLEAN, " +
-                "binary_col BINARY, " +
+                "binary_col VARCHAR(100), " +
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
@@ -321,7 +321,7 @@ public class TDFlinkTableAllTypesTest {
                 "geometry_tag BINARY, " +
                 "tinyint_tag TINYINT, " +
                 "smallint_tag SMALLINT, " +
-                "tbname VARBINARY" +
+                "tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/table_all_type_stmt0?user=root&password=taosdata'," +
@@ -337,7 +337,7 @@ public class TDFlinkTableAllTypesTest {
                 "long_col BIGINT, " +
                 "double_col DOUBLE, " +
                 "bool_col BOOLEAN, " +
-                "binary_col BINARY, " +
+                "binary_col VARCHAR(100), " +
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
@@ -353,7 +353,7 @@ public class TDFlinkTableAllTypesTest {
                 "geometry_tag BINARY, " +
                 "tinyint_tag TINYINT, " +
                 "smallint_tag SMALLINT, " +
-                "tbname VARBINARY" +
+                "tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
@@ -386,7 +386,7 @@ public class TDFlinkTableAllTypesTest {
                 "long_col BIGINT, " +
                 "double_col DOUBLE, " +
                 "bool_col BOOLEAN, " +
-                "binary_col BINARY, " +
+                "binary_col VARCHAR(100), " +
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
@@ -402,7 +402,7 @@ public class TDFlinkTableAllTypesTest {
                 "geometry_tag BINARY, " +
                 "tinyint_tag TINYINT, " +
                 "smallint_tag SMALLINT, " +
-                "tbname VARBINARY" +
+                "tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'bootstrap.servers' = 'localhost:6041'," +
@@ -420,7 +420,7 @@ public class TDFlinkTableAllTypesTest {
                 "long_col BIGINT, " +
                 "double_col DOUBLE, " +
                 "bool_col BOOLEAN, " +
-                "binary_col BINARY, " +
+                "binary_col VARCHAR(100), " +
                 "nchar_col String, " +
                 "varbinary_col BINARY, " +
                 "geometry_col BINARY, " +
@@ -436,7 +436,7 @@ public class TDFlinkTableAllTypesTest {
                 "geometry_tag BINARY, " +
                 "tinyint_tag TINYINT, " +
                 "smallint_tag SMALLINT, " +
-                "tbname VARBINARY" +
+                "tbname VARCHAR(255)" +
                 ") WITH (" +
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'cdc'," +

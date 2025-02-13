@@ -16,7 +16,10 @@ import org.apache.flink.types.RowKind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultTypeQueryable<RowData> {
     private final Logger LOG = LoggerFactory.getLogger(RowDataCdcDeserializer.class);
@@ -63,7 +66,13 @@ public class RowDataCdcDeserializer implements Deserializer<RowData>, ResultType
                 } else if (value instanceof Short) {
                     binaryRowWriter.writeShort(i - 1, (Short) value);
                 } else if (value instanceof byte[]) {
-                    binaryRowWriter.writeBinary(i - 1, (byte[]) value);
+                    if (metaData.getColumnTypeName(i - 1).equals("VARCHAR") || metaData.getColumnTypeName(i - 1).equals("BINARY")) {
+                        String strVal = new String((byte[]) value, StandardCharsets.UTF_8);
+                        binaryRowWriter.writeString(i - 1, StringData.fromString(strVal));
+                    }else {
+                        binaryRowWriter.writeBinary(i - 1, (byte[]) value);
+                    }
+
                 } else {
                     LOG.error("Unknown data type：" + value.getClass().getName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
