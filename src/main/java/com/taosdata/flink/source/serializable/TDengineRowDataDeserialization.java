@@ -12,6 +12,7 @@ import org.apache.flink.types.RowKind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ public class TDengineRowDataDeserialization implements TDengineRecordDeserializa
         BinaryRowData binaryRowData = new BinaryRowData(rowData.size());
         BinaryRowWriter binaryRowWriter = new BinaryRowWriter(binaryRowData);
         binaryRowWriter.writeRowKind(RowKind.INSERT);
-
+        ResultSetMetaData metaData = splitResultRecord.getMetaData();
         for (int i = 0; i < rowData.size(); i++) {
             Object value = rowData.get(i);
             if (value == null) {
@@ -58,7 +59,12 @@ public class TDengineRowDataDeserialization implements TDengineRecordDeserializa
                 } else if (value instanceof Short) {
                     binaryRowWriter.writeShort(i, (Short) value);
                 } else if (value instanceof byte[]) {
-                    binaryRowWriter.writeBinary(i, (byte[]) value);
+                    if (metaData.getColumnTypeName(i + 1).equals("VARCHAR") || metaData.getColumnTypeName(i + 1).equals("BINARY")) {
+                        String strVal = new String((byte[]) value, StandardCharsets.UTF_8);
+                        binaryRowWriter.writeString(i, StringData.fromString(strVal));
+                    }else {
+                        binaryRowWriter.writeBinary(i, (byte[]) value);
+                    }
                 } else {
                     LOG.error("Unknown data type：" + value.getClass().getName());
                     throw TSDBError.createSQLException(TSDBErrorNumbers.ERROR_UNKNOWN_SQL_TYPE_IN_TDENGINE);
