@@ -45,7 +45,7 @@
 
 - 已安装 Java 1.8 或以上版本运行时环境和 Maven 3.6 或以上版本，且正确设置了环境变量。
 - 本地已经部署 TDengine，具体步骤请参考 [部署服务端](https://docs.taosdata.com/get-started/package/)，且已经启动 taosd 与 taosAdapter。
-- Apache Flink v1.19.0 或以上版本已安装，具体安装方法请参考 [官方文档](https://flink.apache.org/)。
+- Apache Flink v1.19.0 或以上版本已安装，具体安装方法请参考 [Apache Flink](https://flink.apache.org/)。
 
 ## 4. 构建
 

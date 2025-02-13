@@ -46,7 +46,7 @@ English | [简体中文](./README-CN.md)
 
 - Java 1.8 or above runtime environment and Maven 3.6 or above installed, with environment variables correctly set.
 - TDengine has been deployed locally. For specific steps, please refer to [Deploy TDengine](https://docs.tdengine.com/get-started/deploy-from-package/). Please make sure taosd and taosAdapter have been started. 
-- Apache Flink version 1.19.0 or above has been installed. For the specific installation method, please refer to the [official documentation](https://flink.apache.org/).
+- Apache Flink version 1.19.0 or above has been installed. For the specific installation method, please refer to the [Apache Flink](https://flink.apache.org/).
 
 ## 4. Build
 Execute `mvn clean package` in the project directory to build the project.
