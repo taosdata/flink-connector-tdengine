@@ -309,7 +309,7 @@ public class TDFlinkSourceTest {
                     ", voltage: " + row.getInt(2) +
                     ", phase: " + row.getFloat(3) +
                     ", groupid: " + row.getInt(4) +
-                    ", location: " + new String(row.getBinary(5)));
+                    ", location: " + row.getString(5).toString());
             sb.append("\n");
             totalVoltage.addAndGet(row.getInt(2));
             return sb.toString();
@@ -345,7 +345,7 @@ public class TDFlinkSourceTest {
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +
                         ", phase: " + row.getFloat(3) +
-                        ", location: " + new String(row.getBinary(4)));
+                        ", location: " + row.getString(4).toString());
                 sb.append("\n");
                 totalVoltage.addAndGet(row.getInt(2));
             }
@@ -384,7 +384,7 @@ public class TDFlinkSourceTest {
                     ", current: " + rowData.getFloat(1) +
                     ", voltage: " + rowData.getInt(2) +
                     ", phase: " + rowData.getFloat(3) +
-                    ", location: " + new String(rowData.getBinary(4)));
+                    ", location: " + rowData.getString(4).toString());
             sb.append("\n");
             totalVoltage.addAndGet(rowData.getInt(2));
             return sb.toString();
@@ -427,7 +427,7 @@ public class TDFlinkSourceTest {
                         ", current: " + row.getFloat(1) +
                         ", voltage: " + row.getInt(2) +
                         ", phase: " + row.getFloat(3) +
-                        ", location: " + new String(row.getBinary(4)));
+                        ", location: " + row.getString(4).toString());
                 sb.append("\n");
                 totalVoltage.addAndGet(row.getInt(2));
             }
