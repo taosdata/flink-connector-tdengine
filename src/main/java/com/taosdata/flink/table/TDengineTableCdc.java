@@ -34,9 +34,6 @@ public class TDengineTableCdc implements ScanTableSource {
     public ChangelogMode getChangelogMode() {
         return ChangelogMode.newBuilder()
                 .addContainedKind(RowKind.INSERT)
-                .addContainedKind(RowKind.UPDATE_BEFORE)
-                .addContainedKind(RowKind.UPDATE_AFTER)
-                .addContainedKind(RowKind.DELETE)
                 .build();
     }
 
