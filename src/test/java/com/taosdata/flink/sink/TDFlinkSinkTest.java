@@ -6,6 +6,7 @@ import com.taosdata.flink.common.TDengineCdcParams;
 import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.entity.ResultBean;
 import com.taosdata.flink.source.TDengineSource;
+import com.taosdata.flink.source.entity.SourceRecords;
 import com.taosdata.flink.source.entity.SourceSplitSql;
 import com.taosdata.flink.source.entity.SplitType;
 import com.taosdata.flink.source.entity.TimestampSplitInfo;
@@ -501,5 +502,42 @@ public class TDFlinkSinkTest {
         processedStream.sinkTo(sink);
         return env.executeAsync("Flink test cdc Example");
     }
+
+    @Test
+    void testBatchTDengineSource() throws Exception {
+        System.out.println("testBatchTDengineSource start！");
+        Properties connProps = new Properties();
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_CHARSET, "UTF-8");
+        connProps.setProperty(TDengineConfigParams.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        connProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(3);
+        Class<SourceRecords<RowData>> typeClass = (Class<SourceRecords<RowData>>) (Class<?>) SourceRecords.class;
+        SourceSplitSql sql = new SourceSplitSql("select ts, `current`, voltage, phase, location, groupid, tbname from meters");
+        TDengineSource<SourceRecords<RowData>> source = new TDengineSource<>(connProps, sql, typeClass);
+        DataStreamSource<SourceRecords<RowData>> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "tdengine-source");
+
+        Properties sinkProps = new Properties();
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_MODE, "true");
+        sinkProps.setProperty(TDengineConfigParams.TD_SOURCE_TYPE, "tdengine_source");
+        sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, "power_sink");
+        sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
+        TDengineSink<SourceRecords<RowData>> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
+        input.sinkTo(sink);
+        env.execute("flink tdengine source");
+        int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");
+        Assert.assertEquals(1221 * 3, queryResult);
+        System.out.println("testBatchTDengineSource finish！");
+    }
+
 
 }
