@@ -397,7 +397,8 @@ public class TDFlinkTableTest {
 
 
     @Test
-    void testSql() throws ExecutionException, InterruptedException {
+    void testSql() throws Exception {
+        System.out.println("testSql start！");
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
         TableEnvironment tEnv = TableEnvironment.create(settings);
         // TDengine汇表DDL
@@ -416,10 +417,14 @@ public class TDFlinkTableTest {
         tEnv.executeSql(tdengineSinkTableDDL);
         TableResult tableResult = tEnv.executeSql("INSERT INTO d1001 VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
         tableResult.await();
+        int queryResult = queryResult();
+        Assert.assertEquals(220, queryResult);
+        System.out.println("testSql finish！");
     }
 
     @Test
-    void testSuperTableSink() throws ExecutionException, InterruptedException {
+    void testSuperTableSink() throws Exception {
+        System.out.println("testSuperTableSink start！");
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
         TableEnvironment tEnv = TableEnvironment.create(settings);
         // TDengine汇表DDL
@@ -451,10 +456,14 @@ public class TDFlinkTableTest {
 
         TableResult tableResult = tEnv.executeSql(insertQuery);
         tableResult.await();
+        int queryResult = queryResult();
+        Assert.assertEquals(1221, queryResult);
+        System.out.println("testSuperTableSink finish！");
     }
 
     @Test
-    void testTableSinkOfRow() throws ExecutionException, InterruptedException {
+    void testTableSinkOfRow() throws Exception {
+        System.out.println("testTableSinkOfRow start！");
         EnvironmentSettings settings = EnvironmentSettings.newInstance()
                 .inBatchMode() // 使用批处理模式
                 .build();
@@ -481,7 +490,7 @@ public class TDFlinkTableTest {
         List<Row> rowDatas = new ArrayList<>();
 //        "ts", "current", "voltage", "phase", "location", "groupid", "tbname"
         Random random = new Random(System.currentTimeMillis());
-
+        int sum = 0;
         for (int i = 0; i < 50; i++) {
             String tbname = "d001";
             String location = "California.SanFrancisco";
@@ -492,7 +501,7 @@ public class TDFlinkTableTest {
 //                location = "Alabama.Montgomery";
 //                groupId = 2;
 //            }
-
+            sum += 300 + (i + 1);
             long timestampInMillis = System.currentTimeMillis() + i * 1000;
             Row row = Row.of(
                     new Timestamp(timestampInMillis), // 时间递增
@@ -523,8 +532,9 @@ public class TDFlinkTableTest {
         // 5. 执行批量插入
         TableResult result = inputTable.executeInsert("sink_meters");
         result.await(); // 等待作业完成
-
-        System.out.println("数据插入完成，共写入 50 条记录。");
+        int queryResult = queryResult();
+        Assert.assertEquals(sum, queryResult);
+        System.out.println("testTableSinkOfRow finish！");
 
     }
 
