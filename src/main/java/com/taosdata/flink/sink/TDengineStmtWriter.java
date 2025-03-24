@@ -104,7 +104,15 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 LOG.warn("element serializer result is null!");
                 return;
             }
+            executeStmt(records);
+        } catch (SQLException e) {
+            LOG.error("write exception info:{}", e.getSQLState());
+            throw new IOException(e.getMessage());
+        }
+    }
 
+    private void executeStmt(List<TDengineSinkRecord> records) throws SQLException {
+        try {
             lock.lock();
             for (TDengineSinkRecord record : records) {
                 setStmtParam(pstmt, record.getColumnParams());
@@ -116,8 +124,8 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
                 }
             }
         } catch (SQLException e) {
-            LOG.error("invoke exception info:{}", e.getSQLState());
-            throw new IOException(e.getMessage());
+            LOG.error("executeStmt exception info:{}", e.getSQLState());
+            throw e;
         } finally {
             lock.unlock();
         }

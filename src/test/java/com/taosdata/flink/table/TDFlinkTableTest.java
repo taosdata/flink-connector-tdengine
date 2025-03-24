@@ -9,13 +9,11 @@ import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.apache.flink.types.Row;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +21,10 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -417,5 +418,114 @@ public class TDFlinkTableTest {
         tableResult.await();
     }
 
+    @Test
+    void testSuperTableSink() throws ExecutionException, InterruptedException {
+        EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+        // TDengine汇表DDL
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARCHAR(255)," +
+                " groupid INT," +
+                " tbname VARCHAR(255)" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'cdc'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.supertable.name' = 'sink_meters'" +
+                ")";
+        tEnv.executeSql(tdengineSinkTableDDL);
+
+        String insertQuery = "INSERT INTO sink_meters " +
+                "VALUES " +
+                "(CAST('2024-12-19 19:12:45' AS TIMESTAMP(6)), 50.30000, 201, 3.31003, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:46' AS TIMESTAMP(6)), 82.60000, 202, 0.33000, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:47' AS TIMESTAMP(6)), 92.30000, 203, 0.31000, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:45' AS TIMESTAMP(6)), 50.30000, 204, 3.25003, 'Alabama.Montgomery', 2, 'd1002')," +
+                "(CAST('2024-12-19 19:12:46' AS TIMESTAMP(6)), 62.60000, 205, 0.33000, 'Alabama.Montgomery', 2, 'd1002')," +
+                "(CAST('2024-12-19 19:12:47' AS TIMESTAMP(6)), 72.30000, 206, 0.31000, 'Alabama.Montgomery', 2, 'd1002');";
+
+        TableResult tableResult = tEnv.executeSql(insertQuery);
+        tableResult.await();
+    }
+
+    @Test
+    void testTableSinkOfRow() throws ExecutionException, InterruptedException {
+        EnvironmentSettings settings = EnvironmentSettings.newInstance()
+                .inBatchMode() // 使用批处理模式
+                .build();
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+
+        // 2. 创建 TDengine 目标表
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARCHAR(255)," +
+                " groupid INT," +
+                " tbname VARCHAR(255)" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.supertable.name' = 'sink_meters'" +
+                ")";
+        tEnv.executeSql(tdengineSinkTableDDL);
+
+        List<Row> rowDatas = new ArrayList<>();
+//        "ts", "current", "voltage", "phase", "location", "groupid", "tbname"
+        Random random = new Random(System.currentTimeMillis());
+
+        for (int i = 0; i < 50; i++) {
+            String tbname = "d001";
+            String location = "California.SanFrancisco";
+            int groupId = 1;
+
+//            if (i >= 25) {
+//                tbname = "d002";
+//                location = "Alabama.Montgomery";
+//                groupId = 2;
+//            }
+
+            long timestampInMillis = System.currentTimeMillis() + i * 1000;
+            Row row = Row.of(
+                    new Timestamp(timestampInMillis), // 时间递增
+                    random.nextFloat() * 30,
+                    300 + (i + 1),
+                    random.nextFloat(),
+                    location,
+                    groupId,
+                    tbname
+
+            );
+            rowDatas.add(row);
+        }
+
+        Table inputTable = tEnv.fromValues(
+                DataTypes.ROW(
+                        DataTypes.FIELD("ts", DataTypes.TIMESTAMP(6)),
+                        DataTypes.FIELD("current", DataTypes.FLOAT()),
+                        DataTypes.FIELD("voltage", DataTypes.INT()),
+                        DataTypes.FIELD("phase", DataTypes.FLOAT()),
+                        DataTypes.FIELD("location", DataTypes.STRING()),
+                        DataTypes.FIELD("groupid", DataTypes.INT()),
+                        DataTypes.FIELD("tbname", DataTypes.STRING())
+                ),
+                rowDatas
+        );
+
+        // 5. 执行批量插入
+        TableResult result = inputTable.executeInsert("sink_meters");
+        result.await(); // 等待作业完成
+
+        System.out.println("数据插入完成，共写入 50 条记录。");
+
+    }
 
 }
