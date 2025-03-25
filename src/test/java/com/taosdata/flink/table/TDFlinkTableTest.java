@@ -14,6 +14,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.types.Row;
+import org.apache.logging.log4j.util.Strings;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,6 +108,9 @@ public class TDFlinkTableTest {
             stmt.executeUpdate("CREATE STABLE IF NOT EXISTS sink_meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);");
             // you can check rowsAffected here
 
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sink_normal (ts timestamp, current float, voltage int, phase float);");
+            // you can check rowsAffected here
+
 
         } catch (Exception ex) {
             // please refer to the JDBC specifications for detailed exceptions info
@@ -118,8 +122,10 @@ public class TDFlinkTableTest {
         }
     }
 
-    public int queryResult() throws Exception {
-        String sql = "SELECT sum(voltage) FROM power_sink.sink_meters";
+    public int queryResult(String sql) throws Exception {
+        if (Strings.isEmpty(sql)) {
+            sql = "SELECT sum(voltage) FROM power_sink.sink_meters";
+        }
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -335,7 +341,7 @@ public class TDFlinkTableTest {
 
         TableResult tableResult = tableEnv.executeSql("INSERT INTO sink_meters SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`");
         tableResult.await();
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testTableToSink finish！");
     }
@@ -390,7 +396,7 @@ public class TDFlinkTableTest {
 
         Thread.sleep(8000L);
         tableResult.getJobClient().get().cancel().get();
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testCdcTableToSink finish！");
     }
@@ -402,7 +408,7 @@ public class TDFlinkTableTest {
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
         TableEnvironment tEnv = TableEnvironment.create(settings);
         // TDengine汇表DDL
-        String tdengineSinkTableDDL = "CREATE TABLE `d1001` (" +
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_normal` (" +
                 " ts TIMESTAMP," +
                 " `current` FLOAT," +
                 " voltage INT," +
@@ -411,13 +417,13 @@ public class TDFlinkTableTest {
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
-                "  'sink.db.name' = 'power'," +
-                "  'sink.table.name' = 'd1001'" +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.table.name' = 'sink_normal'" +
                 ")";
         tEnv.executeSql(tdengineSinkTableDDL);
-        TableResult tableResult = tEnv.executeSql("INSERT INTO d1001 VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
+        TableResult tableResult = tEnv.executeSql("INSERT INTO sink_normal VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
         tableResult.await();
-        int queryResult = queryResult();
+        int queryResult = queryResult("select sum(voltage) from power_sink.sink_normal");
         Assert.assertEquals(220, queryResult);
         System.out.println("testSql finish！");
     }
@@ -456,7 +462,7 @@ public class TDFlinkTableTest {
 
         TableResult tableResult = tEnv.executeSql(insertQuery);
         tableResult.await();
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(1221, queryResult);
         System.out.println("testSuperTableSink finish！");
     }
@@ -532,7 +538,7 @@ public class TDFlinkTableTest {
         // 5. 执行批量插入
         TableResult result = inputTable.executeInsert("sink_meters");
         result.await(); // 等待作业完成
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(sum, queryResult);
         System.out.println("testTableSinkOfRow finish！");
 
