@@ -199,7 +199,7 @@ public class TDFlinkSourceTest {
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
-                //按照时间分片
+                //split by time
                 .setTimestampSplitInfo(new TimestampSplitInfo(
                         "2024-12-19 16:12:48.000",
                         "2024-12-19 19:12:48.000",
@@ -262,7 +262,7 @@ public class TDFlinkSourceTest {
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
-                //按照时间分片
+                //split by time
                 .setTimestampSplitInfo(new TimestampSplitInfo(
                         "2024-12-19 16:12:48.000",
                         "2024-12-19 19:12:48.000",

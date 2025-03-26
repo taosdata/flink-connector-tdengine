@@ -202,7 +202,7 @@ public class TDFlinkSinkTest {
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
-                //按照时间分片
+                //split by time
                 .setTimestampSplitInfo(new TimestampSplitInfo(
                         "2024-12-19 16:12:48.000",
                         "2024-12-19 19:12:48.000",
@@ -285,7 +285,7 @@ public class TDFlinkSinkTest {
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase from d1001")
                 .setSplitType(SplitType.SPLIT_TYPE_TIMESTAMP)
-                //按照时间分片
+                //split by time
                 .setTimestampSplitInfo(new TimestampSplitInfo(
                         "2024-12-19 16:12:48.000",
                         "2024-12-19 19:12:48.000",
@@ -540,8 +540,6 @@ public class TDFlinkSinkTest {
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testBatchTDengineSource finish！");
     }
-
-    // 构造 RowData 的辅助方法
     @Test
     void  testSinkOfRowData() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
