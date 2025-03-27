@@ -35,7 +35,7 @@ public class ResultSoureDeserialization implements TDengineRecordDeserialization
             } else if (metaData.getColumnName(i).equals("groupid")) {
                 resultBean.setGroupid((Integer) rowData.get(i - 1));
             } else if (metaData.getColumnName(i).equals("tbname")) {
-                resultBean.setLocation(new String ((byte[]) rowData.get(i - 1)));
+                resultBean.setTbname(new String ((byte[]) rowData.get(i - 1)));
             }
         }
         return resultBean;

@@ -9,13 +9,12 @@ import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.apache.flink.types.Row;
+import org.apache.logging.log4j.util.Strings;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +22,10 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
@@ -106,6 +107,9 @@ public class TDFlinkTableTest {
             stmt.executeUpdate("CREATE STABLE IF NOT EXISTS sink_meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);");
             // you can check rowsAffected here
 
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sink_normal (ts timestamp, current float, voltage int, phase float);");
+            // you can check rowsAffected here
+
 
         } catch (Exception ex) {
             // please refer to the JDBC specifications for detailed exceptions info
@@ -117,8 +121,10 @@ public class TDFlinkTableTest {
         }
     }
 
-    public int queryResult() throws Exception {
-        String sql = "SELECT sum(voltage) FROM power_sink.sink_meters";
+    public int queryResult(String sql) throws Exception {
+        if (Strings.isEmpty(sql)) {
+            sql = "SELECT sum(voltage) FROM power_sink.sink_meters";
+        }
         Properties properties = new Properties();
         properties.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         properties.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
@@ -189,19 +195,19 @@ public class TDFlinkTableTest {
                 ")";
 
         tableEnv.executeSql(tdengineTableDDL);
-        // 使用 SQL 查询 TDengine 表
+        // using Fink SQL to query meters table
         Table resultTable = tableEnv.sqlQuery(
                 "SELECT ts, `current`, voltage, phase, tbname FROM `meters` where `current` > 90"
         );
 
-        // 将查询结果转换为 DataStream 并打印
+        // convert query results to DataStream and print
         DataStream<Tuple2<Boolean, RowData>> result = tableEnv.toRetractStream(resultTable, RowData.class);
 
         DataStream<String> formattedResult = result.map(new MapFunction<Tuple2<Boolean, RowData>, String>() {
             @Override
             public String map(Tuple2<Boolean, RowData> value) throws Exception {
                 RowData rowData = value.f1;
-                // 根据需要格式化 RowData 的内容
+                // format the contents of RowData as needed
                 StringBuilder sb = new StringBuilder();
                 RowData row = rowData;
                 sb.append("table_ts: " + row.getTimestamp(0, 0) +
@@ -215,9 +221,9 @@ public class TDFlinkTableTest {
             }
         });
 
-        // 打印结果
+        // print result
         formattedResult.print();
-        // 启动 Flink 作业
+        // start Flink task
         env.execute("Flink Table API & SQL TDengine Example");
         Assert.assertEquals(203 * 3, totalVoltage.get());
         System.out.println("testTable finish！");
@@ -249,12 +255,12 @@ public class TDFlinkTableTest {
                 ")";
 
         tableEnv.executeSql(tdengineTableDDL);
-        // 使用 SQL 查询 TDengine 表
+        // using Fink SQL to query meters table
         Table resultTable = tableEnv.sqlQuery(
                 "SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters` where `current` > 40"
         );
 
-        // 将查询结果转换为 DataStream 并打印
+        // convert query results to DataStream and print
         DataStream<Tuple2<Boolean, RowData>> result = tableEnv.toRetractStream(resultTable, RowData.class);
 
         DataStream<String> formattedResult = result.map(new MapFunction<Tuple2<Boolean, RowData>, String>() {
@@ -276,9 +282,9 @@ public class TDFlinkTableTest {
             }
         });
 
-        // 打印结果
+        // print result
         formattedResult.print();
-        // 启动 Flink 作业
+        // start Flink task
         JobClient jobClient = env.executeAsync("Flink Table API & SQL TDengine Example");
         Thread.sleep(8000L);
         jobClient.cancel().get();
@@ -334,7 +340,7 @@ public class TDFlinkTableTest {
 
         TableResult tableResult = tableEnv.executeSql("INSERT INTO sink_meters SELECT ts, `current`, voltage, phase, location, groupid, tbname FROM `meters`");
         tableResult.await();
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testTableToSink finish！");
     }
@@ -389,18 +395,19 @@ public class TDFlinkTableTest {
 
         Thread.sleep(8000L);
         tableResult.getJobClient().get().cancel().get();
-        int queryResult = queryResult();
+        int queryResult = queryResult("");
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testCdcTableToSink finish！");
     }
 
 
     @Test
-    void testSql() throws ExecutionException, InterruptedException {
+    void testSql() throws Exception {
+        System.out.println("testSql start！");
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
         TableEnvironment tEnv = TableEnvironment.create(settings);
-        // TDengine汇表DDL
-        String tdengineSinkTableDDL = "CREATE TABLE `d1001` (" +
+        // Create Flink target table
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_normal` (" +
                 " ts TIMESTAMP," +
                 " `current` FLOAT," +
                 " voltage INT," +
@@ -409,13 +416,131 @@ public class TDFlinkTableTest {
                 "  'connector' = 'tdengine-connector'," +
                 "  'td.jdbc.mode' = 'sink'," +
                 "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
-                "  'sink.db.name' = 'power'," +
-                "  'sink.table.name' = 'd1001'" +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.table.name' = 'sink_normal'" +
                 ")";
         tEnv.executeSql(tdengineSinkTableDDL);
-        TableResult tableResult = tEnv.executeSql("INSERT INTO d1001 VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
+        TableResult tableResult = tEnv.executeSql("INSERT INTO sink_normal VALUES (CAST('2025-01-19 23:00:03' AS TIMESTAMP(6)), 12.34, 220, 1.56)");
         tableResult.await();
+        int queryResult = queryResult("select sum(voltage) from power_sink.sink_normal");
+        Assert.assertEquals(220, queryResult);
+        System.out.println("testSql finish！");
     }
 
+    @Test
+    void testSuperTableSink() throws Exception {
+        System.out.println("testSuperTableSink start！");
+        EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+        // Create Flink target table
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARCHAR(255)," +
+                " groupid INT," +
+                " tbname VARCHAR(255)" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.supertable.name' = 'sink_meters'" +
+                ")";
+        tEnv.executeSql(tdengineSinkTableDDL);
+
+        String insertQuery = "INSERT INTO sink_meters " +
+                "VALUES " +
+                "(CAST('2024-12-19 19:12:45' AS TIMESTAMP(6)), 50.30000, 201, 3.31003, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:46' AS TIMESTAMP(6)), 82.60000, 202, 0.33000, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:47' AS TIMESTAMP(6)), 92.30000, 203, 0.31000, 'California.SanFrancisco', 1, 'd1001')," +
+                "(CAST('2024-12-19 19:12:45' AS TIMESTAMP(6)), 50.30000, 204, 3.25003, 'Alabama.Montgomery', 2, 'd1002')," +
+                "(CAST('2024-12-19 19:12:46' AS TIMESTAMP(6)), 62.60000, 205, 0.33000, 'Alabama.Montgomery', 2, 'd1002')," +
+                "(CAST('2024-12-19 19:12:47' AS TIMESTAMP(6)), 72.30000, 206, 0.31000, 'Alabama.Montgomery', 2, 'd1002');";
+
+        TableResult tableResult = tEnv.executeSql(insertQuery);
+        tableResult.await();
+        int queryResult = queryResult("");
+        Assert.assertEquals(1221, queryResult);
+        System.out.println("testSuperTableSink finish！");
+    }
+
+    @Test
+    void testTableSinkOfRow() throws Exception {
+        System.out.println("testTableSinkOfRow start！");
+        EnvironmentSettings settings = EnvironmentSettings.newInstance()
+                .inBatchMode() // use batch processing mode
+                .build();
+        TableEnvironment tEnv = TableEnvironment.create(settings);
+
+        // create Flink target table
+        String tdengineSinkTableDDL = "CREATE TABLE `sink_meters` (" +
+                " ts TIMESTAMP," +
+                " `current` FLOAT," +
+                " voltage INT," +
+                " phase FLOAT," +
+                " location VARCHAR(255)," +
+                " groupid INT," +
+                " tbname VARCHAR(255)" +
+                ") WITH (" +
+                "  'connector' = 'tdengine-connector'," +
+                "  'td.jdbc.mode' = 'sink'," +
+                "  'td.jdbc.url' = 'jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata'," +
+                "  'sink.db.name' = 'power_sink'," +
+                "  'sink.supertable.name' = 'sink_meters'" +
+                ")";
+        tEnv.executeSql(tdengineSinkTableDDL);
+
+        List<Row> rowDatas = new ArrayList<>();
+//        "ts", "current", "voltage", "phase", "location", "groupid", "tbname"
+        Random random = new Random(System.currentTimeMillis());
+        int sum = 0;
+        for (int i = 0; i < 50; i++) {
+            String tbname = "d001";
+            String location = "California.SanFrancisco";
+            int groupId = 1;
+
+//            if (i >= 25) {
+//                tbname = "d002";
+//                location = "Alabama.Montgomery";
+//                groupId = 2;
+//            }
+            sum += 300 + (i + 1);
+            long timestampInMillis = System.currentTimeMillis() + i * 1000;
+            Row row = Row.of(
+                    new Timestamp(timestampInMillis), // 时间递增
+                    random.nextFloat() * 30,
+                    300 + (i + 1),
+                    random.nextFloat(),
+                    location,
+                    groupId,
+                    tbname
+
+            );
+            rowDatas.add(row);
+        }
+
+        Table inputTable = tEnv.fromValues(
+                DataTypes.ROW(
+                        DataTypes.FIELD("ts", DataTypes.TIMESTAMP(6)),
+                        DataTypes.FIELD("current", DataTypes.FLOAT()),
+                        DataTypes.FIELD("voltage", DataTypes.INT()),
+                        DataTypes.FIELD("phase", DataTypes.FLOAT()),
+                        DataTypes.FIELD("location", DataTypes.STRING()),
+                        DataTypes.FIELD("groupid", DataTypes.INT()),
+                        DataTypes.FIELD("tbname", DataTypes.STRING())
+                ),
+                rowDatas
+        );
+
+        // perform batch insertion
+        TableResult result = inputTable.executeInsert("sink_meters");
+        result.await(); // waiting for homework to complete
+        int queryResult = queryResult("");
+        Assert.assertEquals(sum, queryResult);
+        System.out.println("testTableSinkOfRow finish！");
+
+    }
 
 }
