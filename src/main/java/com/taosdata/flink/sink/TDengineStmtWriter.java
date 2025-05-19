@@ -106,14 +106,17 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
             }
             executeStmt(records);
         } catch (SQLException e) {
-            LOG.error("write exception info:{}", e.getSQLState());
+            LOG.error("write sql exception info:{}", e.getSQLState());
             throw new IOException(e.getMessage());
+        } catch (InterruptedException e) {
+            LOG.error("write interrupted exception info:{}", e.getMessage());
+            throw e;
         }
     }
 
-    private void executeStmt(List<TDengineSinkRecord> records) throws SQLException {
+    private void executeStmt(List<TDengineSinkRecord> records) throws SQLException, InterruptedException {
+        lock.lockInterruptibly();
         try {
-            lock.lock();
             for (TDengineSinkRecord record : records) {
                 setStmtParam(pstmt, record.getColumnParams());
                 pstmt.addBatch();
@@ -133,8 +136,8 @@ public class TDengineStmtWriter<IN> implements SinkWriter<IN> {
 
     @Override
     public void flush(boolean endOfInput) throws IOException, InterruptedException {
+        lock.lockInterruptibly();
         try {
-            lock.lock();
             if (recodeCount.get() > 0) {
                 pstmt.executeBatch();
                 recodeCount.set(0);
