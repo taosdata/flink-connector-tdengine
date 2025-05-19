@@ -118,66 +118,66 @@ public class TDFlinkTableAllTypesTest {
             // set table name
             pstmt.setTableName("ntb");
             // set tags
-            pstmt.setTagInt(1, 1);
-            pstmt.setTagLong(2, 1000000000000L);
-            pstmt.setTagDouble(3, 1.1);
-            pstmt.setTagBoolean(4, true);
-            pstmt.setTagString(5, "binary_value");
-            pstmt.setTagNString(6, "nchar_value");
-            pstmt.setTagVarbinary(7, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
-            pstmt.setTagGeometry(8, new byte[]{
+            pstmt.setTagInt(0, 1);
+            pstmt.setTagLong(1, 1000000000000L);
+            pstmt.setTagDouble(2, 1.1);
+            pstmt.setTagBoolean(3, true);
+            pstmt.setTagString(4, "binary_value");
+            pstmt.setTagNString(5, "nchar_value");
+            pstmt.setTagVarbinary(6, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
+            pstmt.setTagGeometry(7, new byte[]{
                     0x01, 0x01, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59,
                     0x40, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59, 0x40});
-            pstmt.setTagByte(9, (byte) 9);
-            pstmt.setTagShort(10, (short) 13);
+            pstmt.setTagByte(8, (byte) 9);
+            pstmt.setTagShort(9, (short) 13);
 
             long current = System.currentTimeMillis();
 
-            pstmt.setTimestamp(1, new Timestamp(current));
-            pstmt.setInt(2, 1);
-            pstmt.setLong(3, 1000000000000L);
-            pstmt.setDouble(4, 1.1);
-            pstmt.setBoolean(5, true);
-            pstmt.setString(6, "binary_value");
-            pstmt.setNString(7, "nchar_value");
-            pstmt.setVarbinary(8, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
-            pstmt.setGeometry(9, new byte[]{
+            pstmt.setTimestamp(0, new Timestamp(current));
+            pstmt.setInt(1, 1);
+            pstmt.setLong(2, 1000000000000L);
+            pstmt.setDouble(3, 1.1);
+            pstmt.setBoolean(4, true);
+            pstmt.setString(5, "binary_value");
+            pstmt.setNString(6, "nchar_value");
+            pstmt.setVarbinary(7, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
+            pstmt.setGeometry(8, new byte[]{
                     0x01, 0x01, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59,
                     0x40, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59, 0x40});
-            pstmt.setByte(10, (byte) 9);
-            pstmt.setShort(11, (short) 13);
+            pstmt.setByte(9, (byte) 9);
+            pstmt.setShort(10, (short) 13);
             pstmt.addBatch();
             pstmt.executeBatch();
 
             pstmt.setTableName("w3");
-            pstmt.setTagNull(1, TSDBConstants.TSDB_DATA_TYPE_INT);
-            pstmt.setTagNull(2, TSDBConstants.TSDB_DATA_TYPE_BIGINT);
-            pstmt.setTagNull(3, TSDBConstants.TSDB_DATA_TYPE_DOUBLE);
-            pstmt.setTagNull(4, TSDBConstants.TSDB_DATA_TYPE_BOOL);
-            pstmt.setTagNull(5, TSDBConstants.TSDB_DATA_TYPE_BINARY);
-            pstmt.setTagNull(6, TSDBConstants.TSDB_DATA_TYPE_NCHAR);
-            pstmt.setTagNull(7, TSDBConstants.TSDB_DATA_TYPE_VARBINARY);
-            pstmt.setTagNull(8, TSDBConstants.TSDB_DATA_TYPE_GEOMETRY);
-            pstmt.setTagNull(9, TSDBConstants.TSDB_DATA_TYPE_TINYINT);
-            pstmt.setTagNull(10, TSDBConstants.TSDB_DATA_TYPE_SMALLINT);
+            pstmt.setTagNull(0, TSDBConstants.TSDB_DATA_TYPE_INT);
+            pstmt.setTagNull(1, TSDBConstants.TSDB_DATA_TYPE_BIGINT);
+            pstmt.setTagNull(2, TSDBConstants.TSDB_DATA_TYPE_DOUBLE);
+            pstmt.setTagNull(3, TSDBConstants.TSDB_DATA_TYPE_BOOL);
+            pstmt.setTagNull(4, TSDBConstants.TSDB_DATA_TYPE_BINARY);
+            pstmt.setTagNull(5, TSDBConstants.TSDB_DATA_TYPE_NCHAR);
+            pstmt.setTagNull(6, TSDBConstants.TSDB_DATA_TYPE_VARBINARY);
+            pstmt.setTagNull(7, TSDBConstants.TSDB_DATA_TYPE_GEOMETRY);
+            pstmt.setTagNull(8, TSDBConstants.TSDB_DATA_TYPE_TINYINT);
+            pstmt.setTagNull(9, TSDBConstants.TSDB_DATA_TYPE_SMALLINT);
 
-            pstmt.setTimestamp(1, new Timestamp(current + 1));
-            pstmt.setNull(2, Types.INTEGER);
-            pstmt.setNull(3, Types.BIGINT);
-            pstmt.setNull(4, Types.DOUBLE);
-            pstmt.setNull(5, Types.BOOLEAN);
-            pstmt.setNull(6, Types.BINARY);
-            pstmt.setNull(7, Types.NCHAR);
+            pstmt.setTimestamp(0, new Timestamp(current + 1));
+            pstmt.setNull(1, Types.INTEGER);
+            pstmt.setNull(2, Types.BIGINT);
+            pstmt.setNull(3, Types.DOUBLE);
+            pstmt.setNull(4, Types.BOOLEAN);
+            pstmt.setNull(5, Types.BINARY);
+            pstmt.setNull(6, Types.NCHAR);
+            pstmt.setNull(7, Types.VARBINARY);
             pstmt.setNull(8, Types.VARBINARY);
-            pstmt.setNull(9, Types.VARBINARY);
-            pstmt.setNull(10, Types.TINYINT);
-            pstmt.setNull(11, Types.SMALLINT);
+            pstmt.setNull(9, Types.TINYINT);
+            pstmt.setNull(10, Types.SMALLINT);
             pstmt.addBatch();
 
             pstmt.executeBatch();
