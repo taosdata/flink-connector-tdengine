@@ -131,15 +131,15 @@ public class TDFlinkSourceAllTypesTest {
 
             long current = System.currentTimeMillis();
 
-            pstmt.setTimestamp(0, new Timestamp(current));
-            pstmt.setInt(1, 1);
-            pstmt.setLong(2, 1000000000000L);
-            pstmt.setDouble(3, 1.1);
-            pstmt.setBoolean(4, true);
-            pstmt.setString(5, "binary_value");
-            pstmt.setNString(6, "nchar_value");
-            pstmt.setVarbinary(7, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
-            pstmt.setGeometry(8, new byte[]{
+            pstmt.setTimestamp(1, new Timestamp(current));
+            pstmt.setInt(2, 1);
+            pstmt.setLong(3, 1000000000000L);
+            pstmt.setDouble(4, 1.1);
+            pstmt.setBoolean(5, true);
+            pstmt.setString(6, "binary_value");
+            pstmt.setNString(7, "nchar_value");
+            pstmt.setVarbinary(8, new byte[]{(byte) 0x98, (byte) 0xf4, 0x6e});
+            pstmt.setGeometry(9, new byte[]{
                     0x01, 0x01, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x59,
@@ -164,17 +164,17 @@ public class TDFlinkSourceAllTypesTest {
             pstmt.setTagNull(8, TSDBConstants.TSDB_DATA_TYPE_TINYINT);
             pstmt.setTagNull(9, TSDBConstants.TSDB_DATA_TYPE_SMALLINT);
 
-            pstmt.setTimestamp(0, new Timestamp(current + 1));
-            pstmt.setNull(1, Types.INTEGER);
-            pstmt.setNull(2, Types.BIGINT);
-            pstmt.setNull(3, Types.DOUBLE);
-            pstmt.setNull(4, Types.BOOLEAN);
-            pstmt.setNull(5, Types.BINARY);
-            pstmt.setNull(6, Types.NCHAR);
-            pstmt.setNull(7, Types.VARBINARY);
+            pstmt.setTimestamp(1, new Timestamp(current + 1));
+            pstmt.setNull(2, Types.INTEGER);
+            pstmt.setNull(3, Types.BIGINT);
+            pstmt.setNull(4, Types.DOUBLE);
+            pstmt.setNull(5, Types.BOOLEAN);
+            pstmt.setNull(6, Types.BINARY);
+            pstmt.setNull(7, Types.NCHAR);
             pstmt.setNull(8, Types.VARBINARY);
-            pstmt.setNull(9, Types.TINYINT);
-            pstmt.setNull(10, Types.SMALLINT);
+            pstmt.setNull(9, Types.VARBINARY);
+            pstmt.setNull(10, Types.TINYINT);
+            pstmt.setNull(11, Types.SMALLINT);
             pstmt.addBatch();
 
             pstmt.executeBatch();
