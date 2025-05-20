@@ -16,26 +16,29 @@ import com.taosdata.jdbc.tmq.ConsumerRecords;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.connector.sink.Sink;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.testutils.InMemoryReporter;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
-import org.apache.flink.table.data.binary.BinaryRowData;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.sql.*;
@@ -44,6 +47,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
@@ -540,6 +544,58 @@ public class TDFlinkSinkTest {
         Assert.assertEquals(1221 * 3, queryResult);
         System.out.println("testBatchTDengineSource finish！");
     }
+
+    @Test
+    void  testSinkFromJsonData() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
+                3, // try 3
+                Time.of(10, TimeUnit.SECONDS) // wait for 10 seconds after each failure
+        ));
+        String[] jsonArray = new String[20];
+        for (int i = 0; i < 20; i++) {
+            jsonArray[i] = "{\"vin\":" + i % 10 +"}";
+        }
+        DataStream<String> dataStream = env.fromElements(String.class, jsonArray);
+        SingleOutputStreamOperator<RowData> messageStream = dataStream.map(new RichMapFunction<String, RowData>() {
+            @Override
+            public RowData map(String value) throws Exception {
+                Random random = new Random(System.currentTimeMillis());
+                GenericRowData rowData = new GenericRowData(7);
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(value);
+                int vin = jsonNode.get("vin").asInt();
+                int nCount = totalVoltage.addAndGet(1);
+                long current = System.currentTimeMillis() + nCount * 1000;
+                rowData.setField(0, TimestampData.fromEpochMillis(current)); // ts
+                rowData.setField(1, random.nextFloat() * 30); // current
+                rowData.setField(2, 300 + vin); // voltage
+                rowData.setField(3, random.nextFloat()); // phase
+                rowData.setField(4, StringData.fromString("location_" + vin)); // location
+                rowData.setField(5, vin); // groupid
+                rowData.setField(6, StringData.fromString("d0" + vin)); // tbname
+                return rowData;
+            }
+        });
+        Properties sinkProps = new Properties();
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
+        sinkProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
+        sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
+        sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, "power_sink");
+        sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power_sink?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
+
+        TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
+        messageStream.sinkTo(sink);
+        env.execute("flink tdengine source");
+        int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");
+        Assert.assertEquals(6090, queryResult);
+        System.out.println("testBatchTDengineSource finish！");
+
+    }
+
     @Test
     void  testSinkOfRowData() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -559,7 +615,7 @@ public class TDFlinkSinkTest {
             row.setField(6, StringData.fromString("d0" + i));
             rowDatas[i] = row;
         }
-        
+
         DataStream<RowData> dataStream = env.fromElements(RowData.class, rowDatas);
 
         Properties sinkProps = new Properties();

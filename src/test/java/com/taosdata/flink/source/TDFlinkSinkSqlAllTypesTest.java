@@ -115,12 +115,12 @@ public class TDFlinkSinkSqlAllTypesTest {
             // set table name
             pstmt.setTableName("ntb");
             // set tags
-            pstmt.setTagInt(1, 1);
-            pstmt.setTagLong(2, 1000000000000L);
-            pstmt.setTagDouble(3, 1.1);
-            pstmt.setTagBoolean(4, true);
-            pstmt.setTagString(5, "binary_value");
-            pstmt.setTagNString(6, "nchar_value");
+            pstmt.setTagInt(0, 1);
+            pstmt.setTagLong(1, 1000000000000L);
+            pstmt.setTagDouble(2, 1.1);
+            pstmt.setTagBoolean(3, true);
+            pstmt.setTagString(4, "binary_value");
+            pstmt.setTagNString(5, "nchar_value");
 
             long current = System.currentTimeMillis();
 
@@ -136,12 +136,12 @@ public class TDFlinkSinkSqlAllTypesTest {
             pstmt.executeBatch();
 
             pstmt.setTableName("w3");
-            pstmt.setTagNull(1, TSDBConstants.TSDB_DATA_TYPE_INT);
-            pstmt.setTagNull(2, TSDBConstants.TSDB_DATA_TYPE_BIGINT);
-            pstmt.setTagNull(3, TSDBConstants.TSDB_DATA_TYPE_DOUBLE);
-            pstmt.setTagNull(4, TSDBConstants.TSDB_DATA_TYPE_BOOL);
-            pstmt.setTagNull(5, TSDBConstants.TSDB_DATA_TYPE_BINARY);
-            pstmt.setTagNull(6, TSDBConstants.TSDB_DATA_TYPE_NCHAR);
+            pstmt.setTagNull(0, TSDBConstants.TSDB_DATA_TYPE_INT);
+            pstmt.setTagNull(1, TSDBConstants.TSDB_DATA_TYPE_BIGINT);
+            pstmt.setTagNull(2, TSDBConstants.TSDB_DATA_TYPE_DOUBLE);
+            pstmt.setTagNull(3, TSDBConstants.TSDB_DATA_TYPE_BOOL);
+            pstmt.setTagNull(4, TSDBConstants.TSDB_DATA_TYPE_BINARY);
+            pstmt.setTagNull(5, TSDBConstants.TSDB_DATA_TYPE_NCHAR);
 
             pstmt.setTimestamp(1, new Timestamp(current + 1));
             pstmt.setNull(2, Types.INTEGER);
