@@ -48,6 +48,8 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
             isBatchMode = true;
         }
 
+        this.properties.remove(TDengineCdcParams.TMQ_BATCH_MODE);
+
         String autoCommit = this.properties.getProperty(TDengineCdcParams.ENABLE_AUTO_COMMIT, "false");
         if (autoCommit.equals("true")) {
             isAutoCommit = true;
