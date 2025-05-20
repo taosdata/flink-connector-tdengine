@@ -549,8 +549,8 @@ public class TDFlinkSinkTest {
     void  testSinkFromJsonData() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-                3, // 尝试3次
-                Time.of(10, TimeUnit.SECONDS) // 每次失败后等待10秒
+                3, // try 3
+                Time.of(10, TimeUnit.SECONDS) // wait for 10 seconds after each failure
         ));
         String[] jsonArray = new String[20];
         for (int i = 0; i < 20; i++) {
