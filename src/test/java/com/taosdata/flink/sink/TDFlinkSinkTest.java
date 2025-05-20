@@ -562,10 +562,11 @@ public class TDFlinkSinkTest {
             public RowData map(String value) throws Exception {
                 Random random = new Random(System.currentTimeMillis());
                 GenericRowData rowData = new GenericRowData(7);
-                long current = System.currentTimeMillis();
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(value);
                 int vin = jsonNode.get("vin").asInt();
+                int nCount = totalVoltage.addAndGet(1);
+                long current = System.currentTimeMillis() + nCount * 1000;
                 rowData.setField(0, TimestampData.fromEpochMillis(current)); // ts
                 rowData.setField(1, random.nextFloat() * 30); // current
                 rowData.setField(2, 300 + vin); // voltage
