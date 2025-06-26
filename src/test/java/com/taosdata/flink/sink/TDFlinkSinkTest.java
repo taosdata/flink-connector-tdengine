@@ -56,7 +56,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSinkTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://192.168.2.156:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -68,26 +68,26 @@ public class TDFlinkSinkTest {
         String insertQuery = "INSERT INTO " +
                 "power.d1001 USING power.meters TAGS('California.SanFrancisco', 1) " +
                 "VALUES " +
-                "('2024-12-19 19:12:45.642', 50.30000, 201, 0.31000) " +
-                "('2024-12-19 19:12:46.642', 82.60000, 202, 0.33000) " +
-                "('2024-12-19 19:12:47.642', 92.30000, 203, 0.31000) " +
-                "('2024-12-19 18:12:45.642', 50.30000, 201, 0.31000) " +
-                "('2024-12-19 18:12:46.642', 82.60000, 202, 0.33000) " +
-                "('2024-12-19 18:12:47.642', 92.30000, 203, 0.31000) " +
-                "('2024-12-19 17:12:45.642', 50.30000, 201, 0.31000) " +
-                "('2024-12-19 17:12:46.642', 82.60000, 202, 0.33000) " +
-                "('2024-12-19 17:12:47.642', 92.30000, 203, 0.31000) " +
+                "('2024-12-19 19:12:45.642', 50.30000, 201, 0.31000, 1) " +
+                "('2024-12-19 19:12:46.642', 82.60000, 202, 0.33000, 1) " +
+                "('2024-12-19 19:12:47.642', 92.30000, 203, 0.31000, 1) " +
+                "('2024-12-19 18:12:45.642', 50.30000, 201, 0.31000, 1) " +
+                "('2024-12-19 18:12:46.642', 82.60000, 202, 0.33000, 1) " +
+                "('2024-12-19 18:12:47.642', 92.30000, 203, 0.31000, 1) " +
+                "('2024-12-19 17:12:45.642', 50.30000, 201, 0.31000, 1) " +
+                "('2024-12-19 17:12:46.642', 82.60000, 202, 0.33000, 1) " +
+                "('2024-12-19 17:12:47.642', 92.30000, 203, 0.31000, 1) " +
                 "power.d1002 USING power.meters TAGS('Alabama.Montgomery', 2) " +
                 "VALUES " +
-                "('2024-12-19 19:12:45.642', 50.30000, 204, 0.25000) " +
-                "('2024-12-19 19:12:46.642', 62.60000, 205, 0.33000) " +
-                "('2024-12-19 19:12:47.642', 72.30000, 206, 0.31000) " +
-                "('2024-12-19 18:12:45.642', 50.30000, 204, 0.25000) " +
-                "('2024-12-19 18:12:46.642', 62.60000, 205, 0.33000) " +
-                "('2024-12-19 18:12:47.642', 72.30000, 206, 0.31000) " +
-                "('2024-12-19 17:12:45.642', 50.30000, 204, 0.25000) " +
-                "('2024-12-19 17:12:46.642', 62.60000, 205, 0.33000) " +
-                "('2024-12-19 17:12:47.642', 72.30000, 206, 0.31000) ";
+                "('2024-12-19 19:12:45.642', 50.30000, 204, 0.25000, 2) " +
+                "('2024-12-19 19:12:46.642', 62.60000, 205, 0.33000, 2) " +
+                "('2024-12-19 19:12:47.642', 72.30000, 206, 0.31000, 2) " +
+                "('2024-12-19 18:12:45.642', 50.30000, 204, 0.25000, 2) " +
+                "('2024-12-19 18:12:46.642', 62.60000, 205, 0.33000, 2) " +
+                "('2024-12-19 18:12:47.642', 72.30000, 206, 0.31000, 2) " +
+                "('2024-12-19 17:12:45.642', 50.30000, 204, 0.25000, 2) " +
+                "('2024-12-19 17:12:46.642', 62.60000, 205, 0.33000, 2) " +
+                "('2024-12-19 17:12:47.642', 72.30000, 206, 0.31000, 2) ";
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, properties);
              Statement stmt = connection.createStatement()) {
@@ -102,7 +102,7 @@ public class TDFlinkSinkTest {
             // you can check rowsAffected here
             System.out.println("Create database power successfully, rowsAffected: " + rowsAffected);
             // create table
-            rowsAffected = stmt.executeUpdate("CREATE STABLE IF NOT EXISTS meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);");
+            rowsAffected = stmt.executeUpdate("CREATE STABLE IF NOT EXISTS meters (ts timestamp, current float, voltage int, phase float, `Aateat` int) TAGS (location binary(64), groupId int);");
             // you can check rowsAffected here
             System.out.println("Create stable power.meters successfully, rowsAffected: " + rowsAffected);
 
@@ -121,7 +121,7 @@ public class TDFlinkSinkTest {
             // you can check rowsAffected here
             System.out.println("Create database power successfully, rowsAffected: " + rowsAffected);
             // create table
-            stmt.executeUpdate("CREATE STABLE IF NOT EXISTS sink_meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);");
+            stmt.executeUpdate("CREATE STABLE IF NOT EXISTS sink_meters (ts timestamp, current float, voltage int, phase float, `Aateat` int) TAGS (location binary(64), groupId int);");
             // you can check rowsAffected here
 
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sink_normal (ts timestamp, current float, voltage int, phase float);");
@@ -604,15 +604,16 @@ public class TDFlinkSinkTest {
 //        "ts", "current", "voltage", "phase", "location", "groupid", "tbname"
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 10; i++) {
-            GenericRowData row = new GenericRowData(7);
+            GenericRowData row = new GenericRowData(8);
             long current = System.currentTimeMillis() + i * 1000;
             row.setField(0, TimestampData.fromEpochMillis(current));
             row.setField(1, random.nextFloat() * 30);
             row.setField(2, 300 + (i + 1));
             row.setField(3, random.nextFloat());
-            row.setField(4, StringData.fromString("location_" + i));
-            row.setField(5, i);
-            row.setField(6, StringData.fromString("d0" + i));
+            row.setField(4, random.nextInt());
+            row.setField(5, StringData.fromString("location_" + i));
+            row.setField(6, i);
+            row.setField(7, StringData.fromString("d0" + i));
             rowDatas[i] = row;
         }
 
@@ -625,10 +626,10 @@ public class TDFlinkSinkTest {
         sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.2.156:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
-        TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "location", "groupid", "tbname"));
+        TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "`Aateat`","location", "groupid", "tbname"));
         dataStream.sinkTo(sink);
         env.execute("flink tdengine source");
         int queryResult = queryResult("SELECT sum(voltage) FROM power_sink.sink_meters");

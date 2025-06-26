@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
+import static com.taosdata.flink.common.Utils.trimBackticks;
+
 public class TDengineSink<IN> implements Sink<IN> {
     private final Logger LOG = LoggerFactory.getLogger(TDengineSink.class);
     private String dbName;
@@ -81,12 +83,14 @@ public class TDengineSink<IN> implements Sink<IN> {
                 LOG.debug("fieldName:{}", fieldName);
                 metaInfos.add(new SinkMetaInfo(false, DataType.DATA_TYPE_VARCHAR, "tbname", 192));
             } else {
-                SinkMetaInfo sinkMetaInfo = sinkMetaInfoMap.get(fieldName);
+                String tmpFieldName = trimBackticks(fieldName);
+                SinkMetaInfo sinkMetaInfo = sinkMetaInfoMap.get(tmpFieldName);
                 if (sinkMetaInfo == null) {
                     LOG.error("The field name does not exist in the meta information of the table! fieldName:{}, dbname:{}, superTableName:{}, tableName:{}",
                             fieldName, this.dbName, this.superTableName, this.normalTableName);
                     throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME);
                 }
+                sinkMetaInfo.setFieldName(fieldName);
                 metaInfos.add(sinkMetaInfo);
                 LOG.debug("fieldName:{}, type:{}", sinkMetaInfo.getFieldName(), sinkMetaInfo.getFieldType().getTypeName());
             }
