@@ -231,8 +231,13 @@ public class VarbinaryTest {
         assertNull(trimBackticks(null));
         assertEquals("SSAA", trimBackticks("SSAA"));
         assertEquals("", trimBackticks(""));
-        assertEquals("", trimBackticks("`"));
         assertEquals("", trimBackticks("``"));
-        assertEquals("`", trimBackticks("```"));
+        assertEquals("", trimBackticks("```"));
+        try {
+            trimBackticks("`");
+            assertEquals("", "Field name anti quotation mark mismatch, no exception thrown");
+        }catch (SQLException e) {
+            System.out.println("testTrimBackticks SQLException ok! " + e.getMessage());
+        }
     }
 }
