@@ -13,11 +13,15 @@ public class Utils {
         // Check if there are reverse quotes at the beginning
         if (input.startsWith("`")) {
             start = 1;
+        } else {
+            return input;
         }
 
         // Check if there are reverse quotes at the end
         if (input.endsWith("`")) {
             end--;
+        } else {
+            return input;
         }
 
         // If the string only has reverse quotes

@@ -713,6 +713,4 @@ public class TDFlinkSinkTest {
         Assert.assertEquals(3055, queryResult);
         System.out.println("testBatchTDengineSource finish！");
     }
-
-
 }
