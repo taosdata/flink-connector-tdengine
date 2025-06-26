@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.taosdata.flink.common.Utils.trimBackticks;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VarbinaryTest {
@@ -223,5 +224,21 @@ public class VarbinaryTest {
         state = enumerator.snapshotState(1);
         assertNotNull(state.getUnassignedSqls().getFirst().getTaskSplits().get(0));
 
+    }
+
+    @Test
+    public void testTrimBackticks() throws Exception {
+        assertNull(trimBackticks(null));
+        assertEquals("SSAA", trimBackticks("SSAA"));
+        assertEquals("", trimBackticks(""));
+        assertEquals("", trimBackticks("``"));
+        assertEquals("`", trimBackticks("```"));
+        try {
+            trimBackticks("`");
+            trimBackticks("`sss");
+            assertEquals("", "Field name anti quotation mark mismatch, no exception thrown");
+        }catch (SQLException e) {
+            System.out.println("testTrimBackticks SQLException ok! " + e.getMessage());
+        }
     }
 }
