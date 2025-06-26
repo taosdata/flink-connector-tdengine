@@ -61,7 +61,7 @@ jobs:
           path: 'flink-workspace'
 
       - name: set up java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{ matrix.java }}
@@ -69,8 +69,7 @@ jobs:
           maven-version: ${{ matrix.maven }}
 
       - name: Test
-        with:
-          path: 'flink-workspace'
+        working-directory: 'flink-workspace'
         env:
           TDENGINE_CLOUD_URL: ${{ secrets.TDENGINE_CLOUD_URL }}
         run: mvn -B clean verify --file pom.xml
