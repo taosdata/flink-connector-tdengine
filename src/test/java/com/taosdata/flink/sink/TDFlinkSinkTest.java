@@ -56,7 +56,7 @@ import static org.apache.flink.core.execution.CheckpointingMode.AT_LEAST_ONCE;
 public class TDFlinkSinkTest {
     MiniClusterWithClientResource miniClusterResource;
     static InMemoryReporter reporter;
-    String jdbcUrl = "jdbc:TAOS-WS://192.168.2.156:6041?user=root&password=taosdata";
+    String jdbcUrl = "jdbc:TAOS-WS://localhost:6041?user=root&password=taosdata";
     static AtomicInteger totalVoltage = new AtomicInteger();
     LocalDateTime insertTime;
 
@@ -626,7 +626,7 @@ public class TDFlinkSinkTest {
         sinkProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "RowData");
         sinkProps.setProperty(TDengineConfigParams.PROPERTY_KEY_DBNAME, "power_sink");
         sinkProps.setProperty(TDengineConfigParams.TD_SUPERTABLE_NAME, "sink_meters");
-        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://192.168.2.156:6041/power?user=root&password=taosdata");
+        sinkProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
         sinkProps.setProperty(TDengineConfigParams.TD_BATCH_SIZE, "2000");
 
         TDengineSink<RowData> sink = new TDengineSink<>(sinkProps, Arrays.asList("ts", "current", "voltage", "phase", "`Aateat`","location", "groupid", "tbname"));
