@@ -12,6 +12,10 @@ public class Utils {
             return input;
         }
 
+        if (input.equals("`")) {
+            throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME, "Field name reverse quotation mark mismatch, fieldName=" + input);
+        }
+
         int start = 0;
         int end = input.length();
 
