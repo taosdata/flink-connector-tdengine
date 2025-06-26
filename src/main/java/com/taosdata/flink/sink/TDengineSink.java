@@ -78,18 +78,11 @@ public class TDengineSink<IN> implements Sink<IN> {
         Class.forName("com.taosdata.jdbc.ws.WebSocketDriver");
         Map<String, SinkMetaInfo> sinkMetaInfoMap = getMetaInfo();
         for (String fieldName : fieldNameList) {
-
             if (fieldName.equals("tbname")) {
                 LOG.debug("fieldName:{}", fieldName);
                 metaInfos.add(new SinkMetaInfo(false, DataType.DATA_TYPE_VARCHAR, "tbname", 192));
             } else {
                 String tmpFieldName = trimBackticks(fieldName);
-                if (tmpFieldName.isEmpty()) {
-                    LOG.error("The field name does not exist in the meta information of the table! fieldName:{}, dbname:{}, superTableName:{}, tableName:{}",
-                            fieldName, this.dbName, this.superTableName, this.normalTableName);
-                    throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME);
-                }
-
                 SinkMetaInfo sinkMetaInfo = sinkMetaInfoMap.get(tmpFieldName);
                 if (sinkMetaInfo == null) {
                     LOG.error("The field name does not exist in the meta information of the table! fieldName:{}, dbname:{}, superTableName:{}, tableName:{}",

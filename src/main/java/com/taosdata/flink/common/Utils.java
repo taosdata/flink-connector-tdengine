@@ -1,8 +1,13 @@
 package com.taosdata.flink.common;
 
+import com.taosdata.flink.sink.entity.SinkError;
+import com.taosdata.flink.sink.entity.SinkErrorNumbers;
+
+import java.sql.SQLException;
+
 public class Utils {
 
-    public static String trimBackticks(String input) {
+    public static String trimBackticks(String input) throws SQLException {
         if (input == null || input.isEmpty()) {
             return input;
         }
@@ -20,13 +25,11 @@ public class Utils {
         // Check if there are reverse quotes at the end
         if (input.endsWith("`")) {
             end--;
-        } else {
-            return input;
         }
 
         // If the string only has reverse quotes
-        if (start > end) {
-            return "";
+        if (end == 0 || start > end) {
+            throw SinkError.createSQLException(SinkErrorNumbers.ERROR_INVALID_SINK_FIELD_NAME, "Field name reverse quotation mark mismatch, fieldName=" + input);
         }
 
         return input.substring(start, end);
