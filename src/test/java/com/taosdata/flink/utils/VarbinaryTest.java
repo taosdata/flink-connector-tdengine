@@ -7,6 +7,8 @@ import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.common.VersionComparator;
 import com.taosdata.flink.sink.entity.SinkError;
 import com.taosdata.flink.sink.entity.SinkErrorNumbers;
+import com.taosdata.flink.sink.entity.SinkMetaInfo;
+import com.taosdata.flink.sink.serializer.RowDataSerializerBase;
 import com.taosdata.flink.source.entity.*;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
@@ -16,6 +18,9 @@ import com.taosdata.jdbc.TSDBErrorNumbers;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.connector.testutils.source.reader.TestingSplitEnumeratorContext;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.StringData;
 import org.junit.Test;
 
 import java.sql.SQLException;
@@ -28,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.taosdata.flink.common.Utils.trimBackticks;
+import static com.taosdata.flink.sink.entity.DataType.DATA_TYPE_INT;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VarbinaryTest {
@@ -240,5 +246,41 @@ public class VarbinaryTest {
         }catch (SQLException e) {
             System.out.println("testTrimBackticks SQLException ok! " + e.getMessage());
         }
+    }
+
+    @Test
+    public void testFieldCountMismatch() {
+        GenericRowData rowData = new GenericRowData(2);
+        rowData.setField(0, 10);
+        rowData.setField(1, 20);
+
+        List<SinkMetaInfo> metaInfos = Collections.singletonList(
+                new SinkMetaInfo(false, DATA_TYPE_INT, "col1", 4)
+        );
+        RowDataSerializerBase base = new RowDataSerializerBase();
+        Exception exception = assertThrows(SQLException.class, () ->
+                base.getSinkRecord(rowData, metaInfos)
+        );
+
+        assertTrue(exception.getMessage().contains("The recod fields size (2) is not equal to the meta fields size(1)"));
+    }
+
+    @Test
+    public void testTypeConversionError() {
+        GenericRowData rowData = new GenericRowData(1);
+        rowData.setField(0, StringData.fromString("not_a_float")); // 字符串无法转为浮点数
+
+        RowDataSerializerBase base = new RowDataSerializerBase();
+        List<SinkMetaInfo> metaInfos = Collections.singletonList(
+                new SinkMetaInfo(false, DATA_TYPE_INT, "col1", 4)
+        );
+
+        Exception exception = assertThrows(SQLException.class, () ->
+                base.getSinkRecord(rowData, metaInfos)
+        );
+
+        assertTrue(exception.getMessage().contains("Error processing field index 0"));
+        assertTrue(exception.getMessage().contains("Type: DATA_TYPE_INT"));
+        assertTrue(exception.getMessage().contains("Name: col1"));
     }
 }
