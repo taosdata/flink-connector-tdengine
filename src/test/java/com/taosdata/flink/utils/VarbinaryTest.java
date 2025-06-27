@@ -268,7 +268,7 @@ public class VarbinaryTest {
     @Test
     public void testTypeConversionError() {
         GenericRowData rowData = new GenericRowData(1);
-        rowData.setField(0, StringData.fromString("not_a_float")); // 字符串无法转为浮点数
+        rowData.setField(0, StringData.fromString("not_a_int"));
 
         RowDataSerializerBase base = new RowDataSerializerBase();
         List<SinkMetaInfo> metaInfos = Collections.singletonList(
