@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class ResultSoureDeserialization implements TDengineRecordDeserialization<ResultBean> {
+public class ResultSourceDeserialization implements TDengineRecordDeserialization<ResultBean> {
     /**
      * @param splitResultRecord A record of information containing an object list
      * @return Data format after data conversion

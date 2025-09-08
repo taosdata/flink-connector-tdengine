@@ -257,7 +257,7 @@ public class TDFlinkSourceTest {
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_ENABLE_AUTO_RECONNECT, "true");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_CHARSET, "UTF-8");
         connProps.setProperty(TSDBDriver.PROPERTY_KEY_TIME_ZONE, "UTC-8");
-        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultSoureDeserialization");
+        connProps.setProperty(TDengineConfigParams.VALUE_DESERIALIZER, "com.taosdata.flink.entity.ResultSourceDeserialization");
         connProps.setProperty(TDengineConfigParams.TD_JDBC_URL, "jdbc:TAOS-WS://localhost:6041/power?user=root&password=taosdata");
         SourceSplitSql splitSql = new SourceSplitSql();
         splitSql.setSql("select  ts, `current`, voltage, phase, groupid, location, tbname from meters")
