@@ -27,8 +27,4 @@ public class SinkErrorNumbers {
 
     private SinkErrorNumbers() {
     }
-
-    public static boolean contains(int errorNumber) {
-        return errorNumbers.contains(errorNumber);
-    }
 }

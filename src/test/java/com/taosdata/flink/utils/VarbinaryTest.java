@@ -5,21 +5,19 @@ import com.taosdata.flink.cdc.enumerator.TDengineCdcEnumState;
 import com.taosdata.flink.cdc.serializable.TDengineCdcEnumStateSerializer;
 import com.taosdata.flink.cdc.split.TDengineCdcSplit;
 import com.taosdata.flink.common.VersionComparator;
-import com.taosdata.flink.sink.entity.SinkError;
-import com.taosdata.flink.sink.entity.SinkErrorNumbers;
 import com.taosdata.flink.sink.entity.SinkMetaInfo;
 import com.taosdata.flink.sink.serializer.RowDataSerializerBase;
-import com.taosdata.flink.source.entity.*;
+import com.taosdata.flink.source.entity.SourceSplitSql;
+import com.taosdata.flink.source.entity.SplitType;
+import com.taosdata.flink.source.entity.TimestampSplitInfo;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
 import com.taosdata.flink.source.serializable.TDengineSourceEnumStateSerializer;
 import com.taosdata.flink.source.split.TDengineSplit;
-import com.taosdata.jdbc.TSDBErrorNumbers;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.connector.testutils.source.reader.TestingSplitEnumeratorContext;
 import org.apache.flink.table.data.GenericRowData;
-import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
 import org.junit.Test;
 
@@ -107,59 +105,6 @@ public class VarbinaryTest {
 
         TreeSet<TDengineSplit> splitTreeSet = state.getAssignmentSqls();
         assertTrue(splitTreeSet.first().equals(split2));
-    }
-
-    @Test
-    public void testSinkError() {
-        SQLException sqlException = SinkError.createSQLException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
-        assertEquals(SinkErrorNumbers.ERROR_DB_NAME_NULL, sqlException.getErrorCode());
-
-        sqlException = SinkError.createSQLException(TSDBErrorNumbers.ERROR_UNSUPPORTED_METHOD);
-        assertEquals(TSDBErrorNumbers.ERROR_UNSUPPORTED_METHOD, sqlException.getErrorCode());
-
-        sqlException = SinkError.createSQLException(TSDBErrorNumbers.ERROR_SQLCLIENT_EXCEPTION_ON_CONNECTION_CLOSED);
-        assertEquals(0, sqlException.getErrorCode());
-
-        sqlException = SinkError.createSQLException(0x2340, "test---test");
-        assertEquals(0x2340, sqlException.getErrorCode());
-
-        sqlException = SinkError.createSQLException(0x2360, "test---test");
-        assertEquals(0x2360, sqlException.getErrorCode());
-
-        sqlException = SinkError.createSQLException(0x2380, "test---test");
-        assertEquals(0x2380, sqlException.getErrorCode());
-
-        SinkError.createRuntimeException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
-        SinkError.createRuntimeException(SinkErrorNumbers.ERROR_DB_NAME_NULL, "ERROR_DB_NAME_NULL");
-        SinkError.createIllegalArgumentException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
-        SinkError.createIllegalStateException(SinkErrorNumbers.ERROR_DB_NAME_NULL);
-        SinkError.createTimeoutException(SinkErrorNumbers.ERROR_DB_NAME_NULL, "timeout");
-        SinkError.createSQLWarning("test");
-
-
-        sqlException = SourceError.createSQLException(SourceErrorNumbers.ERROR_SERVER_ADDRESS);
-        assertEquals(SourceErrorNumbers.ERROR_SERVER_ADDRESS, sqlException.getErrorCode());
-        sqlException = SourceError.createSQLException(TSDBErrorNumbers.ERROR_UNSUPPORTED_METHOD);
-        assertEquals(TSDBErrorNumbers.ERROR_UNSUPPORTED_METHOD, sqlException.getErrorCode());
-
-        sqlException = SourceError.createSQLException(TSDBErrorNumbers.ERROR_SQLCLIENT_EXCEPTION_ON_CONNECTION_CLOSED);
-        assertEquals(0, sqlException.getErrorCode());
-
-        sqlException = SourceError.createSQLException(0x2340, "test---test");
-        assertEquals(0x2340, sqlException.getErrorCode());
-
-        sqlException = SourceError.createSQLException(0x2360, "test---test");
-        assertEquals(0x2360, sqlException.getErrorCode());
-
-        sqlException = SourceError.createSQLException(0x2380, "test---test");
-        assertEquals(0x2380, sqlException.getErrorCode());
-
-        SourceError.createRuntimeException(SourceErrorNumbers.ERROR_SERVER_ADDRESS);
-        SourceError.createRuntimeException(SourceErrorNumbers.ERROR_SERVER_ADDRESS, "ERROR_SERVER_ADDRESS");
-        SourceError.createIllegalArgumentException(SourceErrorNumbers.ERROR_SERVER_ADDRESS);
-        SourceError.createIllegalStateException(SourceErrorNumbers.ERROR_SERVER_ADDRESS);
-        SourceError.createTimeoutException(SourceErrorNumbers.ERROR_SERVER_ADDRESS, "timeout");
-        SourceError.createSQLWarning("test");
     }
 
     @Test

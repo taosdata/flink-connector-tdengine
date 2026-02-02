@@ -38,4 +38,8 @@ public class Utils {
 
         return input.substring(start, end);
     }
+
+    public static boolean isJDBCError(int errorCode) {
+        return errorCode >= 0x2300 && errorCode <= 0x23ff;
+    }
 }
