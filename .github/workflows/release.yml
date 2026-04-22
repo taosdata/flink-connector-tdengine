@@ -5,7 +5,8 @@ on:
     branches: [ release ]
 
 permissions:
-  contents: write
+  contents: read
+  dependency-graph: write
 
 jobs:
   build:
