@@ -5,8 +5,10 @@ import com.taosdata.flink.source.split.TDengineSplit;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,12 +17,20 @@ import java.util.Map;
 
 public class TDengineSourceReader<T> extends SingleThreadMultiplexSourceReaderBase<SplitResultRecord, T, TDengineSplit, TDengineSplitsState> {
     private static final Logger LOG = LoggerFactory.getLogger(TDengineSourceReader.class);
-    public TDengineSourceReader(SingleThreadFetcherManager splitFetcherManager,
+
+    /**
+     * Uses the (elementsQueue, fetcherManager, ...) super constructor because it is the only one
+     * that exists on both Flink 1.15 and newer versions; the 4-argument variant was added in
+     * Flink 1.19.
+     */
+    @SuppressWarnings("deprecation")
+    public TDengineSourceReader(FutureCompletingBlockingQueue<RecordsWithSplitIds<SplitResultRecord>> elementsQueue,
+                                SingleThreadFetcherManager<SplitResultRecord, TDengineSplit> splitFetcherManager,
                                 RecordEmitter recordEmitter,
                                 Configuration config,
                                 SourceReaderContext readerContext) {
 
-        super(splitFetcherManager, recordEmitter, config, readerContext);
+        super(elementsQueue, splitFetcherManager, recordEmitter, config, readerContext);
 
     }
 

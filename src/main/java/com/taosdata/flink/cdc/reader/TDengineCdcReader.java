@@ -8,8 +8,9 @@ import com.taosdata.jdbc.tmq.TopicPartition;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
-import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +21,17 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
 
     private final SortedMap<Long, List<CdcTopicPartition>> offsetsToCommit;
 
-    // At the beginning of the checkpoint, record the current offset to be submitted
     private Map<Integer, Long> commitedOffsets;
 
     private final boolean autoCommit;
 
+    private final TDengineCdcFetcherManager<T> cdcFetcherManager;
+
     /**
      * Cdc Reader: Used for reading data sources
-     * @param splitFetcherManager  Used for managing slice readers
+     * @param elementsQueue The queue handing over data from the fetcher to the reader,
+     *                      the same instance that was passed to the fetcher manager
+     * @param cdcFetcherManager  Used for managing slice readers with CDC-specific offset commit support
      * @param recordEmitter Distribute data to downstream operators
      * @param config configuration parameter
      * @param readerContext Reader context information, mainly used to process reader status information
@@ -35,13 +39,18 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
      *                   automatic commit can be performed here,
      *                   otherwise set to false and rely on checkpoint for manual commit
      */
-    public TDengineCdcReader(SingleThreadFetcherManager splitFetcherManager,
+    @SuppressWarnings("deprecation")
+    public TDengineCdcReader(FutureCompletingBlockingQueue<RecordsWithSplitIds<T>> elementsQueue,
+                             TDengineCdcFetcherManager<T> cdcFetcherManager,
                              RecordEmitter recordEmitter,
                              Configuration config,
                              SourceReaderContext readerContext,
                              boolean autoCommit) {
 
-        super(splitFetcherManager, recordEmitter, config, readerContext);
+        // The (elementsQueue, fetcherManager, ...) constructor is the only one that exists on
+        // both Flink 1.15 and newer versions; the 4-argument variant was added in Flink 1.19.
+        super(elementsQueue, cdcFetcherManager, recordEmitter, config, readerContext);
+        this.cdcFetcherManager = cdcFetcherManager;
         this.offsetsToCommit = Collections.synchronizedSortedMap(new TreeMap<>());
         this.autoCommit = autoCommit;
         LOG.debug("TDengineCdcReader autoCommit is {}", this.autoCommit);
@@ -126,7 +135,7 @@ public class TDengineCdcReader<T> extends SingleThreadMultiplexSourceReaderBase<
         }
 
         LOG.debug("notifyCheckpointComplete commitOffsets count:{}", committedPartitions.size());
-        ((TDengineCdcFetcherManager) splitFetcherManager).commitOffsets(committedPartitions);
+        cdcFetcherManager.commitOffsets(committedPartitions);
         // clear checkpoint commit info
         removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
         // update vgroup offset, avoid duplicate submissions

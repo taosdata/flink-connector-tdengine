@@ -15,8 +15,8 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
-import org.apache.flink.connector.base.source.reader.SourceReaderOptions;
-import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.slf4j.Logger;
@@ -91,9 +91,13 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
                     }
 
                 };
-        Configuration configuration = new Configuration();
-        configuration.set(SourceReaderOptions.ELEMENT_QUEUE_CAPACITY, 1000);
-        SingleThreadFetcherManager fetcherManager = new TDengineCdcFetcherManager(splitReaderSupplier, configuration);
+        // The elementsQueue must be shared by the fetcher manager and the source reader.
+        // The constructors used here exist on every Flink version since 1.15.
+        FutureCompletingBlockingQueue<RecordsWithSplitIds<OUT>> elementsQueue =
+                new FutureCompletingBlockingQueue<>(1000);
+        @SuppressWarnings("rawtypes")
+        TDengineCdcFetcherManager<OUT> fetcherManager =
+                new TDengineCdcFetcherManager(elementsQueue, splitReaderSupplier);
 
         RecordEmitter recordEmitter;
         if (isBatchMode) {
@@ -102,7 +106,7 @@ public class TDengineCdcSource<OUT> implements Source<OUT, TDengineCdcSplit, TDe
             recordEmitter = new TDengineCdcEmitter<OUT>(false);
         }
 
-        return new TDengineCdcReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), readerContext, isAutoCommit);
+        return new TDengineCdcReader<>(elementsQueue, fetcherManager, recordEmitter, toConfiguration(this.properties), readerContext, isAutoCommit);
 
     }
 

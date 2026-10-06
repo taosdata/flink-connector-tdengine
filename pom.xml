@@ -360,13 +360,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M6</version>
                 <configuration>
-                    <forkMode>pertest</forkMode>
-                    <argLine>${maven.test.jvmargs}</argLine>
+                    <!-- ${argLine} carries the JaCoCo agent; the add-opens flags are required
+                         when running tests on JDK 17+ (Kryo/chill reflects into JDK internals) -->
+                    <argLine>${argLine} --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED --add-opens=java.base/java.math=ALL-UNNAMED</argLine>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
                     <testFailureIgnore>false</testFailureIgnore>
-                    <argLine>${argLine}</argLine>
                 </configuration>
             </plugin>
         </plugins>
