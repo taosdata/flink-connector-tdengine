@@ -7,12 +7,32 @@
     <format>jar</format>
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
+  <!-- 合并(而非覆盖)各依赖 jar 中的 SPI 服务文件,否则连接器自身的
+       META-INF/services/org.apache.flink.table.factories.Factory 会被
+       依赖 jar 的同名文件覆盖,导致 Flink 无法发现
+       'tdengine-connector' 工厂 (Cannot discover a connector) -->
+  <containerDescriptorHandlers>
+    <containerDescriptorHandler>
+      <handlerName>metaInf-services</handlerName>
+    </containerDescriptorHandler>
+  </containerDescriptorHandlers>
   <dependencySets>
     <dependencySet>
       <outputDirectory>/</outputDirectory>
       <useProjectArtifact>true</useProjectArtifact>
       <unpack>true</unpack>
       <scope>runtime</scope>
+      <!-- Flink 自身的类与 SPI(如 FileCatalogStoreFactory)不能打进 fat jar:
+           部署到低版本集群(如 1.15)时用户 jar 里的 1.2x 类与集群运行时类
+           混载,ServiceLoader 实例化外来工厂即抛 IllegalAccessError /
+           ServiceConfigurationError。Flink 运行时由集群 lib 提供。
+           janino/commons-compiler 同理:集群运行时已提供(flink-table-runtime
+           依赖),fat jar 再带一份会在 Calcite 首次编译 metadata handler 时
+           双重加载,抛 CompilerFactory 无法 cast 到 ICompilerFactory。 -->
+      <excludes>
+        <exclude>org.apache.flink:*</exclude>
+        <exclude>org.codehaus.janino:*</exclude>
+      </excludes>
     </dependencySet>
     <!-- 增加 scope 类型为 system 的配置 -->
     <dependencySet>

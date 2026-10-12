@@ -2,6 +2,7 @@ package com.taosdata.flink.source;
 
 import com.taosdata.flink.common.TDengineConfigParams;
 import com.taosdata.flink.source.entity.SourceSplitSql;
+import com.taosdata.flink.source.entity.SplitResultRecord;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumState;
 import com.taosdata.flink.source.enumerator.TDengineSourceEnumerator;
 import com.taosdata.flink.source.reader.TDengineRecordEmitter;
@@ -15,8 +16,9 @@ import org.apache.flink.api.connector.source.*;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
-import org.apache.flink.connector.base.source.reader.SourceReaderOptions;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
+import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.slf4j.Logger;
@@ -68,11 +70,15 @@ public class TDengineSource<OUT> implements Source<OUT, TDengineSplit, TDengineS
 
                 };
         LOG.debug("create TDengineSplitReader ");
-        Configuration configuration = new Configuration();
-        configuration.set(SourceReaderOptions.ELEMENT_QUEUE_CAPACITY, 1000);
-        SingleThreadFetcherManager fetcherManager = new SingleThreadFetcherManager(splitReaderSupplier, configuration);
+        // The elementsQueue must be shared by the fetcher manager and the source reader.
+        // The constructors used here exist on every Flink version since 1.15.
+        FutureCompletingBlockingQueue<RecordsWithSplitIds<SplitResultRecord>> elementsQueue =
+                new FutureCompletingBlockingQueue<>(1000);
+        @SuppressWarnings("rawtypes")
+        SingleThreadFetcherManager<SplitResultRecord, TDengineSplit> fetcherManager =
+                new SingleThreadFetcherManager(elementsQueue, splitReaderSupplier);
         RecordEmitter recordEmitter = new TDengineRecordEmitter<OUT>(isBatchMode);
-        return new TDengineSourceReader<>(fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
+        return new TDengineSourceReader<>(elementsQueue, fetcherManager, recordEmitter, toConfiguration(this.properties), sourceReaderContext);
     }
 
     @Override

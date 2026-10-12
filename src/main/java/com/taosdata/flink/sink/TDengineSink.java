@@ -16,7 +16,6 @@ import com.taosdata.jdbc.TSDBErrorNumbers;
 import com.taosdata.jdbc.utils.Utils;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
-import org.apache.flink.api.connector.sink2.WriterInitContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,12 +124,14 @@ public class TDengineSink<IN> implements Sink<IN> {
         LOG.debug("TDengineSink properties:{}", this.properties.toString());
     }
 
-    public SinkWriter<IN> createWriter(InitContext context) throws IOException {
-        throw new RuntimeException("The interface has been abandoned");
-    }
-
+    /**
+     * Creates the writer. This is the only {@link Sink} method that exists on every Flink
+     * version since 1.15, so the real logic lives here: on Flink 1.15 the runtime calls it
+     * directly, while on Flink 1.19+ the runtime calls {@code createWriter(WriterInitContext)}
+     * whose default implementation bridges back to this method. The context is not used.
+     */
     @Override
-    public SinkWriter<IN> createWriter(WriterInitContext context) throws IOException {
+    public SinkWriter<IN> createWriter(InitContext context) throws IOException {
         try {
             if (metaInfos != null) {
                 if (VersionComparator.compareVersion(tdVersion, stmt2Version) < 0) {
