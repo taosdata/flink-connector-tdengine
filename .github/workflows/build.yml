@@ -81,10 +81,11 @@ jobs:
           EOF
 
       - name: Start taosd
-        run: nohup sudo taosd > /var/log/taosd.stdout 2>&1 &
+        # Redirect inside sudo: the runner user cannot write to /var/log
+        run: sudo sh -c 'nohup taosd > /var/log/taosd.stdout 2>&1 &'
 
       - name: Start taosadapter
-        run: nohup sudo taosadapter > /var/log/taosadapter.stdout 2>&1 &
+        run: sudo sh -c 'nohup taosadapter > /var/log/taosadapter.stdout 2>&1 &'
 
       - name: Check service status
         run: |
