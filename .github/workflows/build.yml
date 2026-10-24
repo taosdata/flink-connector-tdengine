@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
 
+env:
+  TDENGINE_VERSION: 3.3.6.0
+  TDENGINE_PACKAGE: TDengine-server-3.3.6.0-Linux-x64.tar.gz
+
 jobs:
   build:
     strategy:
@@ -31,32 +35,97 @@ jobs:
         maven: [ '3.6.3' ]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: checkout TDengine
-        uses: actions/checkout@v3
-        with:
-          repository: 'taosdata/TDengine'
-          path: 'TDengine'
-          ref: ${{ github.base_ref }}
-
-      - name: prepare install
-        run: | 
-          sudo apt-get install  -y libgeos-dev
-          geos-config --version
-     
-      - name: install TDengine
-        run: cd TDengine && mkdir debug && cd debug && cmake .. -DBUILD_JDBC=false -DBUILD_TOOLS=false -DBUILD_HTTP=false -DBUILD_DEPENDENCY_TESTS=false && make && sudo make install
-
-      - name: shell
+      # Follow the taos-connector-jdbc approach: install a prebuilt TDengine package
+      # instead of compiling TDengine from source. The package already contains
+      # taosd, taos and taosadapter; building from TDengine main no longer installs
+      # taosadapter (removed from TDengine's build after ver-3.4.1.12).
+      - name: Get TDengine
+        env:
+          NIGHTLY_TDENGINE_ENTERPRISE_BASE_URL: ${{ secrets.NIGHTLY_TDENGINE_ENTERPRISE_BASE_URL }}
         run: |
-          cat >start.sh<<EOF 
-          ulimit -n 65535 && TAOS_SUPPORT_VNODES=256 taosd
+          if [ -n "$NIGHTLY_TDENGINE_ENTERPRISE_BASE_URL" ]; then
+            # Same nightly source as taos-connector-jdbc build.yml
+            wget "$NIGHTLY_TDENGINE_ENTERPRISE_BASE_URL/tsdb-nightly-main-linux-x64.tar.gz?v=$(date +%s)" -O tdengine.tar.gz
+            echo "TDENGINE_PACKAGE_DIR=tsdb-nightly-main-linux-x64" >> "$GITHUB_ENV"
+          else
+            # Fallback used by taos-connector-jdbc compatibility-3360.yml
+            wget "https://github.com/taosdata/TDengine/releases/download/ver-${TDENGINE_VERSION}/${TDENGINE_PACKAGE}"
+            mv "$TDENGINE_PACKAGE" tdengine.tar.gz
+            echo "TDENGINE_PACKAGE_DIR=TDengine-server-${TDENGINE_VERSION}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install TDengine
+        run: |
+          tar -zxf tdengine.tar.gz
+          cd "$TDENGINE_PACKAGE_DIR"
+          sudo ./install.sh -e no
+
+      - name: Verify TDengine installation
+        run: |
+          for bin in taosd taos taosadapter; do
+            if ! command -v "$bin" >/dev/null 2>&1; then
+              echo "Error: $bin not found in PATH"
+              exit 1
+            fi
+            echo "$bin: $(command -v "$bin")"
+          done
+          taosd --version
+
+      - name: Configure TDengine
+        run: |
+          sudo mkdir -p /etc/taos
+          sudo tee /etc/taos/taos.cfg >/dev/null <<'EOF'
+          fqdn localhost
+          firstEp localhost:6030
+          supportVnodes 256
           EOF
 
-      - name: taosd
-        run: nohup sudo sh ./start.sh &
+      - name: Start taosd
+        # Redirect inside sudo: the runner user cannot write to /var/log
+        run: sudo sh -c 'nohup taosd > /var/log/taosd.stdout 2>&1 &'
 
-      - name: start taosadapter
-        run: sudo taosadapter &
+      - name: Start taosadapter
+        run: sudo sh -c 'nohup taosadapter > /var/log/taosadapter.stdout 2>&1 &'
+
+      - name: Check service status
+        run: |
+          echo "=== Checking taosd process ==="
+          for i in $(seq 1 30); do
+            pgrep -f "[t]aosd" >/dev/null && break
+            sleep 1
+          done
+          if ! pgrep -f "[t]aosd" >/dev/null; then
+            echo "Error: taosd is not running"
+            sudo tail -50 /var/log/taosd.stdout || true
+            exit 1
+          fi
+
+          echo "=== Checking taosadapter process ==="
+          for i in $(seq 1 30); do
+            pgrep -f "[t]aosadapter" >/dev/null && break
+            sleep 1
+          done
+          if ! pgrep -f "[t]aosadapter" >/dev/null; then
+            echo "Error: taosadapter is not running"
+            sudo tail -50 /var/log/taosadapter.stdout || true
+            exit 1
+          fi
+
+          echo "=== Checking native connection (6030) ==="
+          for i in $(seq 1 30); do
+            timeout 10s taos -s "show dnodes" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          timeout 10s taos -s "show dnodes"
+
+          echo "=== Checking WebSocket connection (6041) ==="
+          for i in $(seq 1 30); do
+            curl -sf -u root:taosdata -d "select server_version()" http://localhost:6041/rest/sql >/dev/null && break
+            sleep 1
+          done
+          curl -sf -u root:taosdata -d "select server_version()" http://localhost:6041/rest/sql
+
+          echo "All services are running correctly"
 
       - name: checkout
         uses: actions/checkout@v4
@@ -87,4 +156,13 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-
+      - name: Upload service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-logs-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.maven }}
+          path: |
+            /var/log/taos/**/*
+            /var/log/taosd.stdout
+            /var/log/taosadapter.stdout
+          retention-days: 7
